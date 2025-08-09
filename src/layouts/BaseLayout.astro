@@ -1,0 +1,22 @@
+---
+export interface Props { title?: string; description?: string }
+const { title = "CambiosPay", description = "Cambia y envía dinero fácil y seguro" } = Astro.props
+import "../styles/global.css"
+---
+<html lang="es" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen text-ink bg-white font-sans">
+    <slot name="navbar" />
+    <main><slot /></main>
+    <slot name="footer" />
+  </body>
+</html>
