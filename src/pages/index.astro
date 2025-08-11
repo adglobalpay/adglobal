@@ -1,17 +1,21 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro"
-import Navbar from "../components/Navbar.astro"
-import Footer from "../components/Footer.astro"
-import Hero from "../components/Hero.astro"
-import Features from "../components/Features.astro"
-import Steps from "../components/Steps.astro"
-import Cta from "../components/Cta.astro"
+import Base from "../layouts/Base.astro";
+import Navbar from "../components/Navbar.astro";
+import Hero from "../components/Hero.astro";
+import Features from "../components/Features.astro";
+import Process from "../components/Process.astro";
+import Testimonials from "../components/Testimonials.astro";
+import About from "../components/About.astro";
+import FAQ from "../components/FAQ.astro";
+import Footer from "../components/Footer.astro";
 ---
-<BaseLayout title="CambiosPay — Cambia y envía dinero">
-  <Fragment slot="navbar"><Navbar /></Fragment>
+<Base title="Inicio">
+  <Navbar />
   <Hero />
   <Features />
-  <Steps />
-  <Cta />
-  <Fragment slot="footer"><Footer /></Fragment>
-</BaseLayout>
+  <Process />
+  <Testimonials />
+  <About />
+  <FAQ />
+  <Footer />
+</Base>

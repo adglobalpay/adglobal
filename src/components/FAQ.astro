@@ -1,0 +1,65 @@
+---
+const faqs = [
+  {
+    question: "¿Qué es PayPal?",
+    answer: `PayPal es una <strong>plataforma de pagos en línea</strong> que permite <a href="https://www.paypal.com/" target="_blank" rel="noopener" class="text-blue-600 underline">enviar y recibir dinero</a> de forma rápida y segura. Es ampliamente utilizada para <strong>compras y servicios internacionales</strong>, así como para transferencias entre particulares.`
+  },
+  {
+    question: "¿Qué es Cash App?",
+    answer: `Cash App es una <strong>aplicación de pagos móviles</strong> que permite enviar, recibir y solicitar dinero en <strong>Estados Unidos</strong>. También puedes <a href="https://cash.app/" target="_blank" rel="noopener" class="text-blue-600 underline">vincular tu tarjeta de débito</a>, comprar Bitcoin y pagar en comercios compatibles.`
+  },
+  {
+    question: "¿Qué es Zelle?",
+    answer: `Zelle es un <strong>servicio de transferencia de dinero</strong> rápido y seguro que permite <strong>enviar y recibir fondos</strong> directamente entre cuentas bancarias en <strong>Estados Unidos</strong>. Con <a href="https://www.zellepay.com/" target="_blank" rel="noopener" class="text-blue-600 underline">Zelle</a> solo necesitas una cuenta bancaria participante y el correo electrónico o número de teléfono del destinatario.`
+  },
+  {
+    question: "¿Qué es Venmo?",
+    answer: `Venmo es una <strong>aplicación de pagos móviles</strong> propiedad de PayPal, diseñada para enviar y recibir dinero de forma rápida entre amigos, familiares o comercios en Estados Unidos. Visita <a href="https://venmo.com/" target="_blank" rel="noopener" class="text-blue-600 underline">Venmo</a> para más información y registrar tu cuenta.`
+  },
+  {
+    question: "¿Qué métodos de pago aceptan?",
+    answer: `Aceptamos <strong>ACH</strong>, <strong>WYRE</strong> y <strong>depósitos bancarios</strong>. Siempre confirmamos con el cliente antes de procesar cualquier transacción para garantizar seguridad y precisión en el pago.`
+  },
+  {
+    question: "¿Cuánto tarda una operación?",
+    answer: `Las operaciones suelen completarse en <strong>pocos minutos</strong> tras la confirmación, aunque pueden demorar más dependiendo del <strong>método de pago</strong> y el proceso de <strong>verificación</strong>.`
+  }
+];
+
+---
+<section class="relative overflow-hidden bg-gradient-to-r from-blue-700 to-blue-500 text-white">
+  <!-- formas decorativas sin imágenes -->
+  <div class="pointer-events-none absolute inset-0">
+    <div class="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl"></div>
+    <div class="absolute right-0 top-1/2 h-80 w-80 -translate-y-1/2 rotate-45 bg-white/10"></div>
+    <div class="absolute -bottom-16 left-1/3 h-60 w-96 rotate-12 bg-white/10 rounded-3xl"></div>
+  </div>
+
+  <div class="relative mx-auto max-w-4xl px-4 py-16 text-center">
+    <h2 class="text-4xl font-bold">Preguntas frecuentes</h2>
+    <p class="mt-3 text-blue-100">
+      Dudas generales del servicio de <strong>cambios</strong>. Si tienes alguna pregunta adicional,
+      <a href="https://wa.me/14482045984" class="underline font-semibold">contáctanos</a>.
+    </p>
+  </div>
+</section>
+
+<section class="bg-gray-50 py-16" id="preguntas-frecuentes">
+  <div class="mx-auto max-w-6xl px-4">
+    <h2 class="text-3xl font-bold text-center mb-10">Preguntas Frecuentes</h2>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {faqs.map((faq) => (
+        <details class="group bg-white rounded-xl border shadow-sm transition hover:bg-blue-50 hover:shadow-md">
+          <summary class="cursor-pointer select-none px-6 py-4 font-medium text-gray-800 flex justify-between items-center">
+            {faq.question}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <p class="px-6 pb-4 text-gray-600" set:html={faq.answer}></p>
+
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

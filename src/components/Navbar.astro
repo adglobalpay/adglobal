@@ -1,26 +1,22 @@
 ---
 const links = [
-  { href: "#servicios", label: "Servicios" },
-  { href: "#como-funciona", label: "Cómo funciona" },
-  { href: "#faq", label: "FAQ" },
-]
+  { href: "/", label: "INICIO" },
+  { href: "/servicios", label: "SERVICIOS" },
+  { href: "/referencias", label: "REFERENCIAS" },
+  { href: "/blog", label: "BLOG" },
+  { href: "/calculadora", label: "CALCULADORA" },
+  { href: "/nosotros", label: "NOSOTROS" },
+];
 ---
-<header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b">
-  <div class="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between">
+<header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b">
+  <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
     <a href="/" class="flex items-center gap-2">
-      <img src="/logo.svg" alt="CambiosPay" class="h-7 w-auto" />
-      <span class="sr-only">CambiosPay</span>
+      <div class="h-8 w-8 rounded-lg bg-gray-900"></div>
+      <span class="sr-only">Marca</span>
     </a>
-
-    <nav class="hidden md:flex items-center gap-7 text-sm">
-      {links.map(l => <a href={l.href} class="opacity-80 hover:opacity-100">{l.label}</a>)}
-    </nav>
-
-    <div class="flex items-center gap-3">
-      <a href="/login" class="text-sm opacity-80 hover:opacity-100">Iniciar sesión</a>
-      <a href="/registro" class="text-sm px-3 py-2 rounded-xl border border-brand hover:bg-brand hover:text-white transition">
-        Crear cuenta
-      </a>
-    </div>
-  </div>
+    <ul class="hidden md:flex gap-6 text-sm font-medium">
+      {links.map((l) => <li><a class="hover:text-gray-900 text-gray-600" href={l.href}>{l.label}</a></li>)}
+    </ul>
+    
+  </nav>
 </header>

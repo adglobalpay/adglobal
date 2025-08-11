@@ -1,33 +1,22 @@
-<section class="mx-auto max-w-6xl px-5 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-center">
-  <div>
-    <h1 class="text-3xl md:text-5xl font-semibold leading-tight">
-      Cambia y envía dinero <span class="text-brand">rápido y seguro</span>
-    </h1>
-    <p class="mt-4 text-base md:text-lg opacity-80">
-      Tasas competitivas, proceso simple y soporte real. Sin complicaciones.
-    </p>
-    <div class="mt-8 flex gap-3">
-      <a href="#simulador" class="px-4 py-2 rounded-xl border text-sm">Calcular tasa</a>
-      <a href="#como-funciona" class="px-4 py-2 rounded-xl border text-sm">Cómo funciona</a>
-    </div>
-  </div>
-
-  <div id="simulador" class="border rounded-2xl p-6 shadow-sm">
-    <div class="text-sm opacity-70 mb-3">Simulador</div>
-    <form class="grid gap-3">
-      <input class="border rounded-xl px-4 h-11" placeholder="Monto (ej. 500 USD)" />
-      <div class="grid grid-cols-2 gap-3">
-        <select class="border rounded-xl px-4 h-11">
-          <option>USD</option><option>COP</option><option>MXN</option><option>PEN</option>
-        </select>
-        <select class="border rounded-xl px-4 h-11">
-          <option>COP</option><option>USD</option><option>MXN</option><option>PEN</option>
-        </select>
+---
+const props = Astro.props;
+---
+<section class="relative">
+  <div class="mx-auto max-w-6xl px-4 py-16 grid md:grid-cols-2 gap-10 items-center">
+    <div>
+      <h1 class="text-4xl/tight font-semibold">
+        Cambia tu saldo a bolívares en minutos
+      </h1>
+      <p class="mt-3 text-gray-600">
+        Plataforma rápida y segura para convertir tu saldo digital a Bs. (demo).
+      </p>
+      <div class="mt-6 flex gap-3">
+        
+        <a href="https://wa.me/" class="rounded-xl px-5 py-3 bg-gray-900 text-white">WhatsApp</a>
       </div>
-      <button type="button" class="h-11 rounded-2xl bg-brand text-white text-sm hover:bg-brand/90 transition">
-        Calcular
-      </button>
-      <p class="text-sm opacity-70">Resultado estimado: —</p>
-    </form>
+    </div>
+    <div class="aspect-video rounded-2xl border bg-white">
+        <img src="/public/main-img.jpeg" alt="Descripción de la imagen" class="w-100 h-100 object-cover rounded-2xl" />
+    </div>
   </div>
 </section>

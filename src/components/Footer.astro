@@ -1,10 +1,40 @@
-<footer class="border-t mt-16">
-  <div class="mx-auto max-w-6xl px-5 py-10 text-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-    <div class="opacity-70">© {new Date().getFullYear()} CambiosPay.</div>
-    <nav class="flex gap-5 text-sm opacity-80">
-      <a href="#faq">Términos</a>
-      <a href="#faq">Privacidad</a>
-      <a href="#faq">Soporte</a>
-    </nav>
+---
+import { IconBrandInstagram, IconBrandFacebook, IconBrandWhatsapp, IconBrandYoutube } from '@tabler/icons-react';
+---
+
+<footer class="bg-gradient-to-r from-blue-800 via-blue-600 to-blue-500 text-white">
+  <div class="mx-auto max-w-6xl px-4 py-14"> <!-- ↑ aumenté padding vertical -->
+    <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+      <!-- Logo + texto -->
+      <div class="text-center md:text-left">
+        <p class="font-semibold text-lg">© AD GLOBAL PAY 2025</p>
+        <p class="text-sm text-blue-100">Todos los derechos reservados</p>
+      </div>
+
+      <!-- Redes sociales -->
+      <div class="flex flex-col items-center gap-3">
+        <p class="font-semibold text-sm uppercase tracking-wide">Síguenos</p>
+        <div class="flex gap-4">
+          <a href="https://www.instagram.com/adglobalpay/" target="_blank" class="hover:text-pink-400 transition-colors">
+            <IconBrandInstagram size={28} />
+          </a>
+          <a href="https://www.facebook.com/adglobalpay" target="_blank" class="hover:text-blue-300 transition-colors">
+            <IconBrandFacebook size={28} />
+          </a>
+          <a href="https://api.whatsapp.com/send/?phone=14482045984&text&type=phone_number&app_absent=0" target="_blank" class="hover:text-green-400 transition-colors">
+            <IconBrandWhatsapp size={28} />
+          </a>
+          <a href="https://www.youtube.com/@adglobalpay" target="_blank" class="hover:text-red-400 transition-colors">
+            <IconBrandYoutube size={28} />
+          </a>
+        </div>
+      </div>
+
+      <!-- Links legales -->
+      <div class="flex gap-4 text-sm">
+        <a href="/terminos.pdf" class="hover:underline">Términos</a>
+        <a href="/privacidad.pdf" class="hover:underline">Privacidad</a>
+      </div>
+    </div>
   </div>
 </footer>

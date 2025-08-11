@@ -1,0 +1,49 @@
+---
+const title = "¿Qué es AD GLOBAL PAY?";
+const ctaHref =
+  "https://api.whatsapp.com/send/?phone=14482045984&text&type=phone_number&app_absent=0";
+---
+
+<section class="relative overflow-hidden bg-gradient-to-br from-sky-50 to-blue-50">
+  <!-- decor -->
+  <div class="pointer-events-none absolute inset-0">
+    <div class="absolute -left-24 top-12 h-72 w-72 rounded-full bg-blue-200/30 blur-3xl"></div>
+    <div class="absolute right-0 bottom-0 h-80 w-80 rotate-45 bg-blue-200/20"></div>
+  </div>
+
+  <div class="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2">
+    <!-- Ilustración -->
+    <img
+      src="/assets/phones-coins.svg"
+      alt="Transferencias rápidas y seguras"
+      class="mx-auto w-full max-w-md drop-shadow-xl"
+      loading="lazy"
+    />
+
+    <!-- Texto -->
+    <div>
+      <h2 class="text-4xl font-bold text-slate-800">{title}</h2>
+      <p class="mt-4 text-slate-600">
+        Convierte tus divisas en minutos con <strong>AD GLOBAL PAY</strong>. Ofrecemos una forma
+        <strong>rápida y segura</strong> de convertir tu saldo de
+        <strong>PayPal</strong>, <strong>Cash App</strong>, <strong>Zelle</strong>,
+        <strong>Venmo</strong>, <strong>USDT</strong>, <strong>depósitos bancarios y mas</strong>.
+      </p>
+      <p class="mt-4 text-slate-600">
+        Olvídate de las esperas e incertidumbres: clientes de todo tipo ya disfrutan de una experiencia
+        confiable y guiada de principio a fin.
+      </p>
+
+      <div class="mt-6 flex gap-3">
+        <a
+          href={ctaHref}
+          target="_blank"
+          class="inline-flex items-center rounded-xl bg-green-600 px-5 py-3 font-medium text-white shadow hover:bg-blue-700"
+        >
+          Contáctanos por WhatsApp
+        </a>
+        
+      </div>
+    </div>
+  </div>
+</section>
