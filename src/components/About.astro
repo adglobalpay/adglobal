@@ -1,48 +1,51 @@
 ---
 const title = "¿Qué es AD GLOBAL PAY?";
-const ctaHref =
-  "https://api.whatsapp.com/send/?phone=14482045984&text&type=phone_number&app_absent=0";
+const whatsappNumber = "14482045984";
+const whatsappMessage = encodeURIComponent(
+  "Hola, quiero más información sobre cómo convertir mi saldo con AD GLOBAL PAY."
+);
+const ctaHref = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 ---
 
-<section class="relative overflow-hidden bg-gradient-to-br from-sky-50 to-blue-50">
+<section id="nosotros" class="relative overflow-hidden bg-gradient-to-br from-sky-50 to-blue-50">
   <!-- decor -->
   <div class="pointer-events-none absolute inset-0">
     <div class="absolute -left-24 top-12 h-72 w-72 rounded-full bg-blue-200/30 blur-3xl"></div>
     <div class="absolute right-0 bottom-0 h-80 w-80 rotate-45 bg-blue-200/20"></div>
   </div>
 
-  <div class="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2">
+  <div class="relative mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 sm:gap-10 sm:py-16 md:grid-cols-2">
     <!-- Ilustración -->
     <img
-      src="/assets/phones-coins.svg"
+      src="/phones.png"
       alt="Transferencias rápidas y seguras"
-      class="mx-auto w-full max-w-md drop-shadow-xl"
+      class="mx-auto w-full max-w-xs sm:max-w-md drop-shadow-xl rounded-2xl"
       loading="lazy"
     />
 
     <!-- Texto -->
     <div>
-      <h2 class="text-4xl font-bold text-slate-800">{title}</h2>
-      <p class="mt-4 text-slate-600">
+      <h2 class="text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">{title}</h2>
+      <p class="mt-3 text-sm sm:text-base leading-relaxed">
         Convierte tus divisas en minutos con <strong>AD GLOBAL PAY</strong>. Ofrecemos una forma
         <strong>rápida y segura</strong> de convertir tu saldo de
         <strong>PayPal</strong>, <strong>Cash App</strong>, <strong>Zelle</strong>,
-        <strong>Venmo</strong>, <strong>USDT</strong>, <strong>depósitos bancarios y mas</strong>.
+        <strong>Venmo</strong>, <strong>USDT</strong>, <strong>depósitos bancarios y más</strong>.
       </p>
-      <p class="mt-4 text-slate-600">
+      <p class="mt-3 text-sm sm:text-base leading-relaxed">
         Olvídate de las esperas e incertidumbres: clientes de todo tipo ya disfrutan de una experiencia
         confiable y guiada de principio a fin.
       </p>
 
-      <div class="mt-6 flex gap-3">
+      <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <a
           href={ctaHref}
           target="_blank"
-          class="inline-flex items-center rounded-xl bg-green-600 px-5 py-3 font-medium text-white shadow hover:bg-blue-700"
+          rel="noopener noreferrer"
+          class="inline-flex justify-center items-center rounded-xl bg-green-600 px-5 py-3 text-sm sm:text-base font-medium text-white shadow hover:opacity-90 transition"
         >
           Contáctanos por WhatsApp
         </a>
-        
       </div>
     </div>
   </div>

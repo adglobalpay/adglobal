@@ -2,20 +2,36 @@
 import Base from "../layouts/Base.astro";
 import Navbar from "../components/Navbar.astro";
 import Hero from "../components/Hero.astro";
-import Features from "../components/Features.astro";
 import Process from "../components/Process.astro";
 import Testimonials from "../components/Testimonials.astro";
 import About from "../components/About.astro";
 import FAQ from "../components/FAQ.astro";
 import Footer from "../components/Footer.astro";
+import StatsStrip from "../components/StatsStrip.astro";
+import PaypalToVESHero from '../components/PaypalToVESHero.astro';
+import ServicesGrid from "../components/ServicesGrid.astro";
+import WhatsAppFloat from "../components/WhatsAppFloat.astro";
+
+
+
+
+const stats = [
+  { value: "+10 MIL", sublabel: "CAMBIOS EXITOSOS" },
+  { value: "+20",   sublabel: "PYMES" },
+  { value: "AÑOS",  sublabel: "DE SERVICIO" },
+];
 ---
-<Base title="Inicio">
+<Base title="Cambia Zelle a Bolivares">
   <Navbar />
   <Hero />
-  <Features />
+  <ServicesGrid />
+  <PaypalToVESHero />
   <Process />
+  <StatsStrip items={stats} className="mt-16 mb-10" />
   <Testimonials />
   <About />
   <FAQ />
   <Footer />
+   <!-- Botón flotante de WhatsApp -->
+  <WhatsAppFloat />
 </Base>

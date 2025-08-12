@@ -1,22 +1,127 @@
 ---
 const links = [
-  { href: "/", label: "INICIO" },
-  { href: "/servicios", label: "SERVICIOS" },
-  { href: "/referencias", label: "REFERENCIAS" },
-  { href: "/blog", label: "BLOG" },
-  { href: "/calculadora", label: "CALCULADORA" },
-  { href: "/nosotros", label: "NOSOTROS" },
+  { href: "#inicio", label: "Inicio" },
+  { href: "#servicios", label: "Servicios" },
+  { href: "#resenas", label: "Reseñas" },
+  { href: "#nosotros", label: "Nosotros" },
 ];
+const purple = "#4B44E7";
 ---
+
 <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b">
   <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-    <a href="/" class="flex items-center gap-2">
-      <div class="h-8 w-8 rounded-lg bg-gray-900"></div>
-      <span class="sr-only">Marca</span>
+    <!-- Brand -->
+    <a href="#inicio" class="flex items-center gap-2">
+      <img src="/logo.png" alt="Logo" class="h-8 w-auto" />
+      <span class="text-xl font-bold text-gray-900">AD Global Pay</span>
     </a>
-    <ul class="hidden md:flex gap-6 text-sm font-medium">
-      {links.map((l) => <li><a class="hover:text-gray-900 text-gray-600" href={l.href}>{l.label}</a></li>)}
+
+    <!-- Desktop -->
+    <ul class="hidden md:flex gap-6 text-sm font-bold">
+      {links.map((l) => (
+        <li>
+          <a class="hover:text-gray-900 text-gray-600" href={l.href}>
+            {l.label}
+          </a>
+        </li>
+      ))}
     </ul>
-    
+
+    <!-- Mobile trigger (right) -->
+    <div class="relative md:hidden">
+      <button
+        id="menuBtn"
+        class="inline-flex items-center justify-center rounded-lg p-2 ring-1 ring-gray-300 text-[color:var(--purple)] hover:bg-[color:var(--purple)]/10"
+        style={{ "--purple": purple }}
+        aria-expanded="false"
+        aria-controls="mobileMenu"
+        aria-label="Abrir menú"
+      >
+        <svg id="iconOpen" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+        <svg id="iconClose" class="h-5 w-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Mobile dropdown (right aligned, width auto) -->
+      <div
+        id="mobileMenu"
+        class="absolute right-0 top-[calc(100%+8px)] origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black/5
+               px-2 py-2 text-sm font-semibold text-gray-700
+               pointer-events-none opacity-0 scale-95 transition-all duration-200 w-auto
+               max-w-[80vw]"
+        hidden
+        role="menu"
+      >
+        <ul class="min-w-[9rem]"> <!-- asegura un ancho mínimo agradable -->
+          {links.map((l) => (
+            <li>
+              <a
+                class="block rounded-lg px-3 py-2 hover:bg-[color:var(--purple)]/10 text-gray-800"
+                style={{ "--purple": purple }}
+                href={l.href}
+                data-menu-item
+              >
+                {l.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   </nav>
 </header>
+
+<script>
+  const btn = document.getElementById('menuBtn');
+  const menu = document.getElementById('mobileMenu');
+  const iconOpen = document.getElementById('iconOpen');
+  const iconClose = document.getElementById('iconClose');
+
+  function setOpen(open) {
+    btn?.setAttribute('aria-expanded', String(open));
+    if (open) {
+      menu.hidden = false;
+      menu.classList.remove('pointer-events-none', 'opacity-0', 'scale-95');
+      iconOpen.classList.add('hidden');
+      iconClose.classList.remove('hidden');
+    } else {
+      menu.classList.add('pointer-events-none', 'opacity-0', 'scale-95');
+      iconOpen.classList.remove('hidden');
+      iconClose.classList.add('hidden');
+      setTimeout(() => { if (menu.classList.contains('opacity-0')) menu.hidden = true; }, 180);
+    }
+  }
+
+  let open = false;
+
+  btn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    open = !open;
+    setOpen(open);
+  });
+
+  // Cerrar al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    if (!open) return;
+    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+      open = false; setOpen(false);
+    }
+  });
+
+  // Cerrar con Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && open) { open = false; setOpen(false); }
+  });
+
+  // Cerrar al seleccionar una opción
+  menu?.querySelectorAll('[data-menu-item]').forEach((a) => {
+    a.addEventListener('click', () => { open = false; setOpen(false); });
+  });
+
+  // Al pasar a md+, cerrar
+  const mq = window.matchMedia('(min-width: 768px)');
+  mq.addEventListener('change', () => { open = false; setOpen(false); });
+</script>

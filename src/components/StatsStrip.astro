@@ -1,0 +1,33 @@
+---
+export interface Item {
+  value: string
+  sublabel?: string
+}
+
+const {
+  items = [
+    { value: '+10 MIL', sublabel: 'CAMBIOS EXITOSOS' },
+    { value: '+20',   sublabel: 'PYMES' },
+    { value: 'AÑOS',  sublabel: 'DE SERVICIO' },
+  ],
+  className = ''
+} = Astro.props as { items?: Item[]; className?: string }
+---
+<section class={`relative mx-auto max-w-6xl px-4 ${className}`}>
+  <div class="rounded-2xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-600 text-white shadow-lg ring-1 ring-white/10">
+    <div class="grid grid-cols-1 gap-6 p-6 sm:grid-cols-3 sm:gap-0 sm:p-8">
+      {items.map((it, idx) => (
+        <div class="flex flex-col items-center justify-center text-center gap-2 relative">
+          {/* separadores en desktop */}
+          {idx !== 0 && <div class="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 h-10 w-px bg-white/15" />}
+          <div class="text-3xl sm:text-4xl font-extrabold tracking-tight">{it.value}</div>
+          {it.sublabel && (
+            <div class="text-xs sm:text-sm font-semibold tracking-wide uppercase text-white/90">
+              {it.sublabel}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

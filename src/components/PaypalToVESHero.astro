@@ -1,0 +1,63 @@
+---
+const imageSrc = "/hero-paypal-ves.png"; // Pon tu imagen en public/
+const whatsappNumber = "14482045984";
+const whatsappMessage = encodeURIComponent(
+  "Hola, quiero cambiar dólares PayPal por bolívares. ¿Me puedes dar más información?"
+);
+const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+---
+
+<section class="relative overflow-hidden">
+  <div class="mx-auto max-w-7xl px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+    <!-- Texto -->
+    <div>
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-slate-800 tracking-tight">
+        Cómo cambiar o vender los <span class="text-slate-900">dólares</span> por <span class="text-slate-900">Bolívares</span> en Venezuela
+      </h1>
+
+      <p class="mt-6 text-base sm:text-lg text-slate-600 max-w-prose">
+        Nosotros recibimos tu saldo y lo enviamos a cualquiera de tus bancos en
+        Venezuela de forma rápida y segura.
+      </p>
+
+      <ul class="mt-6 space-y-3 text-slate-700">
+        <li class="flex items-start gap-3">
+          <span class="mt-1 h-2.5 w-2.5 rounded-full bg-blue-600"></span>
+          Tasa competitiva y transparente sin letras pequeñas
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-1 h-2.5 w-2.5 rounded-full bg-blue-600"></span>
+          Transferencia bancaria en minutos
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-1 h-2.5 w-2.5 rounded-full bg-blue-600"></span>
+          Soporte por WhatsApp y seguimiento en tiempo real
+        </li>
+      </ul>
+
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a
+          href={whatsappLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold bg-green-600 text-white shadow-sm hover:opacity-90 transition"
+        >
+          Cotizar en minutos
+        </a>
+      </div>
+    </div>
+
+    <!-- Imagen -->
+    <div class="relative">
+      <div class="absolute -z-10 inset-0 translate-x-10 translate-y-6 md:translate-x-12">
+        <div class="h-64 w-64 md:h-80 md:w-80 rounded-full bg-blue-50/70 blur-2xl"></div>
+      </div>
+      <img
+        src="/changes.jpeg"
+        alt="Personas cambiando saldo Dólares a Bolívares en computadora"
+        class="mx-auto max-w-full h-auto drop-shadow-xl"
+        loading="lazy"
+      />
+    </div>
+  </div>
+</section>

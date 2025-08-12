@@ -1,9 +1,15 @@
 ---
 import { IconBrandInstagram, IconBrandFacebook, IconBrandWhatsapp, IconBrandYoutube } from '@tabler/icons-react';
+
+const whatsappNumber = "14482045984";
+const whatsappMessage = encodeURIComponent(
+  "Hola, quiero más información sobre sus servicios."
+);
+const waLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 ---
 
-<footer class="bg-gradient-to-r from-blue-800 via-blue-600 to-blue-500 text-white">
-  <div class="mx-auto max-w-6xl px-4 py-14"> <!-- ↑ aumenté padding vertical -->
+<footer class="bg-gradient-to-r from-[#3227B5] via-[#4B44E7] to-[#5A4CF1] text-white">
+  <div class="mx-auto max-w-6xl px-4 py-14">
     <div class="flex flex-col md:flex-row items-center justify-between gap-8">
       <!-- Logo + texto -->
       <div class="text-center md:text-left">
@@ -21,13 +27,14 @@ import { IconBrandInstagram, IconBrandFacebook, IconBrandWhatsapp, IconBrandYout
           <a href="https://www.facebook.com/adglobalpay" target="_blank" class="hover:text-blue-300 transition-colors">
             <IconBrandFacebook size={28} />
           </a>
-          <a href="https://api.whatsapp.com/send/?phone=14482045984&text&type=phone_number&app_absent=0" target="_blank" class="hover:text-green-400 transition-colors">
+          <a href={waLink} target="_blank" class="hover:text-green-400 transition-colors">
             <IconBrandWhatsapp size={28} />
           </a>
           <a href="https://www.youtube.com/@adglobalpay" target="_blank" class="hover:text-red-400 transition-colors">
             <IconBrandYoutube size={28} />
           </a>
         </div>
+        <p class="font-semibold text-sm uppercase tracking-wide">En Dios confiamos</p>
       </div>
 
       <!-- Links legales -->
