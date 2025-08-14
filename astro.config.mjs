@@ -3,8 +3,9 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 
 export default defineConfig({
-  site: 'https://adglobalpay.github.io',
-  base: '/adglobal/',            // nombre EXACTO del repo
+  site: 'https://www.adglobalpay.com', // <— tu dominio real
+  // No base aquí
   trailingSlash: 'ignore',
   integrations: [react()],
 });
+
