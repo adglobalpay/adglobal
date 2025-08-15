@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /terminos.pdf
+Disallow: /privacidad.pdf
+Sitemap: https://www.adglobalpay.com/sitemap.xml
