@@ -1,5 +1,4 @@
 ---
-const imageSrc = "/hero-paypal-ves.png"; // Pon tu imagen en public/
 const whatsappNumber = "14482045984";
 const whatsappMessage = encodeURIComponent(
   "Hola, quiero cambiar dólares PayPal por bolívares. ¿Me puedes dar más información?"
@@ -11,9 +10,9 @@ const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
   <div class="mx-auto max-w-7xl px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
     <!-- Texto -->
     <div>
-      <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-slate-800 tracking-tight">
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-slate-800 tracking-tight">
         Cómo cambiar o vender los <span class="text-slate-900">dólares</span> por <span class="text-slate-900">Bolívares</span> en Venezuela
-      </h1>
+      </h2>
 
       <p class="mt-6 text-base sm:text-lg text-slate-600 max-w-prose">
         Nosotros recibimos tu saldo y lo enviamos a cualquiera de tus bancos en
@@ -53,10 +52,12 @@ const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
         <div class="h-64 w-64 md:h-80 md:w-80 rounded-full bg-blue-50/70 blur-2xl"></div>
       </div>
       <img
-        src="/changes.jpeg"
-        alt="Personas cambiando saldo Dólares a Bolívares en computadora"
+        src="/img/changes.webp"
+        alt="Cambiando saldo Dólares a Bolívares en computadora"
         class="mx-auto max-w-full h-auto drop-shadow-xl"
         loading="lazy"
+        width="1080"
+        height="1080"
       />
     </div>
   </div>

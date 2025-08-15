@@ -2,13 +2,13 @@
 const activeName = ""; // ej. "Zelle" para resaltarlo
 
 const methods = [
-  { name: "Zelle",           icon: "/zelle.svg",          color: "#6A1B9A", url: "https://www.zellepay.com/" },
-  { name: "Cash App",        icon: "/cashapp.svg",        color: "#00C244", url: "https://cash.app/" },
-  { name: "Venmo",           icon: "/venmo.svg",          color: "#3D95CE", url: "https://venmo.com/" },
-  { name: "PayPal",          icon: "/paypal.svg",         color: "#003087", url: "https://www.paypal.com/" },
-  { name: "Chase",           icon: "/chase.svg",          color: "#117ACA", url: "https://www.chase.com/" },
-  { name: "Bofa",            icon: "/bofa.svg",  color: "#D4001A", url: "https://www.bankofamerica.com/" },
-  { name: "Binance",         icon: "/binance.svg",        color: "#F3BA2F", url: "https://www.binance.com/" },
+  { name: "Zelle",           icon: "/img/zelle.svg",          color: "#6A1B9A", url: "https://www.zellepay.com/" },
+  { name: "Cash App",        icon: "/img/cashapp.svg",        color: "#00C244", url: "https://cash.app/" },
+  { name: "Venmo",           icon: "/img/venmo.svg",          color: "#3D95CE", url: "https://venmo.com/" },
+  { name: "PayPal",          icon: "/img/paypal.svg",         color: "#003087", url: "https://www.paypal.com/" },
+  { name: "Chase",           icon: "/img/chase.svg",          color: "#117ACA", url: "https://www.chase.com/" },
+  { name: "Bofa",            icon: "/img/bofa.svg",  color: "#D4001A", url: "https://www.bankofamerica.com/" },
+  { name: "Binance",         icon: "/img/binance.svg",        color: "#F3BA2F", url: "https://www.binance.com/" },
 ];
 ---
 
@@ -31,7 +31,7 @@ const methods = [
         }
         style={`--c:${m.color}`}
       >
-        <!-- Logo real desde /public como máscara (toma el color dinámico) -->
+        
         <span
           class={
             "grid h-8 w-8 place-items-center rounded-full bg-gray-100 text-gray-400 transition " +
