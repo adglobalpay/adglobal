@@ -18,34 +18,25 @@ const GTM_ID = "GTM-TMP3GC84";
     <meta name="description" content={description} />
     <link rel="canonical" href="https://www.adglobalpay.com/" />
 
-    {/* Google Tag Manager (inline, sin hidratar) */}
-    <script is:inline>
-      {`
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
-        (function(w,d,s,l,i){
-          w[l]=w[l]||[];
-          var f=d.getElementsByTagName(s)[0],
-              j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
-          j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-          f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','${GTM_ID}');
-      `}
+    <!-- Google Tag Manager -->
+    <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-TMP3GC84');
     </script>
-    {/* /GTM */}
+    <!-- End Google Tag Manager -->
   </head>
 
   <body class="min-h-dvh bg-white text-gray-900 antialiased">
-    {/* Google Tag Manager (noscript) */}
+    <!-- Google Tag Manager (noscript) -->
     <noscript>
-      <iframe
-        src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-        height="0"
-        width="0"
-        style="display:none;visibility:hidden"
-      ></iframe>
+      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TMP3GC84"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe>
     </noscript>
-    {/* /GTM noscript */}
+    <!-- End Google Tag Manager (noscript) -->
+
 
     <slot />
   </body>
