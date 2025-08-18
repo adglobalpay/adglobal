@@ -1,22 +1,30 @@
 ---
 import "../styles/global.css";
-const { title = "Cambia Zelle a Bolívares en minutos | AD Global Pay", description = "Cambia tu saldo de USD a bolívares de forma rápida, segura y confiable. AD Global Pay te ofrece las mejores tasas y atención personalizada, comunicate ya!" } = Astro.props;
+const {
+  title = "Cambia Zelle a Bolívares en minutos | AD Global Pay",
+  description = "Cambia tu saldo de USD a bolívares de forma rápida, segura y confiable. AD Global Pay te ofrece las mejores tasas y atención personalizada, comunicate ya!"
+} = Astro.props;
+
+// usa env si prefieres: const GTM_ID = import.meta.env.PUBLIC_GTM_ID;
+const GTM_ID = "GTM-TMP3GC84";
 ---
+
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>{title}</title>
-      <link rel="icon" href="/img/logo.webp" type="image/x-icon" />
+    <link rel="icon" href="/img/logo.webp" type="image/x-icon" />
     <meta name="description" content={description} />
-    <!-- Canonical -->
-  <link rel="canonical" href="https://www.adglobalpay.com/" />
-  {/* Google Tag Manager (inline, sin hidratar) */}
+    <link rel="canonical" href="https://www.adglobalpay.com/" />
+
+    {/* Google Tag Manager (inline, sin hidratar) */}
     <script is:inline>
       {`
         window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-        (function(w,d,s,l,i){ w[l]=w[l]||[];
+        window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+        (function(w,d,s,l,i){
+          w[l]=w[l]||[];
           var f=d.getElementsByTagName(s)[0],
               j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
           j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
@@ -25,18 +33,20 @@ const { title = "Cambia Zelle a Bolívares en minutos | AD Global Pay", descript
       `}
     </script>
     {/* /GTM */}
-</head>
-
+  </head>
 
   <body class="min-h-dvh bg-white text-gray-900 antialiased">
-     {/* Google Tag Manager (noscript) – debe ir inmediatamente después de <body> */}
+    {/* Google Tag Manager (noscript) */}
     <noscript>
       <iframe
         src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-        height="0" width="0" style="display:none;visibility:hidden"
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"
       ></iframe>
     </noscript>
     {/* /GTM noscript */}
+
     <slot />
   </body>
 </html>
