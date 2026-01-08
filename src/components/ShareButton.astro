@@ -1,0 +1,93 @@
+---
+/* Componente: Pestaña Lateral AD Global Pay - Zelle Synergy */
+---
+
+<div class="share-drawer-container">
+  <button id="toggleShareMenu" class="share-tab-btn pulse" aria-label="Share">
+    <div class="tab-content">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185m0 12.814a2.25 2.25 0 1 0 3.933 2.185 2.25 2.25 0 0 0-3.933-2.185" />
+      </svg>
+      <span class="tab-text">COMPARTIR</span>
+    </div>
+  </button>
+
+  <div id="socialMenu" class="social-drawer">
+    <a href="https://api.whatsapp.com/send?text=Cambia%20tu%20Zelle%20rápido%20en%20AD%20Global%20Pay%20https://adglobalpay.com" target="_blank" class="drawer-item"><img src="/img/wa.png" alt="WA" /></a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u=https://adglobalpay.com" target="_blank" class="drawer-item"><img src="/img/fb.png" alt="FB" /></a>
+    <a href="https://www.instagram.com/adglobalpay" target="_blank" class="drawer-item"><img src="/img/in.png" alt="IG" /></a>
+  </div>
+</div>
+
+<style>
+  .share-drawer-container {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Mezcla Sinergica: Azul AD Global + Morado Zelle */
+  .share-tab-btn {
+    background: linear-gradient(135deg, #007bff 0%, #6d1ed1 100%);
+    color: white;
+    border: none;
+    padding: 14px 7px;
+    border-radius: 0 10px 10px 0;
+    cursor: pointer;
+    box-shadow: 3px 0 15px rgba(109, 30, 209, 0.4);
+    z-index: 1010;
+    transition: padding 0.3s ease;
+  }
+
+  /* Animación de pulso lateral */
+  .pulse {
+    animation: side-pulse 3s infinite;
+  }
+
+  @keyframes side-pulse {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(6px); }
+    30% { transform: translateX(0); }
+    45% { transform: translateX(4px); }
+  }
+
+  .tab-content { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .tab-text { writing-mode: vertical-rl; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; }
+
+  .social-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: white;
+    padding: 15px 10px;
+    border-radius: 0 12px 12px 0;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+    transform: translateX(-110%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .social-drawer.active { transform: translateX(0); opacity: 1; }
+  .drawer-item { width: 28px; height: 28px; transition: 0.2s; }
+  .drawer-item:hover { transform: scale(1.2); }
+
+  @media (max-width: 768px) {
+    .share-tab-btn { padding: 10px 5px; }
+    .tab-text { font-size: 8px; }
+  }
+</style>
+
+<script>
+  const btn = document.getElementById("toggleShareMenu");
+  const menu = document.getElementById("socialMenu");
+  btn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu?.classList.toggle("active");
+    btn.classList.remove("pulse");
+  });
+  document.addEventListener("click", () => menu?.classList.remove("active"));
+</script>

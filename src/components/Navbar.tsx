@@ -84,7 +84,7 @@ export default function Navbar() {
           <div className="mt-auto pb-10 text-center">
             <p className="text-[#4B44E7] font-black text-xs tracking-[0.3em] uppercase mb-2">IN GOD WE TRUST</p>
             <p className="text-slate-400 text-[11px] font-medium uppercase tracking-tighter">
-              © 2024 - {currentYear} AD Global Services
+              © 2024 - {currentYear} AD Global Pay
             </p>
           </div>
         </div>

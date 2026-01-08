@@ -1,7 +1,9 @@
 ---
 // src/layouts/Base.astro
 import "../styles/global.css";
-import Navbar from '../components/Navbar.tsx'; //
+import Navbar from '../components/Navbar.tsx';
+import ShareButton from "../components/ShareButton.astro";
+import SocialProofMini from "../components/SocialProofMini.tsx";
 
 const {
   title = "Cambia Zelle a Bs.S en minutos | AD Global Pay",
@@ -14,6 +16,7 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>{title}</title>
+    <meta name="description" content={description} />
     <link rel="icon" href="/img/logo.webp" type="image/x-icon" />
   </head>
 
@@ -23,5 +26,8 @@ const {
     <main>
       <slot />
     </main>
+
+    <ShareButton />
+    <SocialProofMini client:load /> 
   </body>
 </html>
