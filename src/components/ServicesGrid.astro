@@ -1,11 +1,12 @@
 ---
 const whatsappNumber = "14482045984";
-const wa = (service) =>
+
+// Actualización de la función: ahora incluye el emoji 🌐 y el nombre del Global Team
+const wa = (service: string) =>
   `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    `Hola, quiero información para operar con ${service}.`
+    `🌐 Hola Global Team, me gustaria enviar dinero a Venezuela con ${service}.`
   )}`;
 
-// Coloca estos íconos en /icons/ (o cambia las rutas)
 const services = [
   {
     key: "paypal",

@@ -1,5 +1,7 @@
 ---
 const PHONE = "14482045984";
+const message = encodeURIComponent("🌐 Hola Global Team me gustaria enviar dinero a Venezuela");
+const waLink = `https://wa.me/${PHONE}?text=${message}`;
 ---
 
 <style>
@@ -18,27 +20,27 @@ const PHONE = "14482045984";
 
 <a
   id="chat-fab"
-  href={`https://wa.me/${PHONE}`}
+  href={waLink}
   target="_blank"
   rel="noopener noreferrer"
   aria-label="Chatea por WhatsApp"
   class="fixed z-50 right-5 bottom-5 flex items-center gap-2
-         bg-[#25D366] text-white px-4 py-2 rounded-full shadow-lg
-         transition-transform hover:scale-105 focus:scale-105"
+        bg-[#25D366] text-white px-4 py-2 rounded-full shadow-lg
+        transition-transform hover:scale-105 focus:scale-105"
 >
-  <!-- Ícono de burbuja de chat -->
   <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
     <path d="M20 2H4C2.897 2 2 2.897 2 4v14c0 1.103.897 2 2 2h14l4 4V4c0-1.103-.897-2-2-2zM6 9h12v2H6V9zm0 4h8v2H6v-2z"/>
   </svg>
 
-  <!-- Texto -->
   <span class="font-semibold">WhatsApp</span>
 </a>
 
 <script>
   const el = document.getElementById("chat-fab");
-  setInterval(() => {
-    el.classList.add("wiggle");
-    setTimeout(() => el.classList.remove("wiggle"), 600);
-  }, 5000);
+  if (el) {
+    setInterval(() => {
+      el.classList.add("wiggle");
+      setTimeout(() => el.classList.remove("wiggle"), 600);
+    }, 5000);
+  }
 </script>
