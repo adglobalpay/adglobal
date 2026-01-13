@@ -1,10 +1,16 @@
 ---
+// Configuración de enlaces
 const PHONE = "14482045984";
-const message = encodeURIComponent("🌐 Hola Global Team me gustaria transferir");
-const waLink = `https://wa.me/${PHONE}?text=${message}`;
+const waMessage = encodeURIComponent("🌐 Hola Global Team me gustaria transferir");
+const waLink = `https://wa.me/${PHONE}?text=${waMessage}`;
+
+// Messenger Link con mensaje (Ref: 648397155019715)
+const messengerMessage = encodeURIComponent("Hola Global Team, quiero transferir");
+const messengerLink = `https://m.me/648397155019715?text=${messengerMessage}`;
 ---
 
 <style>
+  /* Animación de vibración suave */
   @keyframes wiggle {
     0%, 100% { transform: rotate(0deg); }
     15% { transform: rotate(-8deg); }
@@ -18,29 +24,55 @@ const waLink = `https://wa.me/${PHONE}?text=${message}`;
   }
 </style>
 
-<a
-  id="chat-fab"
-  href={waLink}
-  target="_blank"
-  rel="noopener noreferrer"
-  aria-label="Chatea por WhatsApp"
-  class="fixed z-50 right-5 bottom-5 flex items-center gap-2
-        bg-[#25D366] text-white px-4 py-2 rounded-full shadow-lg
-        transition-transform hover:scale-105 focus:scale-105"
->
-  <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M20 2H4C2.897 2 2 2.897 2 4v14c0 1.103.897 2 2 2h14l4 4V4c0-1.103-.897-2-2-2zM6 9h12v2H6V9zm0 4h8v2H6v-2z"/>
-  </svg>
+<div class="fixed z-50 right-5 bottom-5 flex flex-col gap-3">
+  
+  <a
+    id="messenger-fab"
+    href={messengerLink}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Chatea por Messenger"
+    class="flex items-center gap-2 bg-[#0084FF] text-white px-4 py-2 rounded-full shadow-lg transition-transform hover:scale-105 focus:scale-105"
+  >
+    <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.91 1.453 5.501 3.734 7.153V22l3.414-1.874c.903.25 1.86.388 2.852.388 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.082 12.188l-2.583-2.753-5.035 2.753L10.918 8.75l2.583 2.754 5.035-2.754-5.454 5.438z"/>
+    </svg>
+    <span class="font-semibold">Messenger</span>
+  </a>
 
-  <span class="font-semibold">WhatsApp</span>
-</a>
+  <a
+    id="whatsapp-fab"
+    href={waLink}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Chatea por WhatsApp"
+    class="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-full shadow-lg transition-transform hover:scale-105 focus:scale-105"
+  >
+    <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M20 2H4C2.897 2 2 2.897 2 4v14c0 1.103.897 2 2 2h14l4 4V4c0-1.103-.897-2-2-2zM6 9h12v2H6V9zm0 4h8v2H6v-2z"/>
+    </svg>
+    <span class="font-semibold">WhatsApp</span>
+  </a>
+
+</div>
 
 <script>
-  const el = document.getElementById("chat-fab");
-  if (el) {
+  // Función para aplicar la vibración a ambos botones
+  const animateButtons = () => {
+    const messenger = document.getElementById("messenger-fab");
+    const whatsapp = document.getElementById("whatsapp-fab");
+    
+    const buttons = [messenger, whatsapp];
+    
     setInterval(() => {
-      el.classList.add("wiggle");
-      setTimeout(() => el.classList.remove("wiggle"), 600);
-    }, 5000);
-  }
+      buttons.forEach(btn => {
+        if (btn) {
+          btn.classList.add("wiggle");
+          setTimeout(() => btn.classList.remove("wiggle"), 600);
+        }
+      });
+    }, 5000); // Vibra cada 5 segundos
+  };
+
+  animateButtons();
 </script>
