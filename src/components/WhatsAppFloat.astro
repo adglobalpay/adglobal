@@ -1,13 +1,15 @@
----
-// Configuración de enlaces
-const PHONE = "14482045984";
-const waMessage = encodeURIComponent("🌐 Hola Global Team me gustaria transferir");
-const waLink = `https://wa.me/${PHONE}?text=${waMessage}`;
-
-// Messenger Link con mensaje (Ref: 648397155019715)
-const messengerMessage = encodeURIComponent("Hola Global Team, quiero transferir");
-const messengerLink = `https://m.me/648397155019715?text=${messengerMessage}`;
----
+<script>
+  // Variables de configuración
+  const PHONE = "14482045984";
+  const TELEGRAM_USER = "adglobalpay";
+  const COMMON_MESSAGE = "🌐 Hola Global Team me gustaria transferir";
+  const encodedMessage = encodeURIComponent(COMMON_MESSAGE);
+  
+  // Enlaces generados
+  const waLink = `https://wa.me/${PHONE}?text=${encodedMessage}`;
+  const messengerLink = `https://m.me/648397155019715?text=${encodedMessage}`;
+  const tgLink = `https://t.me/${TELEGRAM_USER}?text=${encodedMessage}`;
+</script>
 
 <style>
   /* Animación de vibración suave */
@@ -27,8 +29,22 @@ const messengerLink = `https://m.me/648397155019715?text=${messengerMessage}`;
 <div class="fixed z-50 right-5 bottom-5 flex flex-col gap-3">
   
   <a
+    id="telegram-fab"
+    href="https://t.me/adglobalpay?text=%F0%9F%8C%90%20Hola%20Global%20Team%20me%20gustaria%20transferir"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Chatea por Telegram"
+    class="flex items-center gap-2 bg-[#26A5E4] text-white px-4 py-2 rounded-full shadow-lg transition-transform hover:scale-105 focus:scale-105"
+  >
+    <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.717-3.934 16.325-3.934 16.325s-.107.41-.393.41-.536-.214-.536-.214l-4.251-3.232-2.143 2.054s-.125.143-.321.143-.304-.161-.304-.411v-3.411l9.464-8.732c.161-.143-.054-.214-.232-.107L6.964 14.821l-3.893-1.25s-.357-.107-.375-.393c-.018-.286.357-.446.357-.446l13.607-5.25s.446-.179.679-.018c.232.161.214.688.107.911z"/>
+    </svg>
+    <span class="font-semibold">Telegram</span>
+  </a>
+
+  <a
     id="messenger-fab"
-    href={messengerLink}
+    href="https://m.me/648397155019715?text=Hola%20Global%20Team%2C%20quiero%20transferir"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Chatea por Messenger"
@@ -42,7 +58,7 @@ const messengerLink = `https://m.me/648397155019715?text=${messengerMessage}`;
 
   <a
     id="whatsapp-fab"
-    href={waLink}
+    href="https://wa.me/14482045984?text=%F0%9F%8C%90%20Hola%20Global%20Team%20me%20gustaria%20transferir"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Chatea por WhatsApp"
@@ -57,12 +73,12 @@ const messengerLink = `https://m.me/648397155019715?text=${messengerMessage}`;
 </div>
 
 <script>
-  // Función para aplicar la vibración a ambos botones
   const animateButtons = () => {
+    const telegram = document.getElementById("telegram-fab");
     const messenger = document.getElementById("messenger-fab");
     const whatsapp = document.getElementById("whatsapp-fab");
     
-    const buttons = [messenger, whatsapp];
+    const buttons = [telegram, messenger, whatsapp];
     
     setInterval(() => {
       buttons.forEach(btn => {
@@ -71,7 +87,7 @@ const messengerLink = `https://m.me/648397155019715?text=${messengerMessage}`;
           setTimeout(() => btn.classList.remove("wiggle"), 600);
         }
       });
-    }, 5000); // Vibra cada 5 segundos
+    }, 5000);
   };
 
   animateButtons();
