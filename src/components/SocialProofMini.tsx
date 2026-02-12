@@ -59,7 +59,7 @@ const SocialProofMini: React.FC = () => {
     const [current, setCurrent] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
 
-    const ROTATION_TIME = 7000;
+    const ROTATION_TIME = 14000;
 
     const slides = [
         ...mockStats.recent.map(r => ({
@@ -86,7 +86,7 @@ const SocialProofMini: React.FC = () => {
     ];
 
     useEffect(() => {
-        const showTimer = setTimeout(() => setIsVisible(true), 1500);
+        const showTimer = setTimeout(() => setIsVisible(true), 14000);
         const interval = setInterval(() => {
             setCurrent(prev => (prev + 1) % slides.length);
         }, ROTATION_TIME);
