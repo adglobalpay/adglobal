@@ -1,0 +1,162 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+// --- 1. FUNCIÓN getStaticPaths: GENERA UNA RUTA POR CADA TRANSACCIÓN ---
+export async function getStaticPaths() {
+  // Los datos DEBEN estar DENTRO de la función
+  const todasLasTransacciones = [
+    {
+      id: 1,
+      fecha: '14/03/26',
+      remitente: { nombre: 'Jose Garcia', telefono: '' },
+      destinatario: { nombre: 'Yolimar Mosqueda', telefono: '4243107776', banco: '' },
+      montos: {
+        ingreso_usd: 110.00,
+        salida_usdt: 94.91,
+        ingreso_efectivo: 0,
+        salida_efectivo: 0,
+        monto_ves_entregado: 58850.00
+      },
+      tasa: 535.00,
+      metodo: 'USDT',
+      profit: { usd: 15.09, ves: 0 },
+      admin_comision: 110.00
+    },
+    {
+      id: 2,
+      fecha: '14/03/26',
+      remitente: { nombre: 'Carlos Perez', telefono: '4121234567' },
+      destinatario: { nombre: 'Maria Lopez', telefono: '4147654321', banco: 'Banco Mercantil' },
+      montos: {
+        ingreso_usd: 250.00,
+        salida_usdt: 240.00,
+        ingreso_efectivo: 0,
+        salida_efectivo: 0,
+        monto_ves_entregado: 120000.00
+      },
+      tasa: 500.00,
+      metodo: 'TRANSFERENCIA',
+      profit: { usd: 10.00, ves: 0 },
+      admin_comision: 250.00
+    }
+  ];
+
+  return todasLasTransacciones.map((tx) => ({
+    params: { id: tx.id.toString() },
+    props: { transaccion: tx }
+  }));
+}
+
+// --- 2. LA PÁGINA RECIBE LOS DATOS DE LA TRANSACCIÓN ESPECÍFICA ---
+const { transaccion } = Astro.props;
+
+if (!transaccion) {
+  return Astro.redirect('/404');
+}
+---
+
+<AdminLayout>
+  <div class="max-w-5xl mx-auto space-y-6 p-4">
+    <!-- Botón para volver -->
+    <a href="/admin/transacciones" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4 transition-colors">
+      ← Volver a transacciones
+    </a>
+
+    <h1 class="text-3xl font-bold">Detalle de Transacción</h1>
+    <p class="text-gray-500">ID: {transaccion.id} · {transaccion.fecha}</p>
+
+    <!-- Información de Remitente y Destinatario -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <span class="text-2xl">📤</span> Remitente
+        </h2>
+        <p class="font-medium">{transaccion.remitente.nombre}</p>
+        {transaccion.remitente.telefono ? (
+          <p class="text-sm text-gray-500">Tel: {transaccion.remitente.telefono}</p>
+        ) : (
+          <p class="text-sm text-gray-400 italic">Sin teléfono</p>
+        )}
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <span class="text-2xl">📥</span> Destinatario
+        </h2>
+        <p class="font-medium">{transaccion.destinatario.nombre}</p>
+        <p class="text-sm text-gray-500">Tel: {transaccion.destinatario.telefono}</p>
+        {transaccion.destinatario.banco && (
+          <p class="text-sm text-gray-500">Banco: {transaccion.destinatario.banco}</p>
+        )}
+      </div>
+    </div>
+
+    <!-- Tarjetas de Montos -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-blue-50 rounded-xl p-5 shadow-sm border border-blue-100">
+        <p class="text-sm text-blue-600 font-medium mb-1">💰 Ingreso USD</p>
+        <p class="text-2xl font-bold">${transaccion.montos.ingreso_usd.toFixed(2)}</p>
+      </div>
+
+      <div class="bg-yellow-50 rounded-xl p-5 shadow-sm border border-yellow-100">
+        <p class="text-sm text-yellow-600 font-medium mb-1">🪙 Salida USDT</p>
+        <p class="text-2xl font-bold">${transaccion.montos.salida_usdt.toFixed(2)}</p>
+      </div>
+
+      <div class="bg-green-50 rounded-xl p-5 shadow-sm border border-green-100">
+        <p class="text-sm text-green-600 font-medium mb-1">💵 Monto VES</p>
+        <p class="text-2xl font-bold">Bs. {transaccion.montos.monto_ves_entregado.toLocaleString()}</p>
+      </div>
+
+      <div class="bg-purple-50 rounded-xl p-5 shadow-sm border border-purple-100">
+        <p class="text-sm text-purple-600 font-medium mb-1">📊 Tasa</p>
+        <p class="text-2xl font-bold">Bs. {transaccion.tasa}/USD</p>
+        <p class="text-xs text-gray-500 mt-1">Método: {transaccion.metodo}</p>
+      </div>
+    </div>
+
+    <!-- Profit y Comisión -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <p class="text-sm text-gray-500 mb-1 flex items-center gap-1">
+          <span>📈</span> Profit
+        </p>
+        <p class="text-2xl font-bold text-green-600">${transaccion.profit.usd.toFixed(2)}</p>
+        {transaccion.profit.ves > 0 && (
+          <p class="text-sm text-gray-500">+ Bs. {transaccion.profit.ves}</p>
+        )}
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <p class="text-sm text-gray-500 mb-1 flex items-center gap-1">
+          <span>🧾</span> Comisión Admin
+        </p>
+        <p class="text-2xl font-bold text-blue-600">${transaccion.admin_comision.toFixed(2)}</p>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="flex gap-3 pt-4">
+      <button 
+        onClick={() => alert('Función: Editar transacción (próximamente)')}
+        class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm flex items-center gap-2"
+      >
+        ✏️ Editar
+      </button>
+      <button 
+        onClick={() => alert('Función: Descargar comprobante (próximamente)')}
+        class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm flex items-center gap-2"
+      >
+        📎 Comprobante
+      </button>
+    </div>
+
+    <!-- Mensaje informativo -->
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mt-6">
+      <p class="text-sm text-blue-700">
+        ℹ️ Esta es una vista previa con datos de ejemplo. Cuando el desarrollador conecte la base de datos, 
+        aquí se mostrarán las transacciones reales.
+      </p>
+    </div>
+  </div>
+</AdminLayout>

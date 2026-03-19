@@ -1,0 +1,279 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+// Define el tipo de las props que recibirá la página
+export interface Props {
+  cliente: {
+    id: number;
+    nombre: string;
+    email: string;
+    telefono: string;
+    fecha_registro: string;
+    cuenta_origen: string;
+    tipo_cuenta: string;
+    identificacion: {
+      tipo: string;
+      numero: string;
+      pais: string;
+      fecha_vencimiento: string;
+    };
+    direccion: string;
+    kyc: {
+      estado: string;
+      fecha: string;
+      documento_front: string;
+      documento_back: string;
+      selfie: string;
+      metodo: string;
+    };
+    ofac: {
+      estado: string;
+      fecha: string;
+      resultado: string;
+    };
+    origen_fondos: {
+      declaracion: string;
+      fecha: string;
+      documento: string;
+      monto_anual: number;
+    };
+    riesgo: string;
+    notas: string;
+    transacciones: Array<{
+      id: number;
+      fecha: string;
+      monto_usd: number;
+      monto_ves: number;
+      estado: string;
+    }>;
+    total_enviado: number;
+    promedio_mensual: number;
+  };
+}
+
+// Función getStaticPaths: genera las rutas para cada ID de cliente
+export async function getStaticPaths() {
+  const clientes = [
+    {
+      id: 1,
+      nombre: 'Juan Pérez',
+      email: 'juan.perez@email.com',
+      telefono: '+58 412 1234567',
+      fecha_registro: '15/03/2026',
+      cuenta_origen: 'Bank of America ****1234',
+      tipo_cuenta: 'Cuenta corriente',
+      identificacion: {
+        tipo: 'Pasaporte',
+        numero: '123456789',
+        pais: 'Venezuela',
+        fecha_vencimiento: '20/05/2028'
+      },
+      direccion: 'Av. Principal, Caracas, Venezuela',
+      kyc: {
+        estado: 'Verificado',
+        fecha: '16/03/2026 10:23',
+        documento_front: 'id_front_1.jpg',
+        documento_back: 'id_back_1.jpg',
+        selfie: 'selfie_1.jpg',
+        metodo: 'Didit'
+      },
+      ofac: {
+        estado: 'Sin coincidencias',
+        fecha: '16/03/2026 10:25',
+        resultado: 'ofac_result_1.pdf'
+      },
+      origen_fondos: {
+        declaracion: 'Salario - Trabajo remoto como desarrollador',
+        fecha: '16/03/2026',
+        documento: 'origen_fondos_1.pdf',
+        monto_anual: 45000
+      },
+      riesgo: 'Bajo',
+      notas: 'Cliente frecuente, siempre envía los viernes',
+      transacciones: [
+        { id: 101, fecha: '15/03/2026', monto_usd: 200, monto_ves: 10000, estado: 'Completado' },
+        { id: 102, fecha: '01/03/2026', monto_usd: 150, monto_ves: 7350, estado: 'Completado' }
+      ],
+      total_enviado: 750,
+      promedio_mensual: 250
+    },
+    {
+      id: 2,
+      nombre: 'María Gómez',
+      email: 'maria.gomez@email.com',
+      telefono: '+58 414 7654321',
+      fecha_registro: '14/03/2026',
+      cuenta_origen: 'Chase ****5678',
+      tipo_cuenta: 'Cuenta de ahorros',
+      identificacion: {
+        tipo: 'Cédula',
+        numero: 'V-23456789',
+        pais: 'Venezuela',
+        fecha_vencimiento: '15/04/2030'
+      },
+      direccion: 'Urb. Las Mercedes, Caracas',
+      kyc: {
+        estado: 'Pendiente',
+        fecha: '15/03/2026 14:30',
+        documento_front: 'id_front_2.jpg',
+        documento_back: 'id_back_2.jpg',
+        selfie: 'selfie_2.jpg',
+        metodo: 'Pendiente'
+      },
+      ofac: {
+        estado: 'Revisión pendiente',
+        fecha: '15/03/2026 14:32',
+        resultado: 'pendiente'
+      },
+      origen_fondos: {
+        declaracion: 'Venta de vehículo',
+        fecha: '15/03/2026',
+        documento: 'origen_fondos_2.pdf',
+        monto_anual: 15000
+      },
+      riesgo: 'Medio',
+      notas: 'Requiere documentación adicional',
+      transacciones: [
+        { id: 105, fecha: '14/03/2026', monto_usd: 500, monto_ves: 24750, estado: 'Procesando' }
+      ],
+      total_enviado: 500,
+      promedio_mensual: 500
+    }
+  ];
+
+  return clientes.map((cliente) => ({
+    params: { id: cliente.id.toString() },
+    props: { cliente }
+  }));
+}
+
+const { cliente } = Astro.props;
+
+if (!cliente) {
+  return Astro.redirect('/404');
+}
+---
+
+<AdminLayout>
+  <div class="max-w-6xl mx-auto space-y-6 relative">
+    <!-- Botón volver -->
+    <a href="/admin/clientes" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4 transition-colors">
+      ← Volver a clientes
+    </a>
+
+    <!-- Header con información del cliente -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div class="flex items-center gap-3">
+        <h1 class="text-3xl font-bold">{cliente.nombre}</h1>
+        <span class={`px-3 py-1 rounded-full text-xs font-medium ${
+          cliente.riesgo === 'Bajo' ? 'bg-green-100 text-green-700' :
+          cliente.riesgo === 'Medio' ? 'bg-yellow-100 text-yellow-700' :
+          'bg-red-100 text-red-700'
+        }`}>
+          Riesgo {cliente.riesgo}
+        </span>
+      </div>
+    </div>
+
+    <!-- Resumen rápido -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Cliente desde</p>
+        <p class="text-lg font-semibold">{cliente.fecha_registro}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Total enviado</p>
+        <p class="text-lg font-semibold">${cliente.total_enviado} USD</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Promedio mensual</p>
+        <p class="text-lg font-semibold">${cliente.promedio_mensual} USD</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Transacciones</p>
+        <p class="text-lg font-semibold">{cliente.transacciones.length}</p>
+      </div>
+    </div>
+
+    <!-- Información personal -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+        <span>👤</span> Información personal
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-500">Email</p>
+          <p class="font-medium">{cliente.email}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Teléfono</p>
+          <p class="font-medium">{cliente.telefono}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Dirección</p>
+          <p class="font-medium">{cliente.direccion}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Cuenta origen</p>
+          <p class="font-medium">{cliente.cuenta_origen} ({cliente.tipo_cuenta})</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- KYC, OFAC y Origen de fondos -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <h3 class="font-semibold mb-3 flex items-center gap-2">
+          <span class="text-xl">🪪</span> KYC
+        </h3>
+        <p class={`text-sm font-medium ${cliente.kyc.estado === 'Verificado' ? 'text-green-600' : 'text-yellow-600'}`}>
+          {cliente.kyc.estado}
+        </p>
+        <p class="text-xs text-gray-500 mt-1">{cliente.kyc.fecha}</p>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <h3 class="font-semibold mb-3 flex items-center gap-2">
+          <span class="text-xl">🛡️</span> OFAC
+        </h3>
+        <p class="text-sm font-medium text-green-600">{cliente.ofac.estado}</p>
+        <p class="text-xs text-gray-500 mt-1">{cliente.ofac.fecha}</p>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <h3 class="font-semibold mb-3 flex items-center gap-2">
+          <span class="text-xl">💰</span> Origen
+        </h3>
+        <p class="text-sm font-medium">{cliente.origen_fondos.declaracion}</p>
+        <p class="text-xs text-gray-500 mt-1">{cliente.origen_fondos.fecha}</p>
+      </div>
+    </div>
+
+    <!-- Historial de transacciones -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <h2 class="text-xl font-semibold mb-4">📊 Historial de transacciones</h2>
+      <div class="space-y-3">
+        {cliente.transacciones.map(tx => (
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div>
+              <span class="font-medium">{tx.fecha}</span>
+              <span class="ml-3">${tx.monto_usd} USD → {tx.monto_ves} VES</span>
+            </div>
+            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+              {tx.estado}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<!-- Botón flotante de nueva transacción -->
+<a 
+  href="/admin/transacciones/nueva?clienteId={cliente.id}"
+  class="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg hover:bg-blue-700 transition-colors z-50"
+  title="Nueva Transacción"
+>
+  +
+</a>

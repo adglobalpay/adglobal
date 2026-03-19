@@ -1,0 +1,45 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout>
+  <div class="max-w-2xl mx-auto space-y-6">
+    <h1 class="text-3xl font-bold">Importar Transacciones</h1>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border">
+      <p class="mb-4">Sube tu archivo Excel con el formato que ya usas</p>
+      
+      <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+        <input 
+          type="file" 
+          accept=".xlsx,.xls,.csv"
+          class="hidden"
+          id="fileInput"
+        />
+        <label 
+          for="fileInput"
+          class="cursor-pointer block"
+        >
+          <span class="text-4xl mb-2 block">📤</span>
+          <p class="text-blue-600 hover:underline">Haz clic para seleccionar archivo</p>
+          <p class="text-sm text-gray-500 mt-1">o arrastra y suelta aquí</p>
+        </label>
+      </div>
+      
+      <div class="mt-4 text-sm text-gray-500">
+        <p>Formato esperado:</p>
+        <pre class="bg-gray-50 p-2 rounded mt-1 text-xs">
+Fecha, IN_nombre, IN_phone, OUT_nombre, OUT_phone, Ingreso USD, Salida USDT, Tasa, Monto OUT BsS, Banco OUT, Método
+14/03/26, Jose Garcia, , Yolimar Mosqueda, 4243107776, 110.00, 94.91, 535.00, 58850.00, , USDT
+        </pre>
+      </div>
+      
+      <button
+        onClick={() => alert('Procesando archivo... (simulación)')}
+        class="mt-6 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
+      >
+        Procesar e importar
+      </button>
+    </div>
+  </div>
+</AdminLayout>

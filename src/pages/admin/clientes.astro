@@ -1,0 +1,35 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import ClientTable from '../../components/admin/ClientTable';
+import SearchBar from '../../components/admin/SearchBar';
+---
+
+<AdminLayout>
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">Clientes</h1>
+      <button 
+        onClick={() => alert('Función por implementar')}
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        + Nuevo Cliente
+      </button>
+    </div>
+    
+    <SearchBar client:load />
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+      <ClientTable client:load />
+    </div>
+  </div>
+  <!-- Agrega esto antes de cerrar AdminLayout -->
+<div class="fixed bottom-6 right-6">
+  <a 
+    href="/admin/transacciones/nueva"
+    class="bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg hover:bg-blue-700 transition-colors"
+    title="Nueva Transacción"
+  >
+    +
+  </a>
+</div>
+</AdminLayout>

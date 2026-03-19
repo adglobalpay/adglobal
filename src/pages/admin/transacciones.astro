@@ -1,0 +1,237 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+// Datos de ejemplo (luego vendrán de la base de datos)
+const transacciones = [
+  {
+    id: 1,
+    fecha: '18/03/2026',
+    cliente: 'Juan Pérez',
+    email: 'juan@email.com',
+    monto_usd: 200,
+    monto_ves: 10000,
+    tasa: 50,
+    destino: 'Banco Venezuela',
+    estado: 'Completado',
+    comprobante: 'comprobante1.pdf'
+  },
+  {
+    id: 2,
+    fecha: '18/03/2026',
+    cliente: 'María Gómez',
+    email: 'maria@email.com',
+    monto_usd: 150,
+    monto_ves: 7350,
+    tasa: 49,
+    destino: 'Mercantil',
+    estado: 'Completado',
+    comprobante: 'comprobante2.pdf'
+  },
+  {
+    id: 3,
+    fecha: '17/03/2026',
+    cliente: 'Carlos Rodríguez',
+    email: 'carlos@email.com',
+    monto_usd: 350,
+    monto_ves: 16800,
+    tasa: 48,
+    destino: 'Banesco',
+    estado: 'Procesando',
+    comprobante: null
+  },
+  {
+    id: 4,
+    fecha: '17/03/2026',
+    cliente: 'Ana Martínez',
+    email: 'ana@email.com',
+    monto_usd: 120,
+    monto_ves: 5880,
+    tasa: 49,
+    destino: 'Banco Provincial',
+    estado: 'Completado',
+    comprobante: 'comprobante4.pdf'
+  },
+  {
+    id: 5,
+    fecha: '16/03/2026',
+    cliente: 'Pedro Sánchez',
+    email: 'pedro@email.com',
+    monto_usd: 500,
+    monto_ves: 24500,
+    tasa: 49,
+    destino: 'Banco de Venezuela',
+    estado: 'Pendiente',
+    comprobante: null
+  },
+  {
+    id: 6,
+    fecha: '16/03/2026',
+    cliente: 'Luisa Fernández',
+    email: 'luisa@email.com',
+    monto_usd: 75,
+    monto_ves: 3675,
+    tasa: 49,
+    destino: 'Bancamiga',
+    estado: 'Fallido',
+    comprobante: null
+  }
+];
+
+// Filtrar estado para badges
+const getEstadoBadge = (estado: string) => {
+  const config = {
+    Completado: { bg: 'bg-green-100', text: 'text-green-700', icon: '✅' },
+    Procesando: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '⏳' },
+    Pendiente: { bg: 'bg-blue-100', text: 'text-blue-700', icon: '⏸️' },
+    Fallido: { bg: 'bg-red-100', text: 'text-red-700', icon: '❌' }
+  };
+  
+  const style = config[estado] || config.Pendiente;
+  
+  return `<span class="px-3 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text} flex items-center gap-1 w-fit">
+    ${style.icon} ${estado}
+  </span>`;
+};
+---
+
+<AdminLayout>
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">Transacciones</h1>
+      <div class="flex gap-3">
+        <button 
+          onClick={() => alert('Exportar función por implementar')}
+          class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+        >
+          📥 Exportar
+        </button>
+        <button 
+          onClick={() => alert('Filtros avanzados')}
+          class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
+        >
+          🔍 Filtrar
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtros rápidos -->
+    <div class="flex gap-2 flex-wrap">
+      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors">
+        Hoy
+      </button>
+      <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+        Esta semana
+      </button>
+      <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+        Este mes
+      </button>
+      <select class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm">
+        <option>Todos los estados</option>
+        <option>Completado</option>
+        <option>Procesando</option>
+        <option>Pendiente</option>
+        <option>Fallido</option>
+      </select>
+    </div>
+
+    <!-- Tabla de transacciones -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="text-left text-gray-500 text-sm border-b">
+              <th class="pb-3 font-medium">Fecha</th>
+              <th class="pb-3 font-medium">Cliente</th>
+              <th class="pb-3 font-medium">Monto Envío</th>
+              <th class="pb-3 font-medium">Monto Destino</th>
+              <th class="pb-3 font-medium">Tasa</th>
+              <th class="pb-3 font-medium">Destino</th>
+              <th class="pb-3 font-medium">Estado</th>
+              <th class="pb-3 font-medium">Comprobante</th>
+              <th class="pb-3 font-medium">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transacciones.map((tx) => (
+              <tr key={tx.id} class="border-b hover:bg-gray-50 transition-colors">
+                <td class="py-4 text-sm">{tx.fecha}</td>
+                <td class="py-4">
+                  <div class="font-medium">{tx.cliente}</div>
+                  <div class="text-xs text-gray-500">{tx.email}</div>
+                </td>
+                <td class="py-4 font-medium">${tx.monto_usd} USD</td>
+                <td class="py-4">{tx.monto_ves.toLocaleString()} VES</td>
+                <td class="py-4">
+                  <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
+                    {tx.tasa}
+                  </span>
+                </td>
+                <td class="py-4 text-sm">{tx.destino}</td>
+                <td class="py-4" set:html={getEstadoBadge(tx.estado)} />
+                <td class="py-4">
+                  {tx.comprobante ? (
+                    <button 
+                      onClick={() => alert(`Ver comprobante ${tx.comprobante}`)}
+                      class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                    >
+                      📎 Ver
+                    </button>
+                  ) : (
+                    <span class="text-gray-400 text-sm">—</span>
+                  )}
+                </td>
+                <td class="py-4">
+                  <a 
+                    href={`/admin/transacciones/${tx.id}`}
+                    class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    Ver detalles →
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación (estática por ahora) -->
+      <div class="flex justify-between items-center mt-6 pt-4 border-t">
+        <span class="text-sm text-gray-500">
+          Mostrando 1-6 de 24 transacciones
+        </span>
+        <div class="flex gap-2">
+          <button class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">←</button>
+          <button class="px-3 py-1 bg-blue-600 text-white rounded">1</button>
+          <button class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">2</button>
+          <button class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">3</button>
+          <button class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">→</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen rápido (tarjetas inferiores) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Volumen hoy</p>
+        <p class="text-2xl font-bold">$1,250 USD</p>
+        <p class="text-sm text-gray-500">61,250 VES</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Transacciones hoy</p>
+        <p class="text-2xl font-bold">7</p>
+        <p class="text-sm text-green-600">+2 vs ayer</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Tasa promedio</p>
+        <p class="text-2xl font-bold">49.2</p>
+        <p class="text-sm text-gray-500">USD → VES</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Pendientes</p>
+        <p class="text-2xl font-bold">3</p>
+        <p class="text-sm text-yellow-600">Por procesar</p>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

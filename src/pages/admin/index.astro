@@ -1,0 +1,262 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import StatsCards from '../../components/admin/StatsCards';
+
+// Datos de ejemplo para el dashboard
+const resumen = {
+  clientes_hoy: 3,
+  clientes_totales: 128,
+  transacciones_hoy: 12,
+  transacciones_totales: 345,
+  volumen_hoy: 2450,
+  volumen_semana: 15780,
+  volumen_mes: 45890,
+  pendientes_kyc: 5,
+  alertas_ofac: 2,
+  tasa_promedio: 49.3
+};
+
+const actividadSemana = [
+  { dia: 'Lun', cantidad: 8, volumen: 1600 },
+  { dia: 'Mar', cantidad: 12, volumen: 2400 },
+  { dia: 'Mié', cantidad: 15, volumen: 3200 },
+  { dia: 'Jue', cantidad: 10, volumen: 2100 },
+  { dia: 'Vie', cantidad: 14, volumen: 2900 },
+  { dia: 'Sáb', cantidad: 6, volumen: 1300 },
+  { dia: 'Dom', cantidad: 4, volumen: 850 }
+];
+
+const transaccionesRecientes = [
+  { id: 1, fecha: '18/03', cliente: 'Juan Pérez', monto: 200, estado: 'Completado' },
+  { id: 2, fecha: '18/03', cliente: 'María Gómez', monto: 150, estado: 'Completado' },
+  { id: 3, fecha: '17/03', cliente: 'Carlos Rodríguez', monto: 350, estado: 'Procesando' },
+  { id: 4, fecha: '17/03', cliente: 'Ana Martínez', monto: 120, estado: 'Completado' },
+  { id: 5, fecha: '16/03', cliente: 'Pedro Sánchez', monto: 500, estado: 'Pendiente' }
+];
+
+const alertas = [
+  { tipo: 'kyc', mensaje: '5 clientes pendientes de verificación KYC', link: '/admin/clientes?filtro=kyc' },
+  { tipo: 'ofac', mensaje: '2 posibles coincidencias OFAC por revisar', link: '/admin/clientes?filtro=ofac' },
+  { tipo: 'transaccion', mensaje: '3 transacciones pendientes de procesar', link: '/admin/transacciones?filtro=pendientes' }
+];
+---
+
+<AdminLayout>
+  <div class="space-y-6">
+    <!-- Header con bienvenida -->
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold">Dashboard</h1>
+        <p class="text-gray-500 mt-1">Bienvenido de nuevo, Carlos. Aquí está el resumen de tu negocio.</p>
+      </div>
+      <div class="text-right">
+        <p class="text-sm text-gray-500">{new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+    </div>
+
+    <!-- StatsCards (componente existente) -->
+    <StatsCards client:load />
+
+    <!-- Alertas de cumplimiento (muy importante) -->
+    {alertas.length > 0 && (
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-r-xl p-4">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <span class="text-yellow-600 text-xl">⚠️</span>
+          </div>
+          <div class="ml-3 flex-1">
+            <h3 class="text-sm font-medium text-yellow-800">Atención requerida</h3>
+            <div class="mt-2 text-sm text-yellow-700">
+              <ul class="list-disc pl-5 space-y-1">
+                {alertas.map(alerta => (
+                  <li>
+                    <a href={alerta.link} class="hover:underline">
+                      {alerta.mensaje}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- Grid principal: Gráfico + Resumen numérico -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Gráfico de actividad (ocupa 2 columnas) -->
+      <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold">📈 Actividad de la semana</h2>
+          <select class="text-sm border border-gray-300 rounded-lg px-3 py-1">
+            <option>Volumen ($)</option>
+            <option>Cantidad de transacciones</option>
+          </select>
+        </div>
+        
+        <!-- Gráfico de barras simple -->
+        <div class="flex items-end justify-between gap-2 h-48">
+          {actividadSemana.map(dia => (
+            <div class="flex-1 flex flex-col items-center group">
+              <div class="relative w-full">
+                <div 
+                  class="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-all cursor-pointer"
+                  style={{ height: `${(dia.volumen / 3500) * 180}px` }}
+                  onClick={() => alert(`${dia.dia}: ${dia.cantidad} transacciones - $${dia.volumen}`)}
+                >
+                  <div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                    ${dia.volumen} · {dia.cantidad} ops
+                  </div>
+                </div>
+              </div>
+              <span class="text-sm text-gray-500 mt-2">{dia.dia}</span>
+            </div>
+          ))}
+        </div>
+
+        <!-- Leyenda -->
+        <div class="flex justify-center gap-6 mt-4 pt-4 border-t text-sm text-gray-500">
+          <span class="flex items-center gap-2"><span class="w-3 h-3 bg-blue-500 rounded"></span> Volumen ($)</span>
+          <span class="flex items-center gap-2">📊 Promedio: $2,254/día</span>
+        </div>
+      </div>
+
+      <!-- Tarjetas de resumen rápido -->
+      <div class="space-y-4">
+        <div class="bg-gradient-to-br from-blue-50 to-white rounded-xl p-5 shadow-sm border border-blue-100">
+          <p class="text-sm text-blue-600 font-medium mb-1">Volumen hoy</p>
+          <p class="text-2xl font-bold">${resumen.volumen_hoy.toLocaleString()} USD</p>
+          <p class="text-xs text-gray-500 mt-1">{resumen.transacciones_hoy} transacciones</p>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <p class="text-sm text-gray-500 mb-1">Volumen esta semana</p>
+          <p class="text-2xl font-bold">${resumen.volumen_semana.toLocaleString()} USD</p>
+          <p class="text-xs text-green-600 mt-1">↑ 12% vs semana anterior</p>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <p class="text-sm text-gray-500 mb-1">Clientes totales</p>
+          <p class="text-2xl font-bold">{resumen.clientes_totales}</p>
+          <p class="text-xs text-gray-500 mt-1">{resumen.clientes_hoy} nuevos hoy</p>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <p class="text-sm text-gray-500 mb-1">Tasa promedio</p>
+          <p class="text-2xl font-bold">{resumen.tasa_promedio}</p>
+          <p class="text-xs text-gray-400">USD → VES</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid secundario: Transacciones recientes + Acciones rápidas -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Tabla de transacciones recientes -->
+      <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">🔄 Transacciones recientes</h2>
+          <a href="/admin/transacciones" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            Ver todas →
+          </a>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="text-left text-gray-500 text-sm border-b">
+                <th class="pb-2">Fecha</th>
+                <th class="pb-2">Cliente</th>
+                <th class="pb-2">Monto</th>
+                <th class="pb-2">Estado</th>
+                <th class="pb-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {transaccionesRecientes.map(tx => (
+                <tr class="border-b hover:bg-gray-50">
+                  <td class="py-3 text-sm">{tx.fecha}</td>
+                  <td class="py-3 font-medium">{tx.cliente}</td>
+                  <td class="py-3">${tx.monto}</td>
+                  <td class="py-3">
+                    <span class={`px-2 py-1 rounded-full text-xs ${
+                      tx.estado === 'Completado' ? 'bg-green-100 text-green-700' :
+                      tx.estado === 'Procesando' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>
+                      {tx.estado}
+                    </span>
+                  </td>
+                  <td class="py-3">
+                    <a href={`/admin/transacciones/${tx.id}`} class="text-blue-600 hover:underline text-sm">
+                      Ver
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Acciones rápidas y recordatorios -->
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h2 class="text-xl font-semibold mb-4">⚡ Acciones rápidas</h2>
+          <div class="space-y-2">
+            <button 
+              onClick={() => alert('Ir a nuevo cliente')}
+              class="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-3"
+            >
+              <span class="text-2xl">👤</span>
+              <div>
+                <p class="font-medium">Nuevo cliente</p>
+                <p class="text-xs text-gray-500">Registrar manualmente</p>
+              </div>
+            </button>
+            <button 
+              onClick={() => alert('Ir a nuevo giro')}
+              class="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-3"
+            >
+              <span class="text-2xl">💰</span>
+              <div>
+                <p class="font-medium">Nuevo giro</p>
+                <p class="text-xs text-gray-500">Registrar transacción</p>
+              </div>
+            </button>
+            <button 
+              onClick={() => alert('Ir a reportes')}
+              class="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-3"
+            >
+              <span class="text-2xl">📊</span>
+              <div>
+                <p class="font-medium">Reportes</p>
+                <p class="text-xs text-gray-500">Exportar datos</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-100">
+          <h2 class="text-lg font-semibold mb-2 text-blue-900">📌 Recordatorio</h2>
+          <p class="text-sm text-blue-800 mb-3">
+            Tienes {resumen.pendientes_kyc} clientes pendientes de verificación KYC.
+          </p>
+          <a 
+            href="/admin/clientes?filtro=kyc" 
+            class="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-block"
+          >
+            Revisar ahora
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer del dashboard con información adicional -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 text-xs text-gray-400 border-t">
+      <div>Última actualización: {new Date().toLocaleString()}</div>
+      <div>Transacciones totales: {resumen.transacciones_totales}</div>
+      <div>Volumen mensual: ${resumen.volumen_mes.toLocaleString()}</div>
+      <div class="text-right">AD Global Pay v1.0</div>
+    </div>
+  </div>
+</AdminLayout>

@@ -1,0 +1,340 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+// Datos de ejemplo de clientes con sus contactos de destino
+const clientesConContactos = [
+  {
+    id: 1,
+    nombre: 'José Barrera',
+    telefono: '+1 305 5551234',
+    email: 'jose@email.com',
+    contactos: [
+      { 
+        id: 101, 
+        nombre: 'Yolimar Mosqueda', 
+        telefono: '+58 424 3107776',
+        banco: 'Banco Venezuela',
+        cuenta: '0102-1234-56-78901234',
+        tipo: 'Zelle Account'
+      },
+      { 
+        id: 102, 
+        nombre: 'María López', 
+        telefono: '+58 414 7654321',
+        banco: 'Mercantil',
+        cuenta: '0105-4321-87-65432109',
+        tipo: 'Bank Transfer'
+      }
+    ]
+  },
+  {
+    id: 2,
+    nombre: 'Carlos Rodríguez',
+    telefono: '+1 786 5556789',
+    email: 'carlos@email.com',
+    contactos: [
+      { 
+        id: 103, 
+        nombre: 'Ana Martínez', 
+        telefono: '+58 412 9876543',
+        banco: 'Banesco',
+        cuenta: '0134-5678-90-12345678',
+        tipo: 'Zelle Account'
+      }
+    ]
+  }
+];
+---
+
+<AdminLayout>
+  <div class="max-w-4xl mx-auto space-y-6 p-4">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">➕ Nueva Transacción</h1>
+      <a href="/admin/transacciones" class="text-blue-600 hover:underline">
+        ← Cancelar
+      </a>
+    </div>
+
+    <!-- FORMULARIO PRINCIPAL -->
+    <div class="space-y-6">
+      <!-- PASO 1: Seleccionar Cliente -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm">1</span>
+          Seleccionar Cliente (Recipiente)
+        </h2>
+        
+        <select 
+          id="clienteSelect"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">-- Seleccione un cliente --</option>
+          {clientesConContactos.map(cliente => (
+            <option value={cliente.id}>{cliente.nombre} - {cliente.email}</option>
+          ))}
+        </select>
+      </div>
+
+      <!-- PASO 2: Seleccionar Contacto Destino -->
+      <div id="contactoSection" class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hidden">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm">2</span>
+          Seleccionar Destino
+        </h2>
+        
+        <select 
+          id="contactoSelect"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">-- Seleccione un destino --</option>
+        </select>
+        
+        <div id="contactoDetalles" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+          <p class="text-sm text-gray-600">Banco: <span id="detalleBanco" class="font-medium"></span></p>
+          <p class="text-sm text-gray-600">Cuenta: <span id="detalleCuenta" class="font-medium"></span></p>
+          <p class="text-sm text-gray-600">Teléfono: <span id="detalleTelefono" class="font-medium"></span></p>
+        </div>
+      </div>
+
+      <!-- PASO 3: Montos y cálculos -->
+      <div id="montosSection" class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hidden">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm">3</span>
+          Montos de la Transacción
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <h3 class="font-medium text-gray-700">💰 Lo que entrega el cliente</h3>
+            <div>
+              <label class="block text-sm text-gray-500 mb-1">Monto en USD que recibe el cliente</label>
+              <input 
+                type="number" 
+                id="montoClienteUSD"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="font-medium text-gray-700">📤 Lo que realmente enviamos</h3>
+            <div>
+              <label class="block text-sm text-gray-500 mb-1">Monto en USD que enviamos</label>
+              <input 
+                type="number" 
+                id="montoEnvioUSD"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-500 mb-1">Tasa de cambio (Bs/USD)</label>
+              <input 
+                type="number" 
+                id="tasa"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 p-6 bg-blue-50 rounded-xl border border-blue-100">
+          <h3 class="font-medium text-blue-800 mb-4">📊 Resultados</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p class="text-sm text-blue-600">Monto en Bs</p>
+              <p id="montoBsResultado" class="text-2xl font-bold text-blue-800">Bs. 0.00</p>
+            </div>
+            <div>
+              <p class="text-sm text-green-600">Profit USD</p>
+              <p id="profitUSDResultado" class="text-2xl font-bold text-green-600">$0.00</p>
+            </div>
+            <div>
+              <p class="text-sm text-purple-600">Comisión Admin</p>
+              <p id="adminComisionResultado" class="text-2xl font-bold text-purple-600">$0.00</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm text-gray-500 mb-2">Método de envío</label>
+          <select id="metodo" class="w-full border border-gray-300 rounded-lg px-4 py-3">
+            <option value="USDT">USDT (Cripto)</option>
+            <option value="ZELLE">Zelle</option>
+            <option value="EFECTIVO">Efectivo</option>
+            <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+          </select>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <button 
+            type="button"
+            id="btnGuardar"
+            class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium"
+          >
+            ✅ Guardar Transacción
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<!-- JavaScript con is:inline para que no sea procesado por Astro -->
+<script is:inline>
+  // Datos de clientes
+  const clientesData = {
+    '1': {
+      nombre: 'José Barrera',
+      contactos: {
+        '101': {
+          nombre: 'Yolimar Mosqueda',
+          telefono: '+58 424 3107776',
+          banco: 'Banco Venezuela',
+          cuenta: '0102-1234-56-78901234'
+        },
+        '102': {
+          nombre: 'María López',
+          telefono: '+58 414 7654321',
+          banco: 'Mercantil',
+          cuenta: '0105-4321-87-65432109'
+        }
+      }
+    },
+    '2': {
+      nombre: 'Carlos Rodríguez',
+      contactos: {
+        '103': {
+          nombre: 'Ana Martínez',
+          telefono: '+58 412 9876543',
+          banco: 'Banesco',
+          cuenta: '0134-5678-90-12345678'
+        }
+      }
+    }
+  };
+
+  // Esperar a que el DOM esté listo
+  document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del DOM
+    const clienteSelect = document.getElementById('clienteSelect');
+    const contactoSection = document.getElementById('contactoSection');
+    const contactoSelect = document.getElementById('contactoSelect');
+    const contactoDetalles = document.getElementById('contactoDetalles');
+    const montosSection = document.getElementById('montosSection');
+    const detalleBanco = document.getElementById('detalleBanco');
+    const detalleCuenta = document.getElementById('detalleCuenta');
+    const detalleTelefono = document.getElementById('detalleTelefono');
+    const montoCliente = document.getElementById('montoClienteUSD');
+    const montoEnvio = document.getElementById('montoEnvioUSD');
+    const tasa = document.getElementById('tasa');
+    const montoBs = document.getElementById('montoBsResultado');
+    const profitUsd = document.getElementById('profitUSDResultado');
+    const adminComision = document.getElementById('adminComisionResultado');
+    const btnGuardar = document.getElementById('btnGuardar');
+
+    // Cuando cambia el cliente
+    clienteSelect.addEventListener('change', function() {
+      const clienteId = this.value;
+      
+      if (!clienteId) {
+        contactoSection.classList.add('hidden');
+        montosSection.classList.add('hidden');
+        return;
+      }
+
+      contactoSection.classList.remove('hidden');
+      contactoSelect.innerHTML = '<option value="">-- Seleccione un destino --</option>';
+      
+      const contactos = clientesData[clienteId].contactos;
+      
+      for (let id in contactos) {
+        const c = contactos[id];
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = c.nombre + ' - ' + c.banco;
+        contactoSelect.appendChild(option);
+      }
+      
+      contactoDetalles.classList.add('hidden');
+      montosSection.classList.add('hidden');
+    });
+
+    // Cuando cambia el contacto
+    contactoSelect.addEventListener('change', function() {
+      const clienteId = clienteSelect.value;
+      const contactoId = this.value;
+      
+      if (!clienteId || !contactoId) {
+        contactoDetalles.classList.add('hidden');
+        montosSection.classList.add('hidden');
+        return;
+      }
+
+      const contacto = clientesData[clienteId].contactos[contactoId];
+      
+      detalleBanco.textContent = contacto.banco;
+      detalleCuenta.textContent = contacto.cuenta;
+      detalleTelefono.textContent = contacto.telefono;
+      
+      contactoDetalles.classList.remove('hidden');
+      montosSection.classList.remove('hidden');
+    });
+
+    // Calcular montos
+    function calcular() {
+      const montoClienteVal = parseFloat(montoCliente.value) || 0;
+      const montoEnvioVal = parseFloat(montoEnvio.value) || 0;
+      const tasaVal = parseFloat(tasa.value) || 0;
+
+      const montoBsVal = montoEnvioVal * tasaVal;
+      montoBs.textContent = 'Bs. ' + montoBsVal.toFixed(2);
+      
+      const profitVal = montoClienteVal - montoEnvioVal;
+      profitUsd.textContent = '$' + profitVal.toFixed(2);
+      adminComision.textContent = '$' + montoClienteVal.toFixed(2);
+    }
+
+    montoCliente.addEventListener('input', calcular);
+    montoEnvio.addEventListener('input', calcular);
+    tasa.addEventListener('input', calcular);
+
+    // Guardar transacción
+    btnGuardar.addEventListener('click', function() {
+      const clienteId = clienteSelect.value;
+      const contactoId = contactoSelect.value;
+      
+      if (!clienteId || !contactoId || !montoCliente.value || !montoEnvio.value || !tasa.value) {
+        alert('Por favor complete todos los campos');
+        return;
+      }
+
+      const transaccion = {
+        id: Date.now(),
+        fecha: new Date().toLocaleDateString('es-ES'),
+        cliente: clientesData[clienteId].nombre,
+        contacto: clientesData[clienteId].contactos[contactoId].nombre,
+        monto_cliente: parseFloat(montoCliente.value),
+        monto_envio: parseFloat(montoEnvio.value),
+        tasa: parseFloat(tasa.value),
+        monto_bs: parseFloat(montoEnvio.value) * parseFloat(tasa.value),
+        profit: parseFloat(montoCliente.value) - parseFloat(montoEnvio.value),
+        metodo: document.getElementById('metodo').value
+      };
+
+      console.log(transaccion);
+      alert('✅ Transacción guardada');
+      window.location.href = '/admin/transacciones';
+    });
+  });
+</script>

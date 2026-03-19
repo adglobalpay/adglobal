@@ -1,0 +1,296 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+// Datos de ejemplo para configuración
+const configActual = {
+  tasas: {
+    usd_ves_compra: 49.50,
+    usd_ves_venta: 50.30,
+    margen: 0.8,
+    actualizacion: '18/03/2026 10:30'
+  },
+  limites: {
+    max_por_transaccion: 1000,
+    min_por_transaccion: 10,
+    max_diario_por_cliente: 3000,
+    max_mensual_por_cliente: 15000
+  },
+  horarios: {
+    hora_inicio: '08:00',
+    hora_fin: '18:00',
+    zona_horaria: 'America/New_York',
+    dias_laborales: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
+  }
+};
+
+const usuarios = [
+  { id: 1, nombre: 'Carlos Martinez', email: 'carlos@adglobalpay.com', rol: 'Administrador', ultimo_acceso: '18/03/2026 09:15' },
+  { id: 2, nombre: 'María López', email: 'maria@adglobalpay.com', rol: 'Operador', ultimo_acceso: '17/03/2026 14:30' },
+  { id: 3, nombre: 'Juan Pérez', email: 'juan@adglobalpay.com', rol: 'Operador', ultimo_acceso: '16/03/2026 11:20' }
+];
+---
+
+<AdminLayout>
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">Configuración</h1>
+      <button 
+        onClick={() => alert('Cambios guardados (simulación)')}
+        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+      >
+        💾 Guardar cambios
+      </button>
+    </div>
+
+    <!-- Grid principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Tasas de cambio -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+          <span>💱</span> Tasas de cambio
+        </h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">USD → VES (Compra)</label>
+            <input 
+              type="number" 
+              step="0.01"
+              value={configActual.tasas.usd_ves_compra}
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onInput={(e) => alert(`Tasa actualizada a ${e.target.value}`)}
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">USD → VES (Venta)</label>
+            <input 
+              type="number" 
+              step="0.01"
+              value={configActual.tasas.usd_ves_venta}
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onInput={(e) => alert(`Tasa actualizada a ${e.target.value}`)}
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">Margen (%)</label>
+            <input 
+              type="number" 
+              step="0.1"
+              value={configActual.tasas.margen}
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <p class="text-xs text-gray-400 pt-2 border-t">
+            Última actualización: {configActual.tasas.actualizacion}
+          </p>
+        </div>
+      </div>
+
+      <!-- Límites operativos -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+          <span>⚖️</span> Límites operativos
+        </h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">Máximo por transacción (USD)</label>
+            <input 
+              type="number"
+              value={configActual.limites.max_por_transaccion}
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">Mínimo por transacción (USD)</label>
+            <input 
+              type="number"
+              value={configActual.limites.min_por_transaccion}
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">Máximo diario por cliente (USD)</label>
+            <input 
+              type="number"
+              value={configActual.limites.max_diario_por_cliente}
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">Máximo mensual por cliente (USD)</label>
+            <input 
+              type="number"
+              value={configActual.limites.max_mensual_por_cliente}
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Horarios de operación -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+          <span>⏰</span> Horarios de operación
+        </h2>
+        
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-gray-500 mb-1">Hora inicio</label>
+              <input 
+                type="time"
+                value={configActual.horarios.hora_inicio}
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm text-gray-500 mb-1">Hora fin</label>
+              <input 
+                type="time"
+                value={configActual.horarios.hora_fin}
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">Zona horaria</label>
+            <select class="w-full border border-gray-300 rounded-lg px-4 py-2">
+              <option>America/New_York</option>
+              <option>America/Chicago</option>
+              <option>America/Denver</option>
+              <option>America/Los_Angeles</option>
+              <option>America/Caracas</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-500 mb-2">Días laborales</label>
+            <div class="flex gap-2 flex-wrap">
+              {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(dia => (
+                <label class="flex items-center gap-1 bg-gray-50 px-3 py-2 rounded-lg">
+                  <input 
+                    type="checkbox" 
+                    checked={configActual.horarios.dias_laborales.includes(dia)}
+                    class="rounded"
+                  />
+                  <span class="text-sm">{dia}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Usuarios del sistema -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold flex items-center gap-2">
+            <span>👥</span> Usuarios del sistema
+          </h2>
+          <button 
+            onClick={() => alert('Agregar nuevo usuario')}
+            class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+          >
+            + Nuevo
+          </button>
+        </div>
+        
+        <div class="space-y-3">
+          {usuarios.map(user => (
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-medium">
+                  {user.nombre.charAt(0)}
+                </div>
+                <div>
+                  <p class="font-medium">{user.nombre}</p>
+                  <p class="text-xs text-gray-500">{user.email}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class={`px-2 py-1 rounded-full text-xs ${
+                  user.rol === 'Administrador' ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {user.rol}
+                </span>
+                <p class="text-xs text-gray-400 mt-1">Último: {user.ultimo_acceso}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de seguridad y compliance -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+        <span>🔒</span> Seguridad y compliance
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <p class="font-medium mb-2">Verificación 2FA</p>
+          <p class="text-sm text-gray-600 mb-3">Requerir autenticación de dos factores</p>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" class="rounded" checked />
+            <span class="text-sm">Habilitado para admins</span>
+          </label>
+        </div>
+        
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <p class="font-medium mb-2">Sesiones</p>
+          <p class="text-sm text-gray-600 mb-3">Tiempo de expiración de sesión</p>
+          <select class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm">
+            <option>30 minutos</option>
+            <option>1 hora</option>
+            <option>4 horas</option>
+            <option>8 horas</option>
+          </select>
+        </div>
+        
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <p class="font-medium mb-2">Auditoría</p>
+          <p class="text-sm text-gray-600 mb-3">Registro de acciones</p>
+          <button 
+            onClick={() => alert('Ver logs de auditoría')}
+            class="text-blue-600 hover:underline text-sm"
+          >
+            Ver logs completos →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información de la empresa -->
+    <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+      <h2 class="text-lg font-semibold mb-3">🏢 Información de la empresa</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+        <div>
+          <p class="text-gray-500">Razón social</p>
+          <p class="font-medium">AD GLOBAL SERVICES LLC</p>
+        </div>
+        <div>
+          <p class="text-gray-500">EIN</p>
+          <p class="font-medium">41-4044809</p>
+        </div>
+        <div>
+          <p class="text-gray-500">Registro FinCEN</p>
+          <p class="font-medium">MRX26-00003351</p>
+        </div>
+        <div>
+          <p class="text-gray-500">Documento Florida</p>
+          <p class="font-medium">L25000297675</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

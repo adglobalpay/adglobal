@@ -1,0 +1,245 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+// Datos de ejemplo para reportes
+const reporteGeneral = {
+  total_transacciones: 345,
+  volumen_total_usd: 45890,
+  volumen_total_ves: 2248610,
+  tasa_promedio: 49.3,
+  clientes_activos: 87,
+  clientes_nuevos_mes: 23
+};
+
+const transaccionesPorDia = [
+  { fecha: '2026-03-18', cantidad: 12, volumen: 2450 },
+  { fecha: '2026-03-17', cantidad: 15, volumen: 3200 },
+  { fecha: '2026-03-16', cantidad: 10, volumen: 2100 },
+  { fecha: '2026-03-15', cantidad: 14, volumen: 2900 },
+  { fecha: '2026-03-14', cantidad: 8, volumen: 1600 },
+  { fecha: '2026-03-13', cantidad: 11, volumen: 2300 },
+  { fecha: '2026-03-12', cantidad: 9, volumen: 1850 }
+];
+
+const volumenPorDestino = [
+  { pais: 'Venezuela', volumen: 38750, porcentaje: 84 },
+  { pais: 'Colombia', volumen: 5140, porcentaje: 11 },
+  { pais: 'Perú', volumen: 2300, porcentaje: 5 }
+];
+
+const topClientes = [
+  { nombre: 'Juan Pérez', transacciones: 24, volumen: 4850 },
+  { nombre: 'María Gómez', transacciones: 18, volumen: 3600 },
+  { nombre: 'Carlos Rodríguez', transacciones: 15, volumen: 2900 },
+  { nombre: 'Ana Martínez', transacciones: 12, volumen: 2100 },
+  { nombre: 'Pedro Sánchez', transacciones: 10, volumen: 1850 }
+];
+
+// Función para exportar CSV simulada
+const exportarCSV = (data: any[], filename: string) => {
+  alert(`Exportando ${filename}... (función por implementar)`);
+};
+---
+
+<AdminLayout>
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">Reportes</h1>
+      <div class="flex gap-2">
+        <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
+          <option>Últimos 7 días</option>
+          <option>Últimos 30 días</option>
+          <option>Este mes</option>
+          <option>Mes pasado</option>
+          <option>Personalizado...</option>
+        </select>
+        <button 
+          onClick={() => alert('Generando reporte...')}
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Generar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 shadow-lg">
+        <p class="text-blue-100 text-sm mb-1">Volumen total</p>
+        <p class="text-3xl font-bold">${reporteGeneral.volumen_total_usd.toLocaleString()}</p>
+        <p class="text-blue-100 text-sm mt-1">{reporteGeneral.volumen_total_ves.toLocaleString()} VES</p>
+      </div>
+      
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <p class="text-gray-500 text-sm mb-1">Transacciones</p>
+        <p class="text-3xl font-bold">{reporteGeneral.total_transacciones}</p>
+        <p class="text-green-600 text-sm mt-1">↑ 12% vs mes anterior</p>
+      </div>
+      
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <p class="text-gray-500 text-sm mb-1">Clientes activos</p>
+        <p class="text-3xl font-bold">{reporteGeneral.clientes_activos}</p>
+        <p class="text-green-600 text-sm mt-1">+{reporteGeneral.clientes_nuevos_mes} este mes</p>
+      </div>
+      
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <p class="text-gray-500 text-sm mb-1">Tasa promedio</p>
+        <p class="text-3xl font-bold">{reporteGeneral.tasa_promedio}</p>
+        <p class="text-gray-400 text-sm mt-1">USD → VES</p>
+      </div>
+    </div>
+
+    <!-- Gráfico de actividad diaria (simulado) -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold">📊 Actividad diaria</h2>
+        <button 
+          onClick={() => exportarCSV(transaccionesPorDia, 'actividad_diaria.csv')}
+          class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+        >
+          📥 Exportar CSV
+        </button>
+      </div>
+      
+      <div class="h-64 flex items-end justify-between gap-2">
+        {transaccionesPorDia.map(dia => (
+          <div class="flex-1 flex flex-col items-center group">
+            <div class="relative w-full">
+              <div 
+                class="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-all cursor-pointer"
+                style={{ height: `${(dia.volumen / 3500) * 200}px` }}
+                onClick={() => alert(`${dia.fecha}: $${dia.volumen} · ${dia.cantidad} transacciones`)}
+              >
+                <div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                  ${dia.volumen}
+                </div>
+              </div>
+            </div>
+            <span class="text-xs text-gray-500 mt-2">{dia.fecha.slice(5)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Grid de 2 columnas para reportes adicionales -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Volumen por destino -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">🌎 Volumen por destino</h2>
+          <button 
+            onClick={() => exportarCSV(volumenPorDestino, 'volumen_destino.csv')}
+            class="text-blue-600 hover:text-blue-800 text-sm"
+          >
+            Exportar
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          {volumenPorDestino.map(destino => (
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="font-medium">{destino.pais}</span>
+                <span>${destino.volumen.toLocaleString()} ({destino.porcentaje}%)</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  class="bg-blue-600 h-2 rounded-full" 
+                  style={{ width: `${destino.porcentaje}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Top clientes -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">🏆 Top clientes</h2>
+          <button 
+            onClick={() => exportarCSV(topClientes, 'top_clientes.csv')}
+            class="text-blue-600 hover:text-blue-800 text-sm"
+          >
+            Exportar
+          </button>
+        </div>
+        
+        <div class="space-y-3">
+          {topClientes.map((cliente, index) => (
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <span class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-medium">
+                  {index + 1}
+                </span>
+                <div>
+                  <p class="font-medium">{cliente.nombre}</p>
+                  <p class="text-xs text-gray-500">{cliente.transacciones} transacciones</p>
+                </div>
+              </div>
+              <span class="font-semibold">${cliente.volumen.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de transacciones del período -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">📋 Detalle de transacciones</h2>
+        <button 
+          onClick={() => alert('Exportando reporte completo...')}
+          class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors flex items-center gap-2"
+        >
+          📥 Exportar todo
+        </button>
+      </div>
+      
+      <table class="w-full">
+        <thead>
+          <tr class="text-left text-gray-500 text-sm border-b">
+            <th class="pb-3">Fecha</th>
+            <th class="pb-3">Cliente</th>
+            <th class="pb-3">Monto USD</th>
+            <th class="pb-3">Monto VES</th>
+            <th class="pb-3">Tasa</th>
+            <th class="pb-3">Destino</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b hover:bg-gray-50">
+            <td class="py-3">18/03/2026</td>
+            <td class="py-3">Juan Pérez</td>
+            <td class="py-3">$200</td>
+            <td class="py-3">10,000</td>
+            <td class="py-3">50.0</td>
+            <td class="py-3">Venezuela</td>
+          </tr>
+          <tr class="border-b hover:bg-gray-50">
+            <td class="py-3">18/03/2026</td>
+            <td class="py-3">María Gómez</td>
+            <td class="py-3">$150</td>
+            <td class="py-3">7,350</td>
+            <td class="py-3">49.0</td>
+            <td class="py-3">Venezuela</td>
+          </tr>
+          <tr class="border-b hover:bg-gray-50">
+            <td class="py-3">17/03/2026</td>
+            <td class="py-3">Carlos Rodríguez</td>
+            <td class="py-3">$350</td>
+            <td class="py-3">16,800</td>
+            <td class="py-3">48.0</td>
+            <td class="py-3">Venezuela</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div class="mt-4 pt-4 border-t text-sm text-gray-500 flex justify-between items-center">
+        <span>Mostrando 3 de 345 transacciones</span>
+        <button class="text-blue-600 hover:underline">Ver todas →</button>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
