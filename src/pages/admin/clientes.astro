@@ -5,11 +5,11 @@ import SearchBar from '../../components/admin/SearchBar';
 ---
 
 <AdminLayout>
-  <div class="space-y-6">
+  <div class="space-y-6 p-4">
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">Clientes</h1>
       <button 
-        onClick={() => alert('Función por implementar')}
+        id="btnNuevoCliente"
         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
       >
         + Nuevo Cliente
@@ -22,14 +22,153 @@ import SearchBar from '../../components/admin/SearchBar';
       <ClientTable client:load />
     </div>
   </div>
-  <!-- Agrega esto antes de cerrar AdminLayout -->
-<div class="fixed bottom-6 right-6">
-  <a 
-    href="/admin/transacciones/nueva"
-    class="bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg hover:bg-blue-700 transition-colors"
-    title="Nueva Transacción"
-  >
-    +
-  </a>
-</div>
+
+  <!-- Modal para Nuevo Cliente -->
+  <div id="modalCliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full">
+      <h2 class="text-2xl font-bold mb-4">➕ Nuevo Cliente</h2>
+      <form id="formCliente" class="space-y-4" onsubmit="guardarCliente(event)">
+        <div>
+          <label class="block text-sm font-medium mb-1">Nombre *</label>
+          <input type="text" id="clienteNombre" required class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Teléfono</label>
+          <input type="text" id="clienteTelefono" class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Email</label>
+          <input type="email" id="clienteEmail" class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">País</label>
+          <select id="clientePais" class="w-full border rounded-lg px-3 py-2">
+            <option value="us">Estados Unidos</option>
+            <option value="ve">Venezuela</option>
+            <option value="co">Colombia</option>
+            <option value="pe">Perú</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Método preferido</label>
+          <select id="clienteMetodo" class="w-full border rounded-lg px-3 py-2">
+            <option value="Zelle">Zelle</option>
+            <option value="BOFA">BOFA</option>
+            <option value="Chase">Chase</option>
+            <option value="PNC">PNC</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="USDT">USDT</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Notas</label>
+          <textarea id="clienteNotas" rows="2" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-4">
+          <button type="button" onclick="cerrarModalCliente()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </AdminLayout>
+
+<script is:inline>
+  // Datos iniciales de clientes (para que persistan)
+  if (!window.clientesGlobal) {
+    window.clientesGlobal = [
+      { 
+        id: '1', 
+        first_name: 'Luisa', 
+        last_name: 'Ideas Creativas', 
+        telefono: '4242459151', 
+        email: '', 
+        pais: 'us',
+        metodo: 'Zelle',
+        notas: 'Cliente frecuente, envía los viernes',
+        kyc: 'verified',
+        ofac: 'ok',
+        transactions: [
+          { amount: 150, date: '2026-03-19' },
+          { amount: 200, date: '2026-03-10' },
+          { amount: 100, date: '2026-03-01' }
+        ]
+      },
+      { 
+        id: '2', 
+        first_name: 'Cartaya', 
+        last_name: 'Auto Sales', 
+        telefono: '3055551234', 
+        email: 'cartaya@autos.com', 
+        pais: 'us',
+        metodo: 'Zelle',
+        notas: 'Empresa, envía a varios familiares',
+        kyc: 'verified',
+        ofac: 'ok',
+        transactions: [
+          { amount: 500, date: '2026-03-18' },
+          { amount: 450, date: '2026-03-15' },
+          { amount: 600, date: '2026-03-10' },
+          { amount: 550, date: '2026-03-05' }
+        ]
+      },
+      { 
+        id: '3', 
+        first_name: 'María', 
+        last_name: 'Josefina', 
+        telefono: '7865556789', 
+        email: 'maria.j@email.com', 
+        pais: 'us',
+        metodo: 'Zelle',
+        notas: 'Cliente nuevo',
+        kyc: 'pending',
+        ofac: 'review',
+        transactions: []
+      }
+    ];
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Módulo clientes cargado');
+    
+    var btnNuevoCliente = document.getElementById('btnNuevoCliente');
+    if (btnNuevoCliente) {
+      btnNuevoCliente.onclick = function(e) {
+        e.preventDefault();
+        abrirModalCliente();
+      };
+    }
+  });
+
+  function abrirModalCliente() {
+    document.getElementById('modalCliente').classList.remove('hidden');
+  }
+
+  function cerrarModalCliente() {
+    document.getElementById('modalCliente').classList.add('hidden');
+  }
+
+  function guardarCliente(e) {
+    e.preventDefault();
+    
+    var nuevoCliente = {
+      id: 'c' + Date.now(),
+      first_name: document.getElementById('clienteNombre').value.split(' ')[0] || '',
+      last_name: document.getElementById('clienteNombre').value.split(' ').slice(1).join(' ') || '',
+      telefono: document.getElementById('clienteTelefono').value,
+      email: document.getElementById('clienteEmail').value,
+      pais: document.getElementById('clientePais').value,
+      metodo: document.getElementById('clienteMetodo').value,
+      notas: document.getElementById('clienteNotas').value,
+      kyc: 'pending',
+      ofac: 'pending',
+      transactions: []
+    };
+    
+    window.clientesGlobal.push(nuevoCliente);
+    
+    // Actualizar la tabla (recargar la página por simplicidad)
+    alert('✅ Cliente agregado: ' + nuevoCliente.first_name + ' ' + nuevoCliente.last_name);
+    window.location.reload();
+  }
+</script>

@@ -8,14 +8,15 @@ import Sidebar from '../components/admin/Sidebar';
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Favicon - Lo más simple -->
+  <link rel="icon" href="/public/img/logo.webp" type="image/webp" />
+  
   <title>AD Global Pay - Panel</title>
 </head>
 <body class="bg-gray-50">
   <div class="flex h-screen">
-    <!-- Sidebar -->
     <Sidebar client:load />
-    
-    <!-- Contenido principal -->
     <main class="flex-1 overflow-y-auto p-8">
       <slot />
     </main>

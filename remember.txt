@@ -1,22 +1,6 @@
-alerta de fondos en billetera biannce exponer en la barra lateral cuando legeue a 2k mandar aviso al admin para recargar, conectado con binance api para detecar saldo de operador
+
+en usd se jala directo del email datos monto, quien gira, fechas zelle etc etc
 
 
-comision del operador tambien apartado lateral
-comision del admin apartado lateral
-
-
-confirmacion de transacciones para admin check simple si quiere ver datos expuestos de la transaccion puede tocar y mira. monto, referencia, foto de la operacion en usd se jala directo del email datos monto, quien gira, fechas zelle etc etc
-
-
-apartado de cuanto paga el operador tambien en la trannsaccion
-
-
-un recordatorio panel lateral de los clientes que tienen mas de 15 dias sin girar asi puedo escribirles.
-
-
-tocar y que de una me mande a whatsapp a escribirles se puede ? 
-
-
-agregar nuevo cliente boton no furula
 
 

@@ -20,7 +20,14 @@ export async function getStaticPaths() {
       tasa: 535.00,
       metodo: 'USDT',
       profit: { usd: 15.09, ves: 0 },
-      admin_comision: 110.00
+      admin_comision: 110.00,
+      // NUEVOS CAMPOS PARA VERIFICACIÓN
+      comprobante_pago: 'comprobante_pago_1.pdf',
+      comprobante_admin: 'comprobante_admin_1.pdf',
+      estado: 'pending', // pending, verificando, completado, rechazado
+      fecha_verificacion: null,
+      verificador: null,
+      notas_admin: ''
     },
     {
       id: 2,
@@ -37,7 +44,14 @@ export async function getStaticPaths() {
       tasa: 500.00,
       metodo: 'TRANSFERENCIA',
       profit: { usd: 10.00, ves: 0 },
-      admin_comision: 250.00
+      admin_comision: 250.00,
+      // NUEVOS CAMPOS PARA VERIFICACIÓN
+      comprobante_pago: 'comprobante_pago_2.pdf',
+      comprobante_admin: 'comprobante_admin_2.pdf',
+      estado: 'completado',
+      fecha_verificacion: '15/03/26 10:30',
+      verificador: 'Carlos Martinez',
+      notas_admin: 'Todo correcto, fondos entregados'
     }
   ];
 
@@ -53,6 +67,18 @@ const { transaccion } = Astro.props;
 if (!transaccion) {
   return Astro.redirect('/404');
 }
+
+// --- 3. FUNCIÓN PARA BADGE DE ESTADO ---
+const getEstadoBadge = (estado: string) => {
+  const config = {
+    pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '⏳', label: 'Pendiente revisión' },
+    verificando: { bg: 'bg-blue-100', text: 'text-blue-700', icon: '🔍', label: 'Verificando' },
+    completado: { bg: 'bg-green-100', text: 'text-green-700', icon: '✅', label: 'Completado' },
+    rechazado: { bg: 'bg-red-100', text: 'text-red-700', icon: '❌', label: 'Rechazado' }
+  };
+  const style = config[estado] || config.pending;
+  return `<span class="px-3 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text} flex items-center gap-1 w-fit">${style.icon} ${style.label}</span>`;
+};
 ---
 
 <AdminLayout>
@@ -62,8 +88,14 @@ if (!transaccion) {
       ← Volver a transacciones
     </a>
 
-    <h1 class="text-3xl font-bold">Detalle de Transacción</h1>
-    <p class="text-gray-500">ID: {transaccion.id} · {transaccion.fecha}</p>
+    <!-- Header con estado -->
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-3xl font-bold">Detalle de Transacción</h1>
+        <p class="text-gray-500">ID: {transaccion.id} · {transaccion.fecha}</p>
+      </div>
+      <div set:html={getEstadoBadge(transaccion.estado || 'pending')} />
+    </div>
 
     <!-- Información de Remitente y Destinatario -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -135,7 +167,122 @@ if (!transaccion) {
       </div>
     </div>
 
-    <!-- Botones de acción -->
+    <!-- ===== NUEVA SECCIÓN: VERIFICACIÓN ADMINISTRATIVA ===== -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <span>✅</span> Verificación Administrativa
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Comprobantes -->
+        <div class="space-y-4">
+          <h3 class="font-semibold text-gray-700">📎 Comprobantes</h3>
+          
+          <!-- Comprobante de pago del cliente -->
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">📄</span>
+              <div>
+                <p class="font-medium">Comprobante de pago</p>
+                <p class="text-xs text-gray-500">{transaccion.comprobante_pago || 'No disponible'}</p>
+              </div>
+            </div>
+            {transaccion.comprobante_pago ? (
+              <button 
+                onClick={() => alert('Ver comprobante de pago')}
+                class="text-blue-600 hover:text-blue-800 text-sm"
+              >
+                Ver
+              </button>
+            ) : (
+              <span class="text-gray-400 text-sm">—</span>
+            )}
+          </div>
+          
+          <!-- Comprobante administrativo -->
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">📋</span>
+              <div>
+                <p class="font-medium">Comprobante administrativo</p>
+                <p class="text-xs text-gray-500">{transaccion.comprobante_admin || 'No disponible'}</p>
+              </div>
+            </div>
+            {transaccion.comprobante_admin ? (
+              <button 
+                onClick={() => alert('Ver comprobante administrativo')}
+                class="text-blue-600 hover:text-blue-800 text-sm"
+              >
+                Ver
+              </button>
+            ) : (
+              <span class="text-gray-400 text-sm">—</span>
+            )}
+          </div>
+        </div>
+
+        <!-- Panel de verificación -->
+        <div class="space-y-4">
+          <h3 class="font-semibold text-gray-700">⚙️ Acciones de verificación</h3>
+          
+          <!-- Selector de estado -->
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">Cambiar estado</label>
+            <select 
+              id="estadoSelect"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2"
+            >
+              <option value="pending" selected={transaccion.estado === 'pending'}>⏳ Pendiente revisión</option>
+              <option value="verificando" selected={transaccion.estado === 'verificando'}>🔍 En verificación</option>
+              <option value="completado" selected={transaccion.estado === 'completado'}>✅ Completado</option>
+              <option value="rechazado" selected={transaccion.estado === 'rechazado'}>❌ Rechazado</option>
+            </select>
+          </div>
+          
+          <!-- Notas administrativas -->
+          <div>
+            <label class="block text-sm text-gray-500 mb-1">Notas de verificación</label>
+            <textarea 
+              id="notasAdmin"
+              rows="3"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2"
+              placeholder="Agregar notas sobre la verificación..."
+            >{transaccion.notas_admin || ''}</textarea>
+          </div>
+          
+          <!-- Información de verificación -->
+          {transaccion.fecha_verificacion && (
+            <div class="p-3 bg-blue-50 rounded-lg text-sm">
+              <p class="text-blue-800">Verificado por: <span class="font-medium">{transaccion.verificador}</span></p>
+              <p class="text-blue-600 text-xs">{transaccion.fecha_verificacion}</p>
+            </div>
+          )}
+          
+          <!-- Botones de acción -->
+          <div class="flex gap-3 pt-2">
+            <button 
+              onClick={() => {
+                const nuevoEstado = (document.getElementById('estadoSelect') as HTMLSelectElement).value;
+                const notas = (document.getElementById('notasAdmin') as HTMLTextAreaElement).value;
+                alert(`✅ Transacción marcada como ${nuevoEstado}\nNotas: ${notas || '(vacío)'}`);
+              }}
+              class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Guardar verificación
+            </button>
+            <button 
+              onClick={() => alert('Función: Subir comprobante')}
+              class="flex-1 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              📎 Subir comprobante
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ===== FIN DE NUEVA SECCIÓN ===== -->
+
+    <!-- Botones de acción (originales) -->
     <div class="flex gap-3 pt-4">
       <button 
         onClick={() => alert('Función: Editar transacción (próximamente)')}

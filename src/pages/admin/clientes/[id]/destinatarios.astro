@@ -1,0 +1,505 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+
+// --- 1. FUNCIÓN getStaticPaths: GENERA UNA RUTA POR CADA ID DE CLIENTE ---
+export async function getStaticPaths() {
+  const idsDeClientes = [
+    { id: '00ef1c93-3d56-4e87-8cc8-e0ea68b88b66' },
+    { id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' },
+  ];
+
+  return idsDeClientes.map((cliente) => ({
+    params: { id: cliente.id },
+  }));
+}
+
+// --- 2. OBTENER EL ID DE LA URL ---
+const { id } = Astro.params;
+
+// --- 3. FUNCIÓN PARA OBTENER DATOS DEL CLIENTE ---
+const getClienteById = (clienteId: string) => {
+  const clientes = [
+    {
+      id: '00ef1c93-3d56-4e87-8cc8-e0ea68b88b66',
+      first_name: 'Luisa',
+      last_name: 'Ideas Creativas',
+      destinatarios: [
+        { 
+          id: 201, 
+          nombre: 'Carlos Mendoza', 
+          relacion: 'Hermano',
+          telefono: '+58 412 1234567',
+          banco: 'Banco Venezuela',
+          cuenta: '0102-1234-56-78901234',
+          tipo_cuenta: 'Corriente',
+          identificacion: 'V-12345678',
+          ultimo_envio: '19/03/2026',
+          total_enviado: 450,
+          veces: 3,
+          notas: 'Enviar siempre los viernes'
+        },
+        { 
+          id: 202, 
+          nombre: 'Ana Torres', 
+          relacion: 'Prima',
+          telefono: '+58 414 7654321',
+          banco: 'Mercantil',
+          cuenta: '0105-4321-87-65432109',
+          tipo_cuenta: 'Ahorros',
+          identificacion: 'V-87654321',
+          ultimo_envio: '10/03/2026',
+          total_enviado: 200,
+          veces: 1,
+          notas: ''
+        },
+        { 
+          id: 203, 
+          nombre: 'Roberto Sánchez', 
+          relacion: 'Amigo',
+          telefono: '+58 416 9876543',
+          banco: 'Banesco',
+          cuenta: '0134-5678-90-12345678',
+          tipo_cuenta: 'Corriente',
+          identificacion: 'V-11223344',
+          ultimo_envio: null,
+          total_enviado: 0,
+          veces: 0,
+          notas: 'Nuevo destinatario'
+        }
+      ]
+    },
+    {
+      id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+      first_name: 'Cartaya',
+      last_name: 'Auto Sales',
+      destinatarios: [
+        { 
+          id: 204, 
+          nombre: 'María Pérez', 
+          relacion: 'Prima',
+          telefono: '+58 412 9876543',
+          banco: 'Banesco',
+          cuenta: '0134-5678-90-12345678',
+          tipo_cuenta: 'Corriente',
+          identificacion: 'V-55667788',
+          ultimo_envio: '18/03/2026',
+          total_enviado: 500,
+          veces: 1,
+          notas: 'Envíos quincenales'
+        },
+        { 
+          id: 205, 
+          nombre: 'Juan Sánchez', 
+          relacion: 'Tío',
+          telefono: '+58 416 5554321',
+          banco: 'Banco Provincial',
+          cuenta: '0108-8765-43-21098765',
+          tipo_cuenta: 'Ahorros',
+          identificacion: 'V-99887766',
+          ultimo_envio: '15/03/2026',
+          total_enviado: 450,
+          veces: 1,
+          notas: ''
+        }
+      ]
+    }
+  ];
+  return clientes.find(c => c.id === clienteId);
+};
+
+// --- 4. OBTENER EL CLIENTE ---
+const cliente = getClienteById(id);
+
+if (!cliente) {
+  return Astro.redirect('/404');
+}
+
+const fullName = cliente.last_name 
+  ? `${cliente.first_name} ${cliente.last_name}`
+  : cliente.first_name;
+
+// Estadísticas
+const totalDestinatarios = cliente.destinatarios.length;
+const totalEnviadoDestinos = cliente.destinatarios.reduce((sum, d) => sum + d.total_enviado, 0);
+const destinatariosActivos = cliente.destinatarios.filter(d => d.ultimo_envio).length;
+---
+
+<AdminLayout>
+  <div class="max-w-7xl mx-auto space-y-6 p-4">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+      <a href="/admin/clientes" class="hover:text-blue-600">Clientes</a>
+      <span>›</span>
+      <a href={`/admin/clientes/${id}`} class="hover:text-blue-600">{fullName}</a>
+      <span>›</span>
+      <span class="text-gray-700">Destinatarios</span>
+    </div>
+
+    <!-- Header con acciones -->
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold">Destinatarios de {fullName}</h1>
+        <p class="text-gray-500 mt-1">Gestiona las personas que reciben los envíos de este cliente</p>
+      </div>
+      <div class="flex gap-2">
+        <button 
+          onclick="abrirModalImportar()"
+          class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+        >
+          📤 Importar
+        </button>
+        <button 
+          onclick="abrirModalNuevo()"
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          + Nuevo destinatario
+        </button>
+      </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Total destinatarios</p>
+        <p class="text-2xl font-bold">{totalDestinatarios}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Activos (con envíos)</p>
+        <p class="text-2xl font-bold">{destinatariosActivos}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Total enviado</p>
+        <p class="text-2xl font-bold">${totalEnviadoDestinos}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Promedio por destino</p>
+        <p class="text-2xl font-bold">${totalDestinatarios ? (totalEnviadoDestinos / totalDestinatarios).toFixed(0) : 0}</p>
+      </div>
+    </div>
+
+    <!-- Buscador y filtros -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <input 
+            type="text" 
+            id="buscador"
+            placeholder="Buscar por nombre, teléfono o banco..." 
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onkeyup="filtrarDestinatarios()"
+          />
+        </div>
+        <select id="filtroBanco" class="border border-gray-300 rounded-lg px-4 py-2" onchange="filtrarDestinatarios()">
+          <option value="">Todos los bancos</option>
+          <option value="Banco Venezuela">Banco Venezuela</option>
+          <option value="Mercantil">Mercantil</option>
+          <option value="Banesco">Banesco</option>
+          <option value="Banco Provincial">Banco Provincial</option>
+        </select>
+        <select id="filtroRelacion" class="border border-gray-300 rounded-lg px-4 py-2" onchange="filtrarDestinatarios()">
+          <option value="">Todas las relaciones</option>
+          <option value="Hermano">Hermano/a</option>
+          <option value="Prima">Primo/a</option>
+          <option value="Tío">Tío/a</option>
+          <option value="Amigo">Amigo/a</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Lista de destinatarios -->
+    <div id="listaDestinatarios" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {cliente.destinatarios.map(dest => (
+        <div class="destinatario-card bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+             data-nombre={dest.nombre.toLowerCase()}
+             data-telefono={dest.telefono}
+             data-banco={dest.banco}
+             data-relacion={dest.relacion.toLowerCase()}>
+          
+          <!-- Header de la tarjeta -->
+          <div class="flex justify-between items-start">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                {dest.nombre.charAt(0)}
+              </div>
+              <div>
+                <h3 class="font-semibold text-lg">{dest.nombre}</h3>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 bg-gray-100 rounded-full text-xs">{dest.relacion}</span>
+                  {dest.veces > 0 && (
+                    <span class="text-xs text-gray-500">{dest.veces} envíos</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button 
+                onclick={`editarDestinatario('${dest.id}')`}
+                class="text-blue-600 hover:text-blue-800 text-lg"
+                title="Editar"
+              >
+                ✏️
+              </button>
+              <button 
+                onclick={`eliminarDestinatario('${dest.id}')`}
+                class="text-red-600 hover:text-red-800 text-lg"
+                title="Eliminar"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <!-- Información de contacto -->
+          <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p class="text-gray-500 text-xs">📱 Teléfono</p>
+              <p class="font-medium">{dest.telefono}</p>
+            </div>
+            <div>
+              <p class="text-gray-500 text-xs">🏦 Banco</p>
+              <p class="font-medium">{dest.banco}</p>
+            </div>
+            <div class="col-span-2">
+              <p class="text-gray-500 text-xs">💳 Cuenta</p>
+              <p class="font-mono text-sm bg-gray-50 p-1 rounded">{dest.cuenta}</p>
+            </div>
+            <div>
+              <p class="text-gray-500 text-xs">📋 Tipo</p>
+              <p>{dest.tipo_cuenta}</p>
+            </div>
+            <div>
+              <p class="text-gray-500 text-xs">🆔 ID</p>
+              <p>{dest.identificacion}</p>
+            </div>
+          </div>
+
+          <!-- Últimos envíos -->
+          {dest.ultimo_envio && (
+            <div class="mt-3 p-2 bg-blue-50 rounded-lg">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-blue-700">📅 Último envío: {dest.ultimo_envio}</span>
+                <span class="font-medium text-blue-700">${dest.total_enviado}</span>
+              </div>
+            </div>
+          )}
+
+          <!-- Notas -->
+          {dest.notas && (
+            <div class="mt-3 p-2 bg-gray-50 rounded text-gray-600 text-xs">
+              📝 {dest.notas}
+            </div>
+          )}
+
+          <!-- Acciones -->
+          <div class="mt-4 pt-3 border-t flex justify-end gap-3">
+            <a
+              href={`/admin/transacciones/nueva?clienteId=${id}&destinatarioId=${dest.id}`}
+              class="text-green-600 hover:text-green-800 text-sm font-medium flex items-center gap-1"
+            >
+              + Enviar ahora
+            </a>
+            <a
+              href={`/admin/transacciones?destinatario=${dest.id}`}
+              class="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              Ver historial →
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Modal para nuevo/editar destinatario -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+      <div class="bg-white rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <h2 id="modalTitulo" class="text-2xl font-bold mb-4">Nuevo destinatario</h2>
+        <form id="formDestinatario" class="space-y-4" onsubmit="guardarDestinatario(event)">
+          <input type="hidden" id="destinatarioId" value="" />
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
+            <input type="text" id="nombre" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Relación</label>
+              <select id="relacion" class="w-full border rounded-lg px-3 py-2">
+                <option>Familiar</option>
+                <option>Hermano/a</option>
+                <option>Primo/a</option>
+                <option>Tío/a</option>
+                <option>Amigo/a</option>
+                <option>Colega</option>
+                <option>Cliente</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
+              <input type="text" id="telefono" required class="w-full border rounded-lg px-3 py-2" placeholder="+58 412 1234567" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Banco *</label>
+              <input type="text" id="banco" required class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Tipo cuenta</label>
+              <select id="tipoCuenta" class="w-full border rounded-lg px-3 py-2">
+                <option>Corriente</option>
+                <option>Ahorros</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Número de cuenta *</label>
+            <input type="text" id="cuenta" required class="w-full border rounded-lg px-3 py-2" placeholder="0102-1234-56-78901234" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Identificación</label>
+            <input type="text" id="identificacion" class="w-full border rounded-lg px-3 py-2" placeholder="V-12345678" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+            <textarea id="notas" class="w-full border rounded-lg px-3 py-2" rows="2"></textarea>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-4 border-t">
+            <button type="button" onclick="cerrarModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+              Cancelar
+            </button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Guardar destinatario
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal de importación -->
+    <div id="modalImportar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+      <div class="bg-white rounded-xl p-6 max-w-md w-full">
+        <h2 class="text-2xl font-bold mb-4">Importar destinatarios</h2>
+        <p class="text-gray-600 mb-4">Sube un archivo CSV con la lista de destinatarios</p>
+        
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <input type="file" id="archivoImportar" accept=".csv" class="hidden" />
+          <button onclick="document.getElementById('archivoImportar').click()" class="text-blue-600 hover:underline">
+            📤 Seleccionar archivo
+          </button>
+          <p class="text-sm text-gray-500 mt-2">o arrastra y suelta aquí</p>
+        </div>
+
+        <div class="mt-4 text-sm text-gray-500">
+          <p>Formato esperado: nombre,relación,telefono,banco,cuenta,tipo_cuenta,identificacion</p>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4">
+          <button onclick="cerrarModalImportar()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+            Cancelar
+          </button>
+          <button onclick="importarDestinatarios()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            Importar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<!-- JavaScript mejorado -->
+<script is:inline>
+  // Variables globales
+  let destinatarios = [];
+
+  // Inicialización
+  document.addEventListener('DOMContentLoaded', function() {
+    // Cargar destinatarios del DOM para búsqueda
+    document.querySelectorAll('.destinatario-card').forEach(card => {
+      destinatarios.push({
+        elemento: card,
+        nombre: card.dataset.nombre,
+        telefono: card.dataset.telefono,
+        banco: card.dataset.banco,
+        relacion: card.dataset.relacion
+      });
+    });
+  });
+
+  // Funciones del modal
+  function abrirModalNuevo() {
+    document.getElementById('modalTitulo').textContent = 'Nuevo destinatario';
+    document.getElementById('formDestinatario').reset();
+    document.getElementById('destinatarioId').value = '';
+    document.getElementById('modal').classList.remove('hidden');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal').classList.add('hidden');
+  }
+
+  function abrirModalImportar() {
+    document.getElementById('modalImportar').classList.remove('hidden');
+  }
+
+  function cerrarModalImportar() {
+    document.getElementById('modalImportar').classList.add('hidden');
+  }
+
+  // Editar destinatario
+  function editarDestinatario(id) {
+    document.getElementById('modalTitulo').textContent = 'Editar destinatario';
+    document.getElementById('destinatarioId').value = id;
+    
+    // Aquí cargarías los datos del destinatario
+    alert(`Cargando datos del destinatario ${id}...`);
+    abrirModalNuevo();
+  }
+
+  // Eliminar destinatario
+  function eliminarDestinatario(id) {
+    if (confirm('¿Estás seguro de eliminar este destinatario?')) {
+      alert(`Destinatario ${id} eliminado (simulación)`);
+      // Recargar o eliminar del DOM
+    }
+  }
+
+  // Guardar destinatario
+  function guardarDestinatario(event) {
+    event.preventDefault();
+    alert('Destinatario guardado (simulación)');
+    cerrarModal();
+  }
+
+  // Importar destinatarios
+  function importarDestinatarios() {
+    alert('Importación simulada: 3 destinatarios agregados');
+    cerrarModalImportar();
+  }
+
+  // Filtrar destinatarios
+  function filtrarDestinatarios() {
+    const busqueda = document.getElementById('buscador').value.toLowerCase();
+    const filtroBanco = document.getElementById('filtroBanco').value;
+    const filtroRelacion = document.getElementById('filtroRelacion').value.toLowerCase();
+
+    destinatarios.forEach(item => {
+      const coincideNombre = item.nombre.includes(busqueda);
+      const coincideTelefono = item.telefono.includes(busqueda);
+      const coincideBanco = !filtroBanco || item.banco === filtroBanco;
+      const coincideRelacion = !filtroRelacion || item.relacion === filtroRelacion;
+      
+      if ((coincideNombre || coincideTelefono) && coincideBanco && coincideRelacion) {
+        item.elemento.style.display = '';
+      } else {
+        item.elemento.style.display = 'none';
+      }
+    });
+  }
+</script>
