@@ -149,10 +149,10 @@ export default function Sidebar() {
       <div className="p-4 border-t border-gray-800">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-            CM
+            AD
           </div>
           <div>
-            <p className="text-white font-medium">Carlos Martinez</p>
+            <p className="text-white font-medium">AD Gomez</p>
             <p className="text-sm text-gray-400">Administrador</p>
           </div>
         </div>

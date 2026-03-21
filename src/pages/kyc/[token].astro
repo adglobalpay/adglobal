@@ -1,0 +1,332 @@
+---
+export const prerender = false;
+
+// Esta función permite que Astro genere la página en modo estático
+export async function getStaticPaths() {
+  // Tokens de ejemplo para desarrollo
+  const tokens = ['prueba123', 'demo456', 'test789'];
+  
+  return tokens.map(token => ({
+    params: { token }
+  }));
+}
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Verificación KYC - AD Global Pay</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-fade-in-up {
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
+  
+  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-8">
+    <div class="max-w-md w-full mx-auto animate-fade-in-up">
+      
+      <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
+        
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-center relative">
+          <div class="absolute top-4 right-4">
+            <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">
+              Paso 1 de 3
+            </span>
+          </div>
+          <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+            <span class="text-4xl">🪪</span>
+          </div>
+          <h1 class="text-2xl font-bold text-white">Verifica tu identidad</h1>
+          <p class="text-blue-100 text-sm mt-2">AD Global Pay</p>
+        </div>
+        
+        <div class="p-6">
+          
+          <div id="loadingState" class="text-center py-8">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-500">Cargando verificador...</p>
+          </div>
+          
+          <div id="mainContent" class="hidden">
+            
+            <div class="bg-gray-50 rounded-2xl p-4 mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span class="text-lg">👤</span>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500">Cliente</p>
+                  <p class="font-medium text-gray-800">Luisa Ideas Creativas</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 mt-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span class="text-lg">📧</span>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500">Email</p>
+                  <p class="font-medium text-gray-800">luisa@email.com</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex justify-between mb-8">
+              <div class="flex-1 text-center">
+                <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center mx-auto mb-2 text-sm font-bold">1</div>
+                <p class="text-xs text-gray-500">Documento</p>
+              </div>
+              <div class="flex-1 text-center">
+                <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mx-auto mb-2 text-sm font-bold">2</div>
+                <p class="text-xs text-gray-500">Selfie</p>
+              </div>
+              <div class="flex-1 text-center">
+                <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mx-auto mb-2 text-sm font-bold">3</div>
+                <p class="text-xs text-gray-500">Confirmación</p>
+              </div>
+            </div>
+            
+            <!-- ===== SECCIÓN DE DECLARACIÓN JURADA Y FIRMA ===== -->
+            <div id="declaracionSection" class="mb-6">
+              <div class="bg-gray-50 rounded-2xl p-5 border border-gray-200">
+                <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <span class="text-xl">📜</span> Declaración Jurada
+                </h3>
+                
+                <div class="text-sm text-gray-600 space-y-3 mb-4">
+                  <p>Declaro bajo juramento que:</p>
+                  <ul class="list-disc pl-5 space-y-1">
+                    <li>Los fondos que enviaré a través de AD Global Pay provienen de <strong>actividades lícitas y verificables</strong>.</li>
+                    <li>No estoy involucrado en actividades de lavado de activos, financiamiento del terrorismo, ni operaciones con personas o entidades sancionadas por OFAC.</li>
+                    <li>Toda la información proporcionada es <strong>veraz, completa y actualizada</strong>.</li>
+                    <li>Acepto los <a href="/terminos" target="_blank" class="text-blue-600 underline">Términos y Condiciones</a> y la <a href="/privacidad" target="_blank" class="text-blue-600 underline">Política de Privacidad</a> de AD Global Services LLC.</li>
+                  </ul>
+                </div>
+                
+                <div class="mt-4">
+                  <p class="text-sm font-medium text-gray-700 mb-2">✍️ Firma digital (toque o deslice para firmar)</p>
+                  <div class="border-2 border-dashed border-gray-300 rounded-xl p-2 bg-white">
+                    <canvas id="signatureCanvas" width="400" height="150" style="width:100%; height:auto; max-width:400px; touch-action: none; cursor: crosshair;" class="border rounded-lg bg-white"></canvas>
+                    <div class="flex justify-between mt-2">
+                      <button type="button" id="clearSignature" class="text-xs text-red-600 hover:text-red-800">🗑️ Limpiar firma</button>
+                      <span class="text-xs text-gray-400">Firma con el dedo o mouse</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mt-4 flex items-start gap-3">
+                  <input type="checkbox" id="aceptoTerminos" class="mt-1 w-5 h-5 accent-blue-600">
+                  <label for="aceptoTerminos" class="text-sm text-gray-700">
+                    He leído y acepto la <strong>Declaración Jurada</strong>, los <strong>Términos y Condiciones</strong> y la <strong>Política de Privacidad</strong> de AD Global Services LLC.
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div id="verificationArea" class="bg-gray-50 rounded-2xl p-6 text-center border-2 border-dashed border-gray-200">
+              <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-4xl">📸</span>
+              </div>
+              <h3 class="font-semibold text-gray-800 mb-2">Verificación con Didit</h3>
+              <p class="text-sm text-gray-500 mb-4">Tendrás que tomar una foto de tu documento de identidad y una selfie</p>
+              <button id="startVerificationBtn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md">
+                Iniciar verificación
+              </button>
+              <p class="text-xs text-gray-400 mt-3">⏱️ Tiempo estimado: 2 minutos</p>
+            </div>
+            
+            <div class="mt-6 bg-blue-50 rounded-xl p-4">
+              <div class="flex gap-3">
+                <span class="text-xl">🔒</span>
+                <div>
+                  <p class="text-sm font-medium text-blue-800">Tu información está segura</p>
+                  <p class="text-xs text-blue-600 mt-1">Usamos tecnología Didit, verificada y cumpliendo con las regulaciones internacionales.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+              <p class="text-xs text-gray-400">Este enlace expira en 7 días</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
+          <p class="text-center text-xs text-gray-400">
+            ¿Problemas? <a href="mailto:soporte@adglobalpay.com" class="text-blue-600 font-medium">Contacta soporte</a>
+          </p>
+        </div>
+      </div>
+      
+      <div class="text-center mt-6">
+        <div class="flex justify-center gap-4 text-xs text-gray-400">
+          <span>✅ Datos encriptados</span>
+          <span>✅ Cumple KYC/AML</span>
+          <span>✅ Proceso seguro</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    (function() {
+      var signatureIsEmpty = true;
+      var canvas = null;
+      var ctx = null;
+      
+      setTimeout(function() {
+        var loading = document.getElementById('loadingState');
+        var main = document.getElementById('mainContent');
+        if (loading) loading.classList.add('hidden');
+        if (main) main.classList.remove('hidden');
+      }, 1000);
+      
+      function initSignatureCanvas() {
+        canvas = document.getElementById('signatureCanvas');
+        if (!canvas) return;
+        
+        ctx = canvas.getContext('2d');
+        ctx.strokeStyle = '#1f2937';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        var drawing = false;
+        var lastX = 0, lastY = 0;
+        
+        function getCoordinates(e) {
+          var rect = canvas.getBoundingClientRect();
+          var scaleX = canvas.width / rect.width;
+          var scaleY = canvas.height / rect.height;
+          
+          var clientX, clientY;
+          if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+          } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+          }
+          
+          var x = (clientX - rect.left) * scaleX;
+          var y = (clientY - rect.top) * scaleY;
+          if (x < 0) x = 0;
+          if (x > canvas.width) x = canvas.width;
+          if (y < 0) y = 0;
+          if (y > canvas.height) y = canvas.height;
+          return { x: x, y: y };
+        }
+        
+        function startDrawing(e) {
+          e.preventDefault();
+          drawing = true;
+          var coords = getCoordinates(e);
+          lastX = coords.x;
+          lastY = coords.y;
+          ctx.beginPath();
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(lastX, lastY);
+          ctx.stroke();
+          signatureIsEmpty = false;
+        }
+        
+        function draw(e) {
+          e.preventDefault();
+          if (!drawing) return;
+          var coords = getCoordinates(e);
+          ctx.beginPath();
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(coords.x, coords.y);
+          ctx.stroke();
+          lastX = coords.x;
+          lastY = coords.y;
+        }
+        
+        function stopDrawing(e) {
+          e.preventDefault();
+          drawing = false;
+        }
+        
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing);
+        
+        var clearBtn = document.getElementById('clearSignature');
+        if (clearBtn) {
+          clearBtn.addEventListener('click', function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#1f2937';
+            signatureIsEmpty = true;
+          });
+        }
+        
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#1f2937';
+      }
+      
+      var startBtn = document.getElementById('startVerificationBtn');
+      if (startBtn) {
+        startBtn.addEventListener('click', function() {
+          var acepta = document.getElementById('aceptoTerminos');
+          var canvasEl = document.getElementById('signatureCanvas');
+          
+          if (!acepta || !acepta.checked) {
+            alert('⚠️ Debes aceptar los términos y condiciones y la declaración jurada para continuar.');
+            return;
+          }
+          
+          if (signatureIsEmpty) {
+            alert('⚠️ Debes firmar la declaración jurada para continuar.');
+            return;
+          }
+          
+          var signatureData = canvasEl.toDataURL('image/png');
+          console.log('✅ Firma capturada (simulación)');
+          
+          var btn = this;
+          var area = document.getElementById('verificationArea');
+          
+          btn.disabled = true;
+          btn.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>';
+          
+          setTimeout(function() {
+            area.innerHTML = '<div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-4xl">✅</span></div><h3 class="font-semibold text-gray-800 mb-2">¡Verificación completada!</h3><p class="text-sm text-gray-500 mb-4">Tu identidad ha sido verificada correctamente.</p><button onclick="window.location.href=\'/kyc/completado\'" class="w-full bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-all">Continuar</button>';
+          }, 2000);
+        });
+      }
+      
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSignatureCanvas);
+      } else {
+        initSignatureCanvas();
+      }
+    })();
+  </script>
+</body>
+</html>

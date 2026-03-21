@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Verificación Completada - AD Global Pay</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes confetti {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      animation: confetti 3s ease-out forwards;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .animate-bounce-custom {
+      animation: bounce 0.6s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-green-500 to-emerald-600 min-h-screen flex items-center justify-center p-4">
+  
+  <div class="max-w-md w-full mx-auto">
+    <!-- Tarjeta de éxito -->
+    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden transform transition-all animate-fade-in-up">
+      
+      <!-- Header con icono -->
+      <div class="relative p-8 text-center">
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-400 to-emerald-500"></div>
+        <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg animate-bounce-custom">
+          <span class="text-5xl">✅</span>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">¡Verificación completada!</h1>
+        <p class="text-gray-500 text-sm">Tu identidad ha sido verificada correctamente</p>
+      </div>
+      
+      <!-- Contenido -->
+      <div class="px-8 pb-8">
+        <!-- Detalles -->
+        <div class="bg-gray-50 rounded-2xl p-5 mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <span class="text-green-600 text-sm">✓</span>
+            </div>
+            <p class="text-sm text-gray-700">Verificación aprobada</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <span class="text-blue-600 text-sm">📧</span>
+            </div>
+            <p class="text-sm text-gray-700">Recibirás confirmación por email</p>
+          </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="space-y-3">
+          <a href="/" class="block bg-blue-600 text-white py-3 rounded-xl font-medium text-center hover:bg-blue-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md">
+            Volver al inicio
+          </a>
+          <a href="/admin" class="block border border-gray-300 text-gray-600 py-3 rounded-xl font-medium text-center hover:bg-gray-50 transition-all">
+            Ir al panel (admin)
+          </a>
+        </div>
+        
+        <!-- Mensaje de soporte -->
+        <p class="text-center text-xs text-gray-400 mt-6">
+          ¿Preguntas? <a href="mailto:soporte@adglobalpay.com" class="text-blue-600 font-medium">soporte@adglobalpay.com</a>
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Generar confeti
+    function crearConfeti() {
+      for (let i = 0; i < 100; i++) {
+        const confeti = document.createElement('div');
+        confeti.classList.add('confetti');
+        confeti.style.left = Math.random() * 100 + '%';
+        confeti.style.animationDelay = Math.random() * 2 + 's';
+        confeti.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
+        confeti.style.width = Math.random() * 12 + 4 + 'px';
+        confeti.style.height = Math.random() * 12 + 4 + 'px';
+        document.body.appendChild(confeti);
+        
+        setTimeout(() => confeti.remove(), 3000);
+      }
+    }
+    
+    // Ejecutar confeti al cargar
+    setTimeout(crearConfeti, 100);
+  </script>
+</body>
+</html>

@@ -6,91 +6,119 @@ const transacciones = [
   {
     id: 1,
     fecha: '18/03/2026',
-    cliente: 'Juan Pérez',
-    email: 'juan@email.com',
+    cliente: {
+      nombre: 'Juan Pérez',
+      email: 'juan@email.com'
+    },
     monto_usd: 200,
     monto_ves: 10000,
     tasa: 50,
     destino: 'Banco Venezuela',
+    metodo: 'Zelle',
     estado: 'Completado',
-    comprobante: 'comprobante1.pdf'
+    comprobante: 'comprobante_1.pdf',
+    comprobante_url: '/uploads/comprobantes/comprobante_1.pdf'
   },
   {
     id: 2,
     fecha: '18/03/2026',
-    cliente: 'María Gómez',
-    email: 'maria@email.com',
+    cliente: {
+      nombre: 'María Gómez',
+      email: 'maria@email.com'
+    },
     monto_usd: 150,
     monto_ves: 7350,
     tasa: 49,
     destino: 'Mercantil',
+    metodo: 'USDT',
     estado: 'Completado',
-    comprobante: 'comprobante2.pdf'
+    comprobante: 'comprobante_2.pdf',
+    comprobante_url: '/uploads/comprobantes/comprobante_2.pdf'
   },
   {
     id: 3,
     fecha: '17/03/2026',
-    cliente: 'Carlos Rodríguez',
-    email: 'carlos@email.com',
+    cliente: {
+      nombre: 'Carlos Rodríguez',
+      email: 'carlos@email.com'
+    },
     monto_usd: 350,
     monto_ves: 16800,
     tasa: 48,
     destino: 'Banesco',
+    metodo: 'Transferencia',
     estado: 'Procesando',
-    comprobante: null
+    comprobante: null,
+    comprobante_url: null
   },
   {
     id: 4,
     fecha: '17/03/2026',
-    cliente: 'Ana Martínez',
-    email: 'ana@email.com',
+    cliente: {
+      nombre: 'Ana Martínez',
+      email: 'ana@email.com'
+    },
     monto_usd: 120,
     monto_ves: 5880,
     tasa: 49,
     destino: 'Banco Provincial',
+    metodo: 'Zelle',
     estado: 'Completado',
-    comprobante: 'comprobante4.pdf'
+    comprobante: 'comprobante_4.pdf',
+    comprobante_url: '/uploads/comprobantes/comprobante_4.pdf'
   },
   {
     id: 5,
     fecha: '16/03/2026',
-    cliente: 'Pedro Sánchez',
-    email: 'pedro@email.com',
+    cliente: {
+      nombre: 'Pedro Sánchez',
+      email: 'pedro@email.com'
+    },
     monto_usd: 500,
     monto_ves: 24500,
     tasa: 49,
     destino: 'Banco de Venezuela',
+    metodo: 'Efectivo',
     estado: 'Pendiente',
-    comprobante: null
+    comprobante: null,
+    comprobante_url: null
   },
   {
     id: 6,
     fecha: '16/03/2026',
-    cliente: 'Luisa Fernández',
-    email: 'luisa@email.com',
+    cliente: {
+      nombre: 'Luisa Fernández',
+      email: 'luisa@email.com'
+    },
     monto_usd: 75,
     monto_ves: 3675,
     tasa: 49,
     destino: 'Bancamiga',
+    metodo: 'USDT',
     estado: 'Fallido',
-    comprobante: null
+    comprobante: null,
+    comprobante_url: null
   }
 ];
 
-// Filtrar estado para badges
+// Calcular totales desde transacciones
+const totalIngreso = transacciones.reduce((sum, tx) => sum + tx.monto_usd, 0);
+const totalSalida = transacciones.reduce((sum, tx) => sum + tx.monto_usd, 0);
+const tasaPromedio = transacciones.length > 0 
+  ? (transacciones.reduce((sum, tx) => sum + tx.tasa, 0) / transacciones.length).toFixed(1)
+  : 49.2;
+
+// Función para obtener badge de estado
 const getEstadoBadge = (estado: string) => {
   const config = {
-    Completado: { bg: 'bg-green-100', text: 'text-green-700', icon: '✅' },
-    Procesando: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '⏳' },
-    Pendiente: { bg: 'bg-blue-100', text: 'text-blue-700', icon: '⏸️' },
-    Fallido: { bg: 'bg-red-100', text: 'text-red-700', icon: '❌' }
+    Completado: { bg: 'bg-green-100', text: 'text-green-700', icon: '✅', label: 'Completado' },
+    Procesando: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '⏳', label: 'Procesando' },
+    Pendiente: { bg: 'bg-blue-100', text: 'text-blue-700', icon: '⏸️', label: 'Pendiente' },
+    Fallido: { bg: 'bg-red-100', text: 'text-red-700', icon: '❌', label: 'Fallido' }
   };
   
   const style = config[estado] || config.Pendiente;
-  
-  return `<span class="px-3 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text} flex items-center gap-1 w-fit">
-    ${style.icon} ${estado}
-  </span>`;
+  return `<span class="px-3 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text} flex items-center gap-1 w-fit">${style.icon} ${style.label}</span>`;
 };
 ---
 
@@ -101,13 +129,13 @@ const getEstadoBadge = (estado: string) => {
       <h1 class="text-3xl font-bold">Transacciones</h1>
       <div class="flex gap-3">
         <button 
-          onClick={() => alert('Exportar función por implementar')}
+          id="btnExportar"
           class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
         >
-          📥 Exportar
+          📥 Exportar CSV
         </button>
         <button 
-          onClick={() => alert('Filtros avanzados')}
+          id="btnFiltrar"
           class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
         >
           🔍 Filtrar
@@ -146,19 +174,20 @@ const getEstadoBadge = (estado: string) => {
               <th class="pb-3 font-medium">Monto Envío</th>
               <th class="pb-3 font-medium">Monto Destino</th>
               <th class="pb-3 font-medium">Tasa</th>
+              <th class="pb-3 font-medium">Método</th>
               <th class="pb-3 font-medium">Destino</th>
               <th class="pb-3 font-medium">Estado</th>
               <th class="pb-3 font-medium">Comprobante</th>
               <th class="pb-3 font-medium">Acciones</th>
-            </tr>
+             </tr>
           </thead>
           <tbody>
             {transacciones.map((tx) => (
               <tr key={tx.id} class="border-b hover:bg-gray-50 transition-colors">
                 <td class="py-4 text-sm">{tx.fecha}</td>
                 <td class="py-4">
-                  <div class="font-medium">{tx.cliente}</div>
-                  <div class="text-xs text-gray-500">{tx.email}</div>
+                  <div class="font-medium">{tx.cliente.nombre}</div>
+                  <div class="text-xs text-gray-500">{tx.cliente.email}</div>
                 </td>
                 <td class="py-4 font-medium">${tx.monto_usd} USD</td>
                 <td class="py-4">{tx.monto_ves.toLocaleString()} VES</td>
@@ -167,12 +196,17 @@ const getEstadoBadge = (estado: string) => {
                     {tx.tasa}
                   </span>
                 </td>
+                <td class="py-4">
+                  <span class="px-2 py-1 bg-gray-100 rounded text-xs font-medium">
+                    {tx.metodo}
+                  </span>
+                </td>
                 <td class="py-4 text-sm">{tx.destino}</td>
                 <td class="py-4" set:html={getEstadoBadge(tx.estado)} />
                 <td class="py-4">
                   {tx.comprobante ? (
                     <button 
-                      onClick={() => alert(`Ver comprobante ${tx.comprobante}`)}
+                      onclick="abrirModalComprobante('{tx.comprobante_url}', '{tx.comprobante}')"
                       class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
                     >
                       📎 Ver
@@ -195,7 +229,7 @@ const getEstadoBadge = (estado: string) => {
         </table>
       </div>
 
-      <!-- Paginación (estática por ahora) -->
+      <!-- Paginación -->
       <div class="flex justify-between items-center mt-6 pt-4 border-t">
         <span class="text-sm text-gray-500">
           Mostrando 1-6 de 24 transacciones
@@ -210,23 +244,39 @@ const getEstadoBadge = (estado: string) => {
       </div>
     </div>
 
-    <!-- Resumen rápido (tarjetas inferiores) -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Volumen hoy</p>
-        <p class="text-2xl font-bold">$1,250 USD</p>
-        <p class="text-sm text-gray-500">61,250 VES</p>
+    <!-- Resumen rápido - TODOS LOS KPIS -->
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <!-- Ingreso Total (NUEVO) -->
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-lg">
+        <p class="text-blue-100 text-sm">💰 INGRESO TOTAL</p>
+        <p class="text-2xl font-bold">${totalIngreso.toLocaleString()}</p>
+        <p class="text-blue-100 text-xs">USD recibidos</p>
       </div>
+      
+      <!-- Salida Total (NUEVO) -->
+      <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl p-4 shadow-lg">
+        <p class="text-emerald-100 text-sm">📤 SALIDA TOTAL</p>
+        <p class="text-2xl font-bold">${totalSalida.toLocaleString()}</p>
+        <p class="text-emerald-100 text-xs">USDT enviados</p>
+      </div>
+      
+      
+      
+      <!-- Transacciones hoy (EXISTENTE) -->
       <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <p class="text-sm text-gray-500">Transacciones hoy</p>
         <p class="text-2xl font-bold">7</p>
         <p class="text-sm text-green-600">+2 vs ayer</p>
       </div>
+      
+      <!-- Tasa promedio (EXISTENTE) -->
       <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <p class="text-sm text-gray-500">Tasa promedio</p>
-        <p class="text-2xl font-bold">49.2</p>
+        <p class="text-2xl font-bold">{tasaPromedio}</p>
         <p class="text-sm text-gray-500">USD → VES</p>
       </div>
+      
+      <!-- Pendientes (EXISTENTE) -->
       <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <p class="text-sm text-gray-500">Pendientes</p>
         <p class="text-2xl font-bold">3</p>
@@ -234,12 +284,79 @@ const getEstadoBadge = (estado: string) => {
       </div>
     </div>
   </div>
+
   <!-- Botón flotante de nueva transacción -->
-<a 
-  href="/admin/transacciones/nueva"
-  class="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg hover:bg-blue-700 transition-colors z-50"
-  title="Nueva Transacción"
->
-  +
-</a>
+  <a 
+    href="/admin/transacciones/nueva"
+    class="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg hover:bg-blue-700 transition-colors z-50"
+    title="Nueva Transacción"
+  >
+    +
+  </a>
+
+  <!-- Modal para previsualizar comprobante -->
+  <div id="modalComprobante" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">📎 Comprobante</h2>
+        <button onclick="cerrarModalComprobante()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+      <div id="comprobantePreview" class="flex justify-center items-center min-h-[300px] bg-gray-50 rounded-lg p-4">
+        <p class="text-gray-500">Cargando...</p>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button onclick="cerrarModalComprobante()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cerrar</button>
+      </div>
+    </div>
+  </div>
 </AdminLayout>
+
+<script is:inline>
+  // Función para abrir modal con preview
+  window.abrirModalComprobante = function(url, nombre) {
+    var modal = document.getElementById('modalComprobante');
+    var preview = document.getElementById('comprobantePreview');
+    
+    if (!url) {
+      preview.innerHTML = '<p class="text-red-500">No hay comprobante disponible</p>';
+      modal.classList.remove('hidden');
+      return;
+    }
+    
+    var extension = url.split('.').pop().toLowerCase();
+    
+    if (extension === 'pdf') {
+      preview.innerHTML = `<iframe src="${url}" class="w-full h-[70vh]" frameborder="0"></iframe>`;
+    } else if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extension)) {
+      preview.innerHTML = `<img src="${url}" alt="Comprobante" class="max-w-full max-h-[70vh] object-contain">`;
+    } else {
+      preview.innerHTML = `<p class="text-gray-500">No se puede previsualizar este tipo de archivo (${extension})</p><a href="${url}" target="_blank" class="text-blue-600 underline mt-2 inline-block">Descargar archivo</a>`;
+    }
+    
+    modal.classList.remove('hidden');
+  };
+  
+  window.cerrarModalComprobante = function() {
+    var modal = document.getElementById('modalComprobante');
+    var preview = document.getElementById('comprobantePreview');
+    modal.classList.add('hidden');
+    preview.innerHTML = '<p class="text-gray-500">Cargando...</p>';
+  };
+  
+  // Exportar CSV
+  document.addEventListener('DOMContentLoaded', function() {
+    var btnExportar = document.getElementById('btnExportar');
+    if (btnExportar) {
+      btnExportar.onclick = function() {
+        alert('📥 Exportando a CSV... (función por implementar)');
+      };
+    }
+    
+    var btnFiltrar = document.getElementById('btnFiltrar');
+    if (btnFiltrar) {
+      btnFiltrar.onclick = function() {
+        alert('🔍 Filtros avanzados (función por implementar)');
+      };
+    }
+  });
+</script>

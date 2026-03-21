@@ -3,7 +3,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 ---
 
 <AdminLayout>
-  <div class="max-w-7xl mx-auto space-y-4 p-4">
+  <div class="max-w-full mx-auto space-y-4 p-4">
     <!-- Header -->
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">➕ Nueva Transacción</h1>
@@ -12,7 +12,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       </a>
     </div>
 
-    <!-- Opciones globales (botones para agregar) -->
+    <!-- Panel de administración rápida -->
     <div class="grid grid-cols-4 gap-3 mb-3">
       <a href="/admin/clientes" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1 border border-blue-200 transition-colors">
         <span>➕</span> Clientes
@@ -28,37 +28,44 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       </button>
     </div>
 
-    <!-- Tabla de transacciones - SIN SCROLL HORIZONTAL -->
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <!-- Versión para pantallas grandes (visible en desktop) -->
-      <div class="hidden lg:block">
+    <!-- Tabla de transacciones -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 overflow-x-auto">
+      <div style="min-width: 1100px;">
         <table class="w-full">
           <thead>
             <tr class="text-left text-gray-500 text-xs border-b">
-              <th class="pb-2 pr-2">Fecha</th>
-              <th class="pb-2 pr-2">Cliente</th>
-              <th class="pb-2 pr-2">Método</th>
-              <th class="pb-2 pr-2">Destinatario</th>
-              <th class="pb-2 pr-2">Banco</th>
-              <th class="pb-2 pr-2">Ingreso</th>
-              <th class="pb-2 pr-2">Salida</th>
-              <th class="pb-2 pr-2">Tasa</th>
-              <th class="pb-2 pr-2">Bs</th>
-              <th class="pb-2 pr-2">Profit</th>
-              <th class="pb-2 pr-2"></th>
+              <th class="pb-2 pr-1">Fecha</th>
+              <th class="pb-2 pr-1" colspan="2">Cliente / Comprobante</th>
+              <th class="pb-2 pr-1">Método</th>
+              <th class="pb-2 pr-1" colspan="2">Destinatario / Comprobante</th>
+              <th class="pb-2 pr-1">Banco</th>
+              <th class="pb-2 pr-1">Ingreso</th>
+              <th class="pb-2 pr-1">Salida</th>
+              <th class="pb-2 pr-1">Tasa</th>
+              <th class="pb-2 pr-1">Bs</th>
+              <th class="pb-2 pr-1">Profit</th>
+              <th class="pb-2 pr-1"></th>
+            </tr>
+            <tr class="text-left text-gray-400 text-[10px] border-b">
+              <th></th>
+              <th>Nombre</th>
+              <th>Comprobante</th>
+              <th></th>
+              <th>Nombre</th>
+              <th>Comprobante</th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="tablaBody">
             <!-- Las filas se insertan aquí -->
           </tbody>
         </table>
-      </div>
-
-      <!-- Versión para móvil/tablet (cards) -->
-      <div class="lg:hidden space-y-3" id="cardsContainer">
-        <p class="text-center text-gray-500 text-sm py-4">
-          Usa una pantalla más grande para ver la tabla completa
-        </p>
       </div>
 
       <!-- Botón para agregar fila -->
@@ -73,7 +80,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     </div>
   </div>
 
-  <!-- Modales (sin cambios) -->
+  <!-- Modales (iguales) -->
   <div id="modalBanco" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-xl p-6 max-w-md w-full">
       <h2 class="text-2xl font-bold mb-4">➕ Nuevo Banco</h2>
@@ -96,7 +103,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       <form id="formMetodo" class="space-y-4" onsubmit="guardarMetodo(event)">
         <div>
           <label class="block text-sm font-medium mb-1">Nombre del método *</label>
-          <input type="text" id="metodoNombre" required class="w-full border rounded-lg px-3 py-2" placeholder="Ej: Zelle, BOFA, Chase, PNC">
+          <input type="text" id="metodoNombre" required class="w-full border rounded-lg px-3 py-2" placeholder="Ej: Zelle, BOFA, Chase">
         </div>
         <div class="flex justify-end gap-2 pt-4">
           <button type="button" onclick="cerrarModalMetodo()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -108,29 +115,128 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 </AdminLayout>
 
 <script is:inline>
-  // Datos iniciales
+  // ============ DATOS INICIALES ============
   var clientes = [
-    { id: '1', nombre: 'Luisa Ideas Creativas', telefono: '4242459151', email: '', metodo: 'Zelle' },
-    { id: '2', nombre: 'Cartaya Auto Sales', telefono: '3055551234', email: 'cartaya@autos.com', metodo: 'BOFA' }
+    { id: '1', nombre: 'Luisa Ideas Creativas', telefono: '4242459151', email: '' },
+    { id: '2', nombre: 'Cartaya Auto Sales', telefono: '3055551234', email: 'cartaya@autos.com' }
   ];
 
   var destinatarios = [
-    { id: '201', nombre: 'Carlos Mendoza', telefono: '+58 412 1234567', banco: 'Banco Venezuela', cuenta: '0102-1234-56-78901234', relacion: 'Hermano' },
-    { id: '202', nombre: 'Ana Torres', telefono: '+58 414 7654321', banco: 'Mercantil', cuenta: '0105-4321-87-65432109', relacion: 'Prima' }
+    { id: '201', nombre: 'Carlos Mendoza', telefono: '+58 412 1234567', banco: 'Banco Venezuela', cuenta: '0102-1234-56-78901234' },
+    { id: '202', nombre: 'Ana Torres', telefono: '+58 414 7654321', banco: 'Mercantil', cuenta: '0105-4321-87-65432109' }
   ];
 
   var bancos = ['Banesco', 'Mercantil', 'Banco Venezuela', 'Banco Provincial', 'BNC', 'BOD'];
   var metodos = ['Zelle', 'BOFA', 'Chase', 'PNC', 'Debit Card', 'Efectivo', 'USDT'];
 
+  window.comprobantes = window.comprobantes || {};
+
+  // ============ FUNCIÓN DRAG & DROP ============
+  function crearDropArea(filaId, tipo) {
+    var container = document.createElement('div');
+    container.className = 'flex flex-col items-center';
+    
+    var dropArea = document.createElement('div');
+    dropArea.className = 'drop-area w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all';
+    dropArea.innerHTML = '<span class="text-lg text-gray-400">📎</span>';
+    
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*,application/pdf';
+    fileInput.className = 'hidden';
+    
+    var fileNameSpan = document.createElement('span');
+    fileNameSpan.className = 'text-[10px] text-gray-500 mt-1 truncate max-w-[50px] text-center';
+    fileNameSpan.textContent = '';
+    
+    dropArea.ondragover = function(e) {
+      e.preventDefault();
+      this.classList.add('border-blue-500', 'bg-blue-50');
+      this.innerHTML = '<span class="text-lg text-blue-500">📤</span>';
+    };
+    
+    dropArea.ondragleave = function(e) {
+      e.preventDefault();
+      this.classList.remove('border-blue-500', 'bg-blue-50');
+      this.innerHTML = '<span class="text-lg text-gray-400">📎</span>';
+    };
+    
+    dropArea.ondrop = function(e) {
+      e.preventDefault();
+      this.classList.remove('border-blue-500', 'bg-blue-50');
+      var file = e.dataTransfer.files[0];
+      if (file) {
+        procesarArchivo(file, filaId, tipo, fileNameSpan, dropArea);
+      }
+      this.innerHTML = '<span class="text-lg text-gray-400">📎</span>';
+    };
+    
+    dropArea.onclick = function() {
+      fileInput.click();
+    };
+    
+    fileInput.onchange = function(e) {
+      var file = e.target.files[0];
+      if (file) {
+        procesarArchivo(file, filaId, tipo, fileNameSpan, dropArea);
+      }
+    };
+    
+    container.appendChild(dropArea);
+    container.appendChild(fileInput);
+    container.appendChild(fileNameSpan);
+    
+    return container;
+  }
+
+  function procesarArchivo(file, filaId, tipo, fileNameSpan, dropArea) {
+    var tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    var esValido = false;
+    for (var i = 0; i < tiposPermitidos.length; i++) {
+      if (file.type === tiposPermitidos[i]) {
+        esValido = true;
+        break;
+      }
+    }
+    
+    if (!esValido) {
+      alert('❌ Solo se permiten imágenes (JPG, PNG, WEBP) o PDF');
+      return false;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert('❌ El archivo no debe superar los 5MB');
+      return false;
+    }
+    
+    var comprobantes = window.comprobantes || {};
+    if (!comprobantes[filaId]) comprobantes[filaId] = {};
+    comprobantes[filaId][tipo] = {
+      nombre: file.name,
+      tipo: file.type,
+      tamaño: file.size,
+      archivo: file
+    };
+    window.comprobantes = comprobantes;
+    
+    var nombreCorto = file.name.length > 12 ? file.name.substring(0, 10) + '...' : file.name;
+    fileNameSpan.textContent = nombreCorto;
+    fileNameSpan.classList.add('text-green-600');
+    
+    dropArea.classList.add('border-green-500', 'bg-green-50');
+    dropArea.innerHTML = '<span class="text-lg text-green-500">✅</span>';
+    
+    return true;
+  }
+
+  // ============ INICIALIZACIÓN ============
+  var filas = [];
+
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Página cargada');
+    agregarFila();
     
     var btnAgregar = document.getElementById('btnAgregar');
-    var tablaBody = document.getElementById('tablaBody');
-    
-    if (btnAgregar && tablaBody) {
-      agregarFila();
-      
+    if (btnAgregar) {
       btnAgregar.onclick = function() {
         agregarFila();
       };
@@ -141,12 +247,16 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     var tablaBody = document.getElementById('tablaBody');
     if (!tablaBody) return;
     
+    var filaId = 'fila_' + Date.now() + '_' + Math.random();
+    filas.push(filaId);
+    
     var tr = document.createElement('tr');
+    tr.id = filaId;
     tr.className = 'border-b hover:bg-gray-50';
     
-    // Fecha
+    // FECHA
     var tdFecha = document.createElement('td');
-    tdFecha.className = 'py-2 pr-2';
+    tdFecha.className = 'py-2 pr-1';
     var spanFecha = document.createElement('span');
     spanFecha.className = 'text-xs whitespace-nowrap';
     var ahora = new Date();
@@ -157,25 +267,29 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
                             ('0' + ahora.getMinutes()).slice(-2);
     tdFecha.appendChild(spanFecha);
     
-    // Cliente
+    // CLIENTE - NOMBRE
     var tdCliente = document.createElement('td');
-    tdCliente.className = 'py-2 pr-2';
+    tdCliente.className = 'py-2 pr-1';
     var selectCliente = document.createElement('select');
-    selectCliente.className = 'cliente-select w-32 border rounded px-2 py-1 text-xs';
-    
-    var optionsCliente = '<option value="">Selec</option>';
+    selectCliente.className = 'cliente-select w-28 border rounded px-2 py-1 text-xs';
+    var optionsCliente = '<option value="">Seleccionar</option>';
     for (var i = 0; i < clientes.length; i++) {
-      optionsCliente += '<option value="' + clientes[i].id + '">' + clientes[i].nombre.split(' ')[0] + '</option>';
+      optionsCliente += '<option value="' + clientes[i].id + '">' + clientes[i].nombre + '</option>';
     }
     selectCliente.innerHTML = optionsCliente;
     tdCliente.appendChild(selectCliente);
     
-    // Método
-    var tdMetodo = document.createElement('td');
-    tdMetodo.className = 'py-2 pr-2';
-    var selectMetodo = document.createElement('select');
-    selectMetodo.className = 'metodo-select w-16 border rounded px-2 py-1 text-xs';
+    // CLIENTE - COMPROBANTE
+    var tdCompCliente = document.createElement('td');
+    tdCompCliente.className = 'py-2 pr-1';
+    var dropCliente = crearDropArea(filaId, 'cliente');
+    tdCompCliente.appendChild(dropCliente);
     
+    // MÉTODO
+    var tdMetodo = document.createElement('td');
+    tdMetodo.className = 'py-2 pr-1';
+    var selectMetodo = document.createElement('select');
+    selectMetodo.className = 'metodo-select w-20 border rounded px-2 py-1 text-xs';
     var optionsMetodo = '';
     for (var m = 0; m < metodos.length; m++) {
       optionsMetodo += '<option value="' + metodos[m] + '">' + metodos[m] + '</option>';
@@ -183,88 +297,95 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     selectMetodo.innerHTML = optionsMetodo;
     tdMetodo.appendChild(selectMetodo);
     
-    // Destinatario
+    // DESTINATARIO - NOMBRE
     var tdDestino = document.createElement('td');
-    tdDestino.className = 'py-2 pr-2';
+    tdDestino.className = 'py-2 pr-1';
     var selectDestino = document.createElement('select');
-    selectDestino.className = 'destino-select w-32 border rounded px-2 py-1 text-xs';
-    
-    var optionsDestino = '<option value="">Selec</option>';
+    selectDestino.className = 'destino-select w-28 border rounded px-2 py-1 text-xs';
+    var optionsDestino = '<option value="">Seleccionar</option>';
     for (var j = 0; j < destinatarios.length; j++) {
-      optionsDestino += '<option value="' + destinatarios[j].id + '">' + destinatarios[j].nombre.split(' ')[0] + '</option>';
+      optionsDestino += '<option value="' + destinatarios[j].id + '">' + destinatarios[j].nombre + '</option>';
     }
     selectDestino.innerHTML = optionsDestino;
     tdDestino.appendChild(selectDestino);
     
-    // Banco
+    // DESTINATARIO - COMPROBANTE
+    var tdCompDestino = document.createElement('td');
+    tdCompDestino.className = 'py-2 pr-1';
+    var dropDestino = crearDropArea(filaId, 'destino');
+    tdCompDestino.appendChild(dropDestino);
+    
+    // BANCO
     var tdBanco = document.createElement('td');
-    tdBanco.className = 'py-2 pr-2';
+    tdBanco.className = 'py-2 pr-1';
     var selectBanco = document.createElement('select');
     selectBanco.className = 'banco-select w-24 border rounded px-2 py-1 text-xs';
-    
-    var optionsBanco = '<option value="">Selec</option>';
+    var optionsBanco = '<option value="">Seleccionar</option>';
     for (var k = 0; k < bancos.length; k++) {
-      optionsBanco += '<option value="' + bancos[k] + '">' + bancos[k].substring(0, 8) + '</option>';
+      optionsBanco += '<option value="' + bancos[k] + '">' + bancos[k] + '</option>';
     }
     selectBanco.innerHTML = optionsBanco;
     tdBanco.appendChild(selectBanco);
     
-    // Ingreso
+    // INGRESO
     var tdIngreso = document.createElement('td');
-    tdIngreso.className = 'py-2 pr-2';
+    tdIngreso.className = 'py-2 pr-1';
     var inputIngreso = document.createElement('input');
     inputIngreso.type = 'number';
     inputIngreso.step = '0.01';
     inputIngreso.placeholder = '0';
-    inputIngreso.className = 'ingreso w-14 border rounded px-2 py-1 text-xs';
-    inputIngreso.oninput = function() { calcularFila(tr); };
+    inputIngreso.className = 'ingreso w-16 border rounded px-2 py-1 text-xs text-right';
+    inputIngreso.oninput = function() { calcularFila(filaId); };
     tdIngreso.appendChild(inputIngreso);
     
-    // Salida
+    // SALIDA
     var tdSalida = document.createElement('td');
-    tdSalida.className = 'py-2 pr-2';
+    tdSalida.className = 'py-2 pr-1';
     var inputSalida = document.createElement('input');
     inputSalida.type = 'number';
     inputSalida.step = '0.01';
     inputSalida.placeholder = '0';
-    inputSalida.className = 'salida w-14 border rounded px-2 py-1 text-xs';
-    inputSalida.oninput = function() { calcularFila(tr); };
+    inputSalida.className = 'salida w-16 border rounded px-2 py-1 text-xs text-right';
+    inputSalida.oninput = function() { calcularFila(filaId); };
     tdSalida.appendChild(inputSalida);
     
-    // Tasa
+    // TASA
     var tdTasa = document.createElement('td');
-    tdTasa.className = 'py-2 pr-2';
+    tdTasa.className = 'py-2 pr-1';
     var inputTasa = document.createElement('input');
     inputTasa.type = 'number';
     inputTasa.step = '0.01';
     inputTasa.placeholder = '0';
-    inputTasa.className = 'tasa w-14 border rounded px-2 py-1 text-xs';
-    inputTasa.oninput = function() { calcularFila(tr); };
+    inputTasa.className = 'tasa w-16 border rounded px-2 py-1 text-xs text-right';
+    inputTasa.oninput = function() { calcularFila(filaId); };
     tdTasa.appendChild(inputTasa);
     
-    // Monto Bs
+    // MONTO BS
     var tdMontoBs = document.createElement('td');
-    tdMontoBs.className = 'py-2 pr-2 font-medium text-blue-600 monto-bs text-xs whitespace-nowrap';
-    tdMontoBs.textContent = 'Bs. 0';
+    tdMontoBs.className = 'py-2 pr-1 font-medium text-blue-600 monto-bs text-xs text-right';
+    tdMontoBs.textContent = '0';
     
-    // Profit
+    // PROFIT
     var tdProfit = document.createElement('td');
-    tdProfit.className = 'py-2 pr-2 font-medium text-green-600 profit text-xs whitespace-nowrap';
-    tdProfit.textContent = '$0';
+    tdProfit.className = 'py-2 pr-1 font-medium text-green-600 profit text-xs text-right';
+    tdProfit.textContent = '0';
     
-    // Botón eliminar
+    // ELIMINAR
     var tdEliminar = document.createElement('td');
     tdEliminar.className = 'py-2';
     var btnEliminar = document.createElement('button');
     btnEliminar.innerHTML = '🗑️';
     btnEliminar.className = 'text-red-600 hover:text-red-800 text-sm';
-    btnEliminar.onclick = function() { tr.remove(); };
+    btnEliminar.onclick = function() { eliminarFila(filaId); };
     tdEliminar.appendChild(btnEliminar);
     
+    // Armar fila
     tr.appendChild(tdFecha);
     tr.appendChild(tdCliente);
+    tr.appendChild(tdCompCliente);
     tr.appendChild(tdMetodo);
     tr.appendChild(tdDestino);
+    tr.appendChild(tdCompDestino);
     tr.appendChild(tdBanco);
     tr.appendChild(tdIngreso);
     tr.appendChild(tdSalida);
@@ -276,22 +397,40 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     tablaBody.appendChild(tr);
   }
 
-  function calcularFila(tr) {
-    var ingreso = parseFloat(tr.querySelector('.ingreso').value) || 0;
-    var salida = parseFloat(tr.querySelector('.salida').value) || 0;
-    var tasa = parseFloat(tr.querySelector('.tasa').value) || 0;
+  function calcularFila(filaId) {
+    var fila = document.getElementById(filaId);
+    if (!fila) return;
+    
+    var ingreso = parseFloat(fila.querySelector('.ingreso').value) || 0;
+    var salida = parseFloat(fila.querySelector('.salida').value) || 0;
+    var tasa = parseFloat(fila.querySelector('.tasa').value) || 0;
     
     var montoBs = salida * tasa;
     var profit = ingreso - salida;
     
-    tr.querySelector('.monto-bs').textContent = 'Bs. ' + montoBs.toFixed(0);
-    tr.querySelector('.profit').textContent = '$' + profit.toFixed(0);
+    fila.querySelector('.monto-bs').textContent = Math.round(montoBs);
+    fila.querySelector('.profit').textContent = Math.round(profit);
   }
 
-  // Funciones para modales
+  function eliminarFila(filaId) {
+    var fila = document.getElementById(filaId);
+    if (fila) {
+      fila.remove();
+      for (var i = 0; i < filas.length; i++) {
+        if (filas[i] === filaId) {
+          filas.splice(i, 1);
+          break;
+        }
+      }
+      if (window.comprobantes && window.comprobantes[filaId]) {
+        delete window.comprobantes[filaId];
+      }
+    }
+  }
+
+  // ============ MODALES ============
   function abrirModalBanco() { document.getElementById('modalBanco').classList.remove('hidden'); }
   function cerrarModalBanco() { document.getElementById('modalBanco').classList.add('hidden'); }
-  
   function abrirModalMetodo() { document.getElementById('modalMetodo').classList.remove('hidden'); }
   function cerrarModalMetodo() { document.getElementById('modalMetodo').classList.add('hidden'); }
 
@@ -319,9 +458,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     var selects = document.querySelectorAll('.banco-select');
     selects.forEach(function(select) {
       var valorActual = select.value;
-      var options = '<option value="">Selec</option>';
+      var options = '<option value="">Seleccionar</option>';
       for (var b = 0; b < bancos.length; b++) {
-        options += '<option value="' + bancos[b] + '" ' + (valorActual === bancos[b] ? 'selected' : '') + '>' + bancos[b].substring(0, 8) + '</option>';
+        options += '<option value="' + bancos[b] + '" ' + (valorActual === bancos[b] ? 'selected' : '') + '>' + bancos[b] + '</option>';
       }
       select.innerHTML = options;
     });
@@ -338,4 +477,64 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       select.innerHTML = options;
     });
   }
+
+  // ============ GUARDAR TODO ============
+  function guardarTodo() {
+    var transacciones = [];
+    var comprobantes = window.comprobantes || {};
+    
+    for (var i = 0; i < filas.length; i++) {
+      var fila = document.getElementById(filas[i]);
+      if (!fila) continue;
+      
+      var clienteId = fila.querySelector('.cliente-select').value;
+      var destinoId = fila.querySelector('.destino-select').value;
+      var metodo = fila.querySelector('.metodo-select').value;
+      var banco = fila.querySelector('.banco-select').value;
+      var ingreso = parseFloat(fila.querySelector('.ingreso').value) || 0;
+      var salida = parseFloat(fila.querySelector('.salida').value) || 0;
+      var tasa = parseFloat(fila.querySelector('.tasa').value) || 0;
+      
+      if (clienteId && destinoId && ingreso > 0 && salida > 0 && tasa > 0) {
+        transacciones.push({
+          fecha: fila.querySelector('.fecha').textContent,
+          cliente: clientes.find(c => c.id === clienteId)?.nombre || '',
+          metodo: metodo,
+          destinatario: destinatarios.find(d => d.id === destinoId)?.nombre || '',
+          banco: banco,
+          ingreso_usd: ingreso,
+          salida_usdt: salida,
+          tasa: tasa,
+          monto_bs: salida * tasa,
+          profit_usd: ingreso - salida,
+          comprobante_cliente: comprobantes[filas[i]]?.cliente || null,
+          comprobante_destino: comprobantes[filas[i]]?.destino || null
+        });
+      }
+    }
+    
+    if (transacciones.length === 0) {
+      alert('⚠️ No hay transacciones válidas para guardar');
+      return;
+    }
+    
+    console.log('Transacciones guardadas:', transacciones);
+    alert('✅ ' + transacciones.length + ' transacciones guardadas');
+    window.location.href = '/admin/transacciones';
+  }
+
+  window.abrirModalBanco = abrirModalBanco;
+  window.cerrarModalBanco = cerrarModalBanco;
+  window.abrirModalMetodo = abrirModalMetodo;
+  window.cerrarModalMetodo = cerrarModalMetodo;
+  window.guardarBanco = guardarBanco;
+  window.guardarMetodo = guardarMetodo;
+  window.guardarTodo = guardarTodo;
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    var btnGuardar = document.getElementById('btnGuardar');
+    if (btnGuardar) {
+      btnGuardar.onclick = guardarTodo;
+    }
+  });
 </script>

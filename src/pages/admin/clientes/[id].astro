@@ -4,7 +4,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 // Define el tipo de las props que recibirá la página
 export interface Props {
   cliente: {
-    id: string; // Cambiado de number a string (para UUID)
+    id: string;
     country: string;
     first_name: string;
     last_name: string;
@@ -13,7 +13,13 @@ export interface Props {
     metod: string;
     status: number;
     notes: string;
-    kyc: string;
+    kyc: {
+      estado: string;
+      fecha: string;
+      metodo: string;
+      documentos?: string[];
+      ultima_solicitud?: string;
+    };
     ofac: string;
     destinatarios: Array<{
       id: number;
@@ -36,7 +42,7 @@ export interface Props {
   };
 }
 
-// Función getStaticPaths: genera las rutas para cada ID de cliente
+// Função getStaticPaths: gera as rotas para cada ID de cliente
 export async function getStaticPaths() {
   const clientes = [
     {
@@ -49,8 +55,14 @@ export async function getStaticPaths() {
       metod: 'BsS',
       status: 4,
       notes: 'Cliente frecuente, envía los viernes',
-      kyc: 'verified',
-      ofac: 'ok',
+      kyc: {
+        estado: 'Verificado',
+        fecha: '16/03/2026 10:23',
+        metodo: 'Didit',
+        documentos: ['id_front.jpg', 'id_back.jpg', 'selfie.jpg'],
+        ultima_solicitud: null
+      },
+      ofac: 'Sin coincidencias',
       destinatarios: [
         { id: 201, nombre: 'Carlos Mendoza', relacion: 'Hermano', telefono: '+58 412 1234567', banco: 'Banco Venezuela', cuenta: '0102-1234-56-78901234' },
         { id: 202, nombre: 'Ana Torres', relacion: 'Prima', telefono: '+58 414 7654321', banco: 'Mercantil', cuenta: '0105-4321-87-65432109' }
@@ -73,8 +85,14 @@ export async function getStaticPaths() {
       metod: 'Zelle',
       status: 4,
       notes: 'Empresa, envía a varios familiares',
-      kyc: 'verified',
-      ofac: 'ok',
+      kyc: {
+        estado: 'Verificado',
+        fecha: '15/03/2026 14:30',
+        metodo: 'Manual',
+        documentos: ['company_cert.pdf', 'representante_id.jpg'],
+        ultima_solicitud: null
+      },
+      ofac: 'Sin coincidencias',
       destinatarios: [
         { id: 203, nombre: 'María Pérez', relacion: 'Prima', telefono: '+58 412 9876543', banco: 'Banesco', cuenta: '0134-5678-90-12345678' },
         { id: 204, nombre: 'Juan Sánchez', relacion: 'Tío', telefono: '+58 416 5554321', banco: 'Banco Provincial', cuenta: '0108-8765-43-21098765' }
@@ -89,7 +107,7 @@ export async function getStaticPaths() {
   ];
 
   return clientes.map((cliente) => ({
-    params: { id: cliente.id }, // El ID ya es string, no necesita toString()
+    params: { id: cliente.id },
     props: { cliente }
   }));
 }
@@ -100,27 +118,6 @@ if (!cliente) {
   return Astro.redirect('/404');
 }
 
-// Función para obtener el nivel del cliente (similar a la de ClientTable)
-const getClientLevel = (transactions: Array<{monto_usd: number}>) => {
-  const totalTransactions = transactions.length;
-  const totalAmount = transactions.reduce((sum, t) => sum + t.monto_usd, 0);
-  
-  if (totalAmount >= 15000 || totalTransactions >= 50) {
-    return { name: 'Diamante', icon: '💎✨', color: 'bg-gradient-to-r from-blue-400 to-cyan-400 text-white' };
-  } else if (totalAmount >= 8000 || totalTransactions >= 30) {
-    return { name: 'Platino', icon: '💎', color: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' };
-  } else if (totalAmount >= 3000 || totalTransactions >= 15) {
-    return { name: 'Oro', icon: '🥇', color: 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white' };
-  } else if (totalAmount >= 1000 || totalTransactions >= 5) {
-    return { name: 'Plata', icon: '🥈', color: 'bg-gradient-to-r from-gray-400 to-gray-300 text-white' };
-  } else if (totalTransactions > 0) {
-    return { name: 'Bronce', icon: '🥉', color: 'bg-gradient-to-r from-amber-700 to-amber-600 text-white' };
-  } else {
-    return { name: 'Nuevo', icon: '🆕', color: 'bg-gradient-to-r from-blue-500 to-blue-400 text-white' };
-  }
-};
-
-const level = getClientLevel(cliente.transactions);
 const fullName = cliente.last_name 
   ? `${cliente.first_name} ${cliente.last_name}`
   : cliente.first_name;
@@ -145,8 +142,8 @@ const fullName = cliente.last_name
           <div>
             <h1 class="text-3xl font-bold flex items-center gap-2">
               {fullName}
-              <span class={`ml-2 px-3 py-1 rounded-full text-xs font-medium ${level.color}`}>
-                {level.icon} {level.name}
+              <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                🥉 Bronce
               </span>
             </h1>
             <div class="flex items-center gap-4 mt-2 text-gray-600">
@@ -195,111 +192,220 @@ const fullName = cliente.last_name
       </div>
     </div>
 
-    <!-- Grid de 2 columnas -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Columna izquierda (2/3) - Información detallada -->
-      <div class="lg:col-span-2 space-y-6">
-        <!-- KYC / OFAC / Estado -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 class="text-xl font-semibold mb-4">📋 Verificación y cumplimiento</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="p-4 bg-gray-50 rounded-lg">
-              <p class="text-sm text-gray-500">KYC</p>
-              <p class={`text-lg font-medium ${cliente.kyc === 'verified' ? 'text-green-600' : 'text-yellow-600'}`}>
-                {cliente.kyc === 'verified' ? '✅ Verificado' : '⏳ Pendiente'}
-              </p>
-            </div>
-            <div class="p-4 bg-gray-50 rounded-lg">
-              <p class="text-sm text-gray-500">OFAC</p>
-              <p class={`text-lg font-medium ${cliente.ofac === 'ok' ? 'text-green-600' : 'text-yellow-600'}`}>
-                {cliente.ofac === 'ok' ? '✅ Sin coincidencias' : '⚠️ Revisar'}
-              </p>
-            </div>
-            <div class="p-4 bg-gray-50 rounded-lg">
-              <p class="text-sm text-gray-500">Método preferido</p>
-              <p class="text-lg font-medium">{cliente.metod}</p>
-            </div>
-          </div>
+    <!-- SECCIÓN KYC / VERIFICACIÓN -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold flex items-center gap-2">
+          <span>🪪</span> Verificación KYC
+        </h2>
+        <div class="flex gap-2">
+          <button 
+            onclick="enviarKYC()"
+            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm flex items-center gap-2"
+          >
+            <span class="text-lg">📧</span> Enviar link KYC
+          </button>
+          <button 
+            onclick="abrirModalSubirDocumentos()"
+            class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm flex items-center gap-2"
+          >
+            📤 Subir documentos
+          </button>
         </div>
+      </div>
 
-        <!-- Destinatarios registrados -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold">👥 Destinatarios</h2>
-            <button 
-              onClick={() => alert('Agregar nuevo destinatario')}
-              class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              + Agregar
-            </button>
-          </div>
-          
-          <div class="space-y-3">
-            {cliente.destinatarios.map(dest => (
-              <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div>
-                  <p class="font-medium">{dest.nombre}</p>
-                  <p class="text-sm text-gray-500">{dest.relacion} · {dest.banco}</p>
-                  <p class="text-xs text-gray-400">{dest.telefono}</p>
-                </div>
-                <button 
-                  onClick={() => alert(`Editar destinatario ${dest.nombre}`)}
-                  class="text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  Editar
-                </button>
-              </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-500 mb-1">Estado actual</p>
+          <p class={`text-lg font-semibold ${cliente.kyc.estado === 'Verificado' ? 'text-green-600' : 'text-yellow-600'}`}>
+            {cliente.kyc.estado === 'Verificado' ? '✅ Verificado' : 
+             cliente.kyc.estado === 'Pendiente' ? '⏳ Pendiente' : 
+             cliente.kyc.estado === 'Rechazado' ? '❌ Rechazado' : '📝 Por iniciar'}
+          </p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-500 mb-1">Fecha de verificación</p>
+          <p class="font-medium">{cliente.kyc.fecha || '—'}</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-500 mb-1">Método de verificación</p>
+          <p class="font-medium">{cliente.kyc.metodo || '—'}</p>
+        </div>
+      </div>
+
+      {cliente.kyc.documentos && cliente.kyc.documentos.length > 0 && (
+        <div class="mt-4">
+          <h3 class="font-medium text-gray-700 mb-2">Documentos subidos</h3>
+          <div class="flex flex-wrap gap-2">
+            {cliente.kyc.documentos.map(doc => (
+              <button 
+                onclick="alert(`Ver documento: ${doc}`)"
+                class="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm hover:bg-gray-200"
+              >
+                📄 {doc}
+              </button>
             ))}
           </div>
         </div>
-      </div>
+      )}
 
-      <!-- Columna derecha (1/3) - Badges y referidos -->
-      <div class="space-y-6">
-        <!-- Badges especiales -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 class="text-xl font-semibold mb-4">🏅 Badges especiales</h2>
-          <div class="space-y-2">
-            {cliente.referred_count > 0 && (
-              <div class="flex items-center gap-2 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
-                <span class="text-2xl">🤝</span>
-                <div>
-                  <p class="font-medium">Referidor</p>
-                  <p class="text-sm text-gray-600">Ha referido a {cliente.referred_count} clientes</p>
-                </div>
-              </div>
-            )}
-            {cliente.referred_by && (
-              <div class="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-                <span class="text-2xl">📢</span>
-                <div>
-                  <p class="font-medium">Recomendado</p>
-                  <p class="text-sm text-gray-600">Vino por otro cliente</p>
-                </div>
-              </div>
-            )}
-            {cliente.transactions.length >= 20 && (
-              <div class="flex items-center gap-2 p-3 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg">
-                <span class="text-2xl">🔄</span>
-                <div>
-                  <p class="font-medium">Frecuente</p>
-                  <p class="text-sm text-gray-600">{cliente.transactions.length} transacciones</p>
-                </div>
-              </div>
-            )}
+      {cliente.kyc.ultima_solicitud && (
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+          <p class="text-sm text-blue-700">📧 Última solicitud enviada: {cliente.kyc.ultima_solicitud}</p>
+        </div>
+      )}
+    </div>
+
+    <!-- SECCIÓN OFAC MEJORADA -->
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🛡️</span>
+          <h3 class="font-semibold text-lg">OFAC (Listas de Sanciones)</h3>
+        </div>
+        <div class="flex gap-2">
+          <a 
+            href="https://sanctionssearch.ofac.treas.gov/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-colors"
+            title="Abrir OFAC Sanctions Search"
+          >
+            🔍 Buscar en OFAC
+          </a>
+          <button 
+            onclick="ofacBuscarManual()"
+            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-colors"
+            title="Buscar con nombre pre-cargado"
+          >
+            ⚡ Búsqueda rápida
+          </button>
+        </div>
+      </div>
+      
+      <div class="space-y-3 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-gray-500">Estado actual:</span>
+          <span class={`font-medium ${cliente.ofac === 'Sin coincidencias' ? 'text-green-600' : 'text-yellow-600'}`}>
+            {cliente.ofac === 'Sin coincidencias' ? '✅ Sin coincidencias' : '⚠️ Revisión pendiente'}
+          </span>
+        </div>
+        <div>
+          <span class="text-gray-500">Última verificación:</span>
+          <span class="ml-2">16/03/2026 10:25</span>
+        </div>
+        
+        <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+          <p class="font-medium text-gray-700 mb-2 text-xs">📋 Nombre para búsqueda en OFAC:</p>
+          <div class="flex items-center gap-2">
+            <code class="bg-white px-3 py-1.5 rounded border text-sm font-mono flex-1">
+              {cliente.first_name} {cliente.last_name}
+            </code>
+            <button 
+              onclick="copiarTexto('{cliente.first_name} {cliente.last_name}')"
+              class="bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded text-sm transition-colors"
+              title="Copiar nombre"
+            >
+              📋 Copiar
+            </button>
           </div>
+          <p class="text-xs text-gray-400 mt-2">1. Copia el nombre<br>2. Pégalo en la búsqueda de OFAC<br>3. Ajusta el slider a 80<br>4. Si no hay coincidencias, está OK</p>
         </div>
 
-        <!-- Clientes referidos por este -->
-        {cliente.referred_count > 0 && (
-          <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-xl font-semibold mb-4">👥 Clientes referidos</h2>
-            <p class="text-gray-500 text-center py-4">
-              (Lista de clientes que ha recomendado)
-            </p>
-          </div>
-        )}
+        <div class="mt-2 pt-2 border-t">
+          <p class="text-xs text-gray-500 mb-2">📜 Historial de verificaciones:</p>
+          <ul class="text-xs text-gray-500 space-y-1">
+            <li>• 16/03/2026 10:25 - Sin coincidencias</li>
+            <li>• 10/03/2026 09:15 - Sin coincidencias</li>
+            <li>• 01/03/2026 14:30 - Sin coincidencias</li>
+          </ul>
+        </div>
+
+        <div class="mt-3 pt-2">
+          <button 
+            onclick="marcarOFACVerificado()"
+            class="w-full border border-green-300 bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
+          >
+            ✅ Marcar como verificado (sin coincidencias)
+          </button>
+        </div>
       </div>
+    </div>
+
+    <!-- Información personal -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <h2 class="text-xl font-semibold mb-4">📋 Información personal</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-500">Nombre completo</p>
+          <p class="font-medium">{fullName}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Email</p>
+          <p class="font-medium">{cliente.email || 'No registrado'}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Teléfono</p>
+          <p class="font-medium">{cliente.phone}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">País</p>
+          <p class="font-medium">{cliente.country.toUpperCase()}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Destinatarios -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">👥 Destinatarios</h2>
+        <button 
+          onclick="alert('Agregar destinatario')"
+          class="text-blue-600 hover:text-blue-800 text-sm"
+        >
+          + Agregar
+        </button>
+      </div>
+      <div class="space-y-3">
+        {cliente.destinatarios.map(dest => (
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div>
+              <p class="font-medium">{dest.nombre}</p>
+              <p class="text-sm text-gray-500">{dest.relacion} · {dest.banco}</p>
+              <p class="text-xs text-gray-400">{dest.telefono}</p>
+            </div>
+            <button 
+              onclick="alert(`Editar destinatario ${dest.nombre}`)"
+              class="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              Editar
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Badges especiales -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <h2 class="text-xl font-semibold mb-4">🏅 Badges especiales</h2>
+      {cliente.referred_count > 0 && (
+        <div class="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+          <span class="text-2xl">🤝</span>
+          <div>
+            <p class="font-medium">Referidor</p>
+            <p class="text-sm text-gray-600">Ha referido a {cliente.referred_count} clientes</p>
+          </div>
+        </div>
+      )}
+      {cliente.referred_by && (
+        <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg mt-2">
+          <span class="text-2xl">📢</span>
+          <div>
+            <p class="font-medium">Recomendado</p>
+            <p class="text-sm text-gray-600">Vino por otro cliente</p>
+          </div>
+        </div>
+      )}
     </div>
 
     <!-- Historial de transacciones -->
@@ -310,7 +416,6 @@ const fullName = cliente.last_name
           Ver todas →
         </a>
       </div>
-      
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -321,11 +426,11 @@ const fullName = cliente.last_name
               <th class="pb-3">Monto VES</th>
               <th class="pb-3">Estado</th>
               <th class="pb-3"></th>
-            </tr>
+             </tr>
           </thead>
           <tbody>
             {cliente.transactions.map(tx => (
-              <tr class="border-b hover:bg-gray-50">
+              <tr class="border-b hover:bg-gray-50" key={tx.id}>
                 <td class="py-3">{tx.fecha}</td>
                 <td class="py-3">{tx.destinatario}</td>
                 <td class="py-3 font-medium">${tx.monto_usd}</td>
@@ -348,3 +453,69 @@ const fullName = cliente.last_name
     </div>
   </div>
 </AdminLayout>
+
+<!-- Script con todas las funciones -->
+<script is:inline>
+  // ============ FUNCIONES KYC ============
+  function enviarKYC() {
+    const email = '{cliente.email}' || '';
+    const nombre = '{cliente.first_name} {cliente.last_name}';
+    
+    if (!email) {
+      alert('⚠️ El cliente no tiene email registrado. Por favor agregue un email antes de enviar la solicitud KYC.');
+      return;
+    }
+    
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const link = `https://adglobalpay.com/kyc/${token}`;
+    
+    if (confirm(`📧 Enviar solicitud KYC a ${email}?\n\nSe enviará un enlace para que ${nombre} complete su verificación de identidad.`)) {
+      alert(`✅ Solicitud KYC enviada a ${email}\n\nEl cliente recibirá un email con instrucciones.\n\n🔗 Link: ${link}`);
+    }
+  }
+
+  function abrirModalSubirDocumentos() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,application/pdf';
+    input.multiple = true;
+    input.onchange = function(e) {
+      const files = e.target.files;
+      if (files.length > 0) {
+        alert(`✅ ${files.length} documento(s) seleccionado(s) para subir.\n\n(Simulación - aquí se subirían al servidor)`);
+      }
+    };
+    input.click();
+  }
+
+  // ============ FUNCIONES OFAC ============
+  function ofacBuscarManual() {
+    const nombre = '{cliente.first_name} {cliente.last_name}';
+    window.open('https://sanctionssearch.ofac.treas.gov/', '_blank');
+    
+    alert(`🔍 OFAC: Buscar "${nombre}"\n\n📋 Instrucciones:\n1. Pega el nombre en el buscador\n2. Ajusta el slider a 80\n3. Haz clic en Search\n4. Revisa los resultados\n5. Si no hay coincidencias, marca como verificado\n\n✅ Nombre copiado al portapapeles`);
+    
+    navigator.clipboard.writeText(nombre).catch(() => {});
+  }
+
+  function copiarTexto(texto) {
+    navigator.clipboard.writeText(texto).then(() => {
+      alert(`✅ Nombre copiado: "${texto}"\n\nPéguelo en la búsqueda de OFAC.`);
+    }).catch(() => {
+      alert('❌ No se pudo copiar automáticamente. Seleccione y copie manualmente.');
+    });
+  }
+
+  function marcarOFACVerificado() {
+    if (confirm('¿Confirmar que no hay coincidencias OFAC para este cliente?\n\nSe registrará la verificación en el historial.')) {
+      alert('✅ Verificación OFAC registrada\n\nSe ha guardado en el historial del cliente.');
+    }
+  }
+
+  // Exponer funciones globales
+  window.enviarKYC = enviarKYC;
+  window.abrirModalSubirDocumentos = abrirModalSubirDocumentos;
+  window.ofacBuscarManual = ofacBuscarManual;
+  window.copiarTexto = copiarTexto;
+  window.marcarOFACVerificado = marcarOFACVerificado;
+</script>

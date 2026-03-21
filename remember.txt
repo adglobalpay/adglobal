@@ -4,3 +4,21 @@ en usd se jala directo del email datos monto, quien gira, fechas zelle etc etc
 
 
 
+crear el modulo de verificacion KYC 
+
+link formal, amigabvle ux/ui para que sesa facil y agradable, lleva reconocimiento facial, captura de documento legal pasaporte,id/dni, licencia, lleva busqueda con api directa a OFAC y carga datos directo en nuestro systema. 
+
+
+
+
+compirmirlas automatico a webp para evitar peso extra, conectar a la DB almacenamiento en AWS? 
+
+
+
+A que banco nos pago, cuando llegue un pago al email si cumple con los requisitos jala esos datos de una vez al sistema y arma lo que pueda de la transferencia ejemplo, nombre del recipiente, monto, memo. Fecha que llegó estatus pending, esperaría el compa complete lo demás.
+
+
+profit del operador = 30% profit global
+profit global =  (ingreso USD - egreso USD)- fees
+fee = ingreso USD * 2.9%  (este 2.9 es variable y se ajusta en settings Tasa de Costo Operativo (%))
+
