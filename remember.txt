@@ -22,3 +22,4 @@ profit del operador = 30% profit global
 profit global =  (ingreso USD - egreso USD)- fees
 fee = ingreso USD * 2.9%  (este 2.9 es variable y se ajusta en settings Tasa de Costo Operativo (%))
 
+cantidad de operaciones por cada banco CHASE/PNC etc..

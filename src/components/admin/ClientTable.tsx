@@ -382,7 +382,9 @@ export default function ClientTable({ limit }: Props) {
                     >
                       👥
                     </button>
+                    
                   </div>
+                  
                 </td>
                 
                 <td className="py-4">
