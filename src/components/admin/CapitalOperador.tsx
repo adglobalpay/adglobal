@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, Search, Download, Filter } from 'lucide-react';
 
 interface CapitalData {
-  binanceBalance: number;    // Saldo en Binance (USDT)
-  fiatAvailable: number;      // Fiat disponible para operar
+  binanceBalance: number;
+  fiatAvailable: number;
   lastUpdate: string;
 }
 
@@ -32,12 +33,13 @@ export default function CapitalOperador() {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState('todo');
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Simular consulta a API
   useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 200);
+    
     const fetchCapital = () => {
       setLoading(true);
-      
       setTimeout(() => {
         const mockBinanceBalance = 3250;
         const mockFiatAvailable = 0;
@@ -52,7 +54,6 @@ export default function CapitalOperador() {
     };
 
     const fetchMovimientos = () => {
-      // Simular movimientos desde tu API
       const mockMovimientos: Movimiento[] = [
         {
           id: '1',
@@ -141,7 +142,10 @@ export default function CapitalOperador() {
     fetchMovimientos();
     const interval = setInterval(fetchCapital, 300000);
     
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
   }, []);
 
   const getFilteredMovimientos = () => {
@@ -155,61 +159,69 @@ export default function CapitalOperador() {
   const currentMovimientos = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="p-4 border-t border-gray-800">
+    <div className="p-2 md:p-3 border-t border-white/5 bg-slate-950">
       <div 
-        className="rounded-lg p-3 cursor-pointer transition-all bg-gray-50 border border-gray-200"
+        className={`rounded-xl p-3 md:p-4 cursor-pointer transition-all duration-500 bg-gradient-to-b from-slate-900 to-slate-900/50 border border-slate-800 hover:border-indigo-500/30 group relative overflow-hidden ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
         onClick={() => setShowDetails(!showDetails)}
       >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">💰</span>
-            <span className="text-sm font-medium text-gray-700">Capital Operador</span>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-all group-hover:bg-indigo-500/10"></div>
+        
+        <div className="flex items-center justify-between mb-3 md:mb-4 relative z-10">
+          <div className="flex items-center gap-2 md:gap-2.5">
+            <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/20 transition-transform group-hover:scale-110">
+              <Wallet size={14} />
+            </div>
+            <span className="text-xs md:text-sm font-semibold tracking-tight text-slate-200" style={{ fontFamily: 'var(--font-heading)' }}>Capital Operativo</span>
           </div>
-          {loading && (
-            <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+          {loading ? (
+            <div className="w-4 h-4 border-2 border-slate-700 border-t-indigo-400 rounded-full animate-spin"></div>
+          ) : (
+            <ChevronRight size={16} className={`text-slate-500 transition-transform duration-300 ${showDetails ? 'rotate-90' : ''}`} />
           )}
         </div>
 
-        {/* Dos métricas principales */}
-        <div className="grid grid-cols-2 gap-4 mb-2">
-          <div>
-            <p className="text-xs text-gray-500">Binance (USDT)</p>
-            <p className="text-xl font-bold text-blue-600">
-              ${capital.binanceBalance.toLocaleString()}
+        <div className="grid grid-cols-2 gap-2 md:gap-3 mb-1 relative z-10">
+          <div className="bg-slate-950 p-2 md:p-2.5 rounded-lg border border-slate-800/60 transition-all hover:border-indigo-500/20">
+            <p className="text-[0.55rem] md:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-1">Binance (USDT)</p>
+            <p className="text-sm md:text-base font-bold text-indigo-400 font-mono tracking-tight flex items-baseline gap-0.5">
+              <span className="text-[0.65rem] md:text-[0.7rem] text-indigo-500/70">$</span>
+              {capital.binanceBalance.toLocaleString()}
             </p>
           </div>
           
-          <div>
-            <p className="text-xs text-gray-500">Fiat Disponible</p>
-            <p className={`text-xl font-bold ${capital.fiatAvailable < 100000 ? 'text-red-500' : 'text-green-600'}`}>
+          <div className="bg-slate-950 p-2 md:p-2.5 rounded-lg border border-slate-800/60 transition-all hover:border-rose-500/20">
+            <p className="text-[0.55rem] md:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-1">Fiat Disponible</p>
+            <p className={`text-sm md:text-base font-bold font-mono tracking-tight ${capital.fiatAvailable < 100000 ? 'text-rose-400' : 'text-emerald-400'}`}>
               {capital.fiatAvailable.toLocaleString()}
             </p>
           </div>
         </div>
 
         {showDetails && !loading && (
-          <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
-            <p className="text-xs text-gray-400">Última actualización: {capital.lastUpdate}</p>
+          <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-slate-800/60 space-y-3 relative z-10" style={{animation: 'fadeInUp 0.3s ease-out'}}>
+            <p className="text-[0.6rem] md:text-[0.65rem] text-slate-500 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              {capital.lastUpdate}
+            </p>
 
-            {/* Botones */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2">
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowHistory(true);
                 }}
-                className="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700 flex items-center gap-1"
+                className="flex-1 justify-center text-xs bg-slate-800 text-slate-200 px-3 py-2 rounded-lg hover:bg-slate-700 hover:text-white flex items-center gap-1.5 transition-all border border-slate-700 font-medium hover:scale-[1.02]"
               >
-                📜 Historial
+                <History size={14} /> Historial
               </button>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
                   window.location.href = '/admin/config#binance';
                 }}
-                className="text-xs border border-gray-300 px-2 py-1 rounded hover:bg-gray-50"
+                className="flex-1 justify-center text-xs bg-transparent border border-slate-700 text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-1.5 transition-all font-medium hover:scale-[1.02]"
               >
-                ⚙️ Configurar
+                <Settings size={14} /> Config
               </button>
             </div>
           </div>
@@ -218,100 +230,98 @@ export default function CapitalOperador() {
 
       {/* Modal de Historial */}
       {showHistory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowHistory(false)}>
-          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-3 md:p-4 sm:p-6 anim-overlay" onClick={() => setShowHistory(false)}>
+          <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200 anim-modal" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-bold">Historial de Movimientos</h2>
-                <p className="text-xs text-gray-500">
-                  Página {currentPage} / {totalPages} | Mostrando {filtered.length} movimientos de {movimientos.length}
-                </p>
+            <div className="bg-slate-50 border-b border-slate-200 px-4 md:px-6 py-4 md:py-5 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 md:w-10 md:h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
+                  <History size={18} />
+                </div>
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Historial de Operaciones</h2>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    ({filtered.length} registros encontrados)
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setShowHistory(false)} className="text-2xl">&times;</button>
+              <button onClick={() => setShowHistory(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all hover:rotate-90">
+                <X size={20} />
+              </button>
             </div>
 
-            {/* Filtros */}
-            <div className="p-4 border-b flex gap-2 flex-wrap">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { setFilter('todo'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-sm rounded ${filter === 'todo' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
-                >
-                  Todo
-                </button>
-                <button
-                  onClick={() => { setFilter('red'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-sm rounded ${filter === 'red' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
-                >
-                  Red
-                </button>
-                <button
-                  onClick={() => { setFilter('p2p'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-sm rounded ${filter === 'p2p' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
-                >
-                  P2P
-                </button>
-                <button
-                  onClick={() => { setFilter('pay'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-sm rounded ${filter === 'pay' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
-                >
-                  Pay
+            {/* Toolbar */}
+            <div className="px-4 md:px-6 py-3 md:py-4 border-b border-slate-100 bg-white flex flex-col sm:flex-row gap-3 md:gap-4 justify-between items-stretch sm:items-center shrink-0">
+              <div className="flex bg-slate-100 p-1 rounded-xl overflow-x-auto">
+                {['todo', 'red', 'p2p', 'pay'].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => { setFilter(f); setCurrentPage(1); }}
+                    className={`px-3 md:px-4 py-1.5 text-xs font-semibold rounded-lg uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${filter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-48 md:w-64 group">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar referencia..." 
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium placeholder-slate-400 hover:bg-white"
+                  />
+                </div>
+                <button className="h-9 px-3 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 flex items-center gap-2 text-sm font-medium transition-all hover:scale-105">
+                  <Download size={16} /> <span className="hidden sm:inline">Exportar</span>
                 </button>
               </div>
-              <div className="flex-1"></div>
-              <div className="flex gap-2">
-                <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">Today</button>
-                <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">Last One</button>
-                <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">Prev</button>
-                <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">Next</button>
-              </div>
-            </div>
-
-            {/* Buscador */}
-            <div className="p-4 border-b">
-              <input 
-                type="text" 
-                placeholder="Buscar orden, referencia o descripcion..." 
-                className="border rounded px-3 py-2 text-sm w-full"
-              />
             </div>
 
             {/* Tabla */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b sticky top-0">
-                  <tr className="text-left text-xs text-gray-500">
-                    <th className="p-3">FECHA</th>
-                    <th className="p-3">DESCRIPCIÓN</th>
-                    <th className="p-3">TIPO</th>
-                    <th className="p-3">MONTO</th>
-                    <th className="p-3">COBERTURA</th>
-                    <th className="p-3">BALANCE</th>
-                   </tr>
+            <div className="overflow-auto flex-1 bg-white">
+              <table className="w-full text-sm min-w-[700px]">
+                <thead className="bg-slate-50/80 sticky top-0 backdrop-blur-sm shadow-[0_1px_rgba(226,232,240,1)] z-10">
+                  <tr className="text-left">
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-[0.6rem] md:text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider w-32 md:w-40">Fecha</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-[0.6rem] md:text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider">Concepto</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-[0.6rem] md:text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider">Operación</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-[0.6rem] md:text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider text-right">Monto</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-[0.6rem] md:text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider text-center">Protocolo</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-[0.6rem] md:text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider text-right">Balance final</th>
+                  </tr>
                 </thead>
-                <tbody>
-                  {currentMovimientos.map((mov) => (
-                    <tr key={mov.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3 text-xs">{mov.fecha}</td>
-                      <td className="p-3">
-                        <div className="font-medium">{mov.descripcion}</div>
-                        <div className="text-xs text-gray-500">{mov.metodo} • USDT/VES • RATE {mov.rate} • FEE ${mov.fee}</div>
+                <tbody className="divide-y divide-slate-100">
+                  {currentMovimientos.map((mov, idx) => (
+                    <tr key={mov.id} className="table-row-anim group" style={{animationDelay: `${idx * 30}ms`}}>
+                      <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-slate-500 text-xs font-medium">
+                        {mov.fecha.split(',').map((p,i) => <span key={i} className={i===1?'block text-[0.6rem] md:text-[0.65rem] mt-0.5 opacity-70':''}>{p}</span>)}
                       </td>
-                      <td className="p-3">
-                        <span className="text-green-600">+ {mov.tipo}</span>
-                        <div className="text-xs text-gray-500">TRADE BUY MAKER</div>
+                      <td className="px-4 md:px-6 py-3 md:py-4">
+                        <div className="font-semibold text-slate-800">{mov.descripcion}</div>
+                        <div className="flex items-center gap-2 mt-1 text-[0.6rem] md:text-[0.65rem] font-medium">
+                          <span className="text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{mov.metodo}</span>
+                          <span className="text-slate-400">USDT/VES</span>
+                          <span className="text-slate-400 border-l border-slate-200 pl-2">RATE {mov.rate}</span>
+                        </div>
                       </td>
-                      <td className="p-3">
-                        <div className="font-medium">+${mov.montoUSD}</div>
-                        <div className="text-xs text-gray-500">{mov.montoFiat.toLocaleString()} FIAT</div>
+                      <td className="px-4 md:px-6 py-3 md:py-4">
+                        <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-[0.6rem] md:text-[0.65rem] font-bold uppercase tracking-widest border border-emerald-100">
+                          <ArrowUpRight size={10} strokeWidth={3} /> {mov.tipo}
+                        </span>
+                        <div className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-wider font-semibold mt-1.5">Trade Buy</div>
                       </td>
-                      <td className="p-3">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">{mov.cobertura}</span>
+                      <td className="px-4 md:px-6 py-3 md:py-4 text-right">
+                        <div className="font-bold text-emerald-600 font-mono tracking-tight">+${mov.montoUSD}</div>
+                        <div className="text-[0.6rem] md:text-[0.65rem] uppercase tracking-wider text-slate-500 font-medium mt-1">{mov.montoFiat.toLocaleString()} VES</div>
                       </td>
-                      <td className="p-3">
-                        <div className="font-medium">${mov.balance.toLocaleString()}</div>
-                        <div className="text-xs text-gray-500">Balance disponible</div>
+                      <td className="px-4 md:px-6 py-3 md:py-4 text-center">
+                        <span className="inline-block px-2 md:px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-[0.6rem] md:text-[0.65rem] font-bold uppercase tracking-wider border border-indigo-100">{mov.cobertura}</span>
+                      </td>
+                      <td className="px-4 md:px-6 py-3 md:py-4 text-right">
+                        <div className="font-bold text-slate-800 font-mono tracking-tight">${mov.balance.toLocaleString()}</div>
+                        <div className="text-[0.65rem] md:text-[0.7rem] text-slate-400 font-medium mt-1 leading-none">Disponible</div>
                       </td>
                     </tr>
                   ))}
@@ -320,25 +330,22 @@ export default function CapitalOperador() {
             </div>
 
             {/* Paginación */}
-            <div className="p-4 border-t flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                Mostrando {currentMovimientos.length} de {filtered.length} movimientos
+            <div className="bg-slate-50 border-t border-slate-200 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0 rounded-b-2xl">
+              <div className="text-xs text-slate-500 font-medium">
+                Página <strong className="text-slate-800">{currentPage}</strong> de {totalPages}
               </div>
               <div className="flex gap-2">
                 <button 
                   onClick={() => setCurrentPage(p => Math.max(1, p-1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50"
+                  className="px-3 md:px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                 >
                   Anterior
                 </button>
-                <span className="px-3 py-1 text-sm">
-                  Página {currentPage} de {totalPages}
-                </span>
                 <button 
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50"
+                  className="px-3 md:px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                 >
                   Siguiente
                 </button>

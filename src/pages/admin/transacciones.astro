@@ -1,15 +1,28 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import { 
+  ArrowLeftRight, 
+  Download, 
+  Filter, 
+  Search, 
+  CheckCircle2, 
+  Clock, 
+  PauseCircle, 
+  XCircle, 
+  Paperclip, 
+  ExternalLink,
+  Plus,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ArrowRight,
+  AlertCircle
+} from 'lucide-react';
 
-// Datos de ejemplo (luego vendrán de la base de datos)
 const transacciones = [
   {
     id: 1,
     fecha: '18/03/2026',
-    cliente: {
-      nombre: 'Juan Pérez',
-      email: 'juan@email.com'
-    },
+    cliente: { nombre: 'Juan Pérez', email: 'juan@email.com' },
     monto_usd: 200,
     monto_ves: 10000,
     tasa: 50,
@@ -22,10 +35,7 @@ const transacciones = [
   {
     id: 2,
     fecha: '18/03/2026',
-    cliente: {
-      nombre: 'María Gómez',
-      email: 'maria@email.com'
-    },
+    cliente: { nombre: 'María Gómez', email: 'maria@email.com' },
     monto_usd: 150,
     monto_ves: 7350,
     tasa: 49,
@@ -38,10 +48,7 @@ const transacciones = [
   {
     id: 3,
     fecha: '17/03/2026',
-    cliente: {
-      nombre: 'Carlos Rodríguez',
-      email: 'carlos@email.com'
-    },
+    cliente: { nombre: 'Carlos Rodríguez', email: 'carlos@email.com' },
     monto_usd: 350,
     monto_ves: 16800,
     tasa: 48,
@@ -54,10 +61,7 @@ const transacciones = [
   {
     id: 4,
     fecha: '17/03/2026',
-    cliente: {
-      nombre: 'Ana Martínez',
-      email: 'ana@email.com'
-    },
+    cliente: { nombre: 'Ana Martínez', email: 'ana@email.com' },
     monto_usd: 120,
     monto_ves: 5880,
     tasa: 49,
@@ -70,10 +74,7 @@ const transacciones = [
   {
     id: 5,
     fecha: '16/03/2026',
-    cliente: {
-      nombre: 'Pedro Sánchez',
-      email: 'pedro@email.com'
-    },
+    cliente: { nombre: 'Pedro Sánchez', email: 'pedro@email.com' },
     monto_usd: 500,
     monto_ves: 24500,
     tasa: 49,
@@ -86,10 +87,7 @@ const transacciones = [
   {
     id: 6,
     fecha: '16/03/2026',
-    cliente: {
-      nombre: 'Luisa Fernández',
-      email: 'luisa@email.com'
-    },
+    cliente: { nombre: 'Luisa Fernández', email: 'luisa@email.com' },
     monto_usd: 75,
     monto_ves: 3675,
     tasa: 49,
@@ -101,126 +99,195 @@ const transacciones = [
   }
 ];
 
-// Calcular totales desde transacciones
 const totalIngreso = transacciones.reduce((sum, tx) => sum + tx.monto_usd, 0);
 const totalSalida = transacciones.reduce((sum, tx) => sum + tx.monto_usd, 0);
 const tasaPromedio = transacciones.length > 0 
   ? (transacciones.reduce((sum, tx) => sum + tx.tasa, 0) / transacciones.length).toFixed(1)
-  : 49.2;
+  : '49.2';
+const pendientes = transacciones.filter(tx => tx.estado === 'Pendiente' || tx.estado === 'Procesando').length;
 
-// Función para obtener badge de estado
 const getEstadoBadge = (estado: string) => {
-  const config = {
-    Completado: { bg: 'bg-green-100', text: 'text-green-700', icon: '✅', label: 'Completado' },
-    Procesando: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '⏳', label: 'Procesando' },
-    Pendiente: { bg: 'bg-blue-100', text: 'text-blue-700', icon: '⏸️', label: 'Pendiente' },
-    Fallido: { bg: 'bg-red-100', text: 'text-red-700', icon: '❌', label: 'Fallido' }
-  };
-  
-  const style = config[estado] || config.Pendiente;
-  return `<span class="px-3 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text} flex items-center gap-1 w-fit">${style.icon} ${style.label}</span>`;
+  if (estado === 'Completado') {
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 gap-1 transition-all hover:bg-emerald-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Completado</span>`;
+  }
+  if (estado === 'Procesando') {
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 gap-1 transition-all hover:bg-amber-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Procesando</span>`;
+  }
+  if (estado === 'Pendiente') {
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 gap-1 transition-all hover:bg-blue-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Pendiente</span>`;
+  }
+  if (estado === 'Fallido') {
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-200 gap-1 transition-all hover:bg-red-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Fallido</span>`;
+  }
+  return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 gap-1">${estado}</span>`;
 };
 ---
 
 <AdminLayout>
-  <div class="space-y-6">
+  <div class="space-y-6 md:space-y-8 relative pb-24">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold">Transacciones</h1>
-      <div class="flex gap-3">
+    <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-200 pb-6 anim-fade-in">
+      <div>
+        <h1 class="text-2xl md:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3" style="font-family: var(--font-heading)">
+          <div class="p-2 md:p-2.5 bg-indigo-50 text-indigo-600 rounded-xl transition-transform hover:scale-110 duration-300">
+             <ArrowLeftRight class="w-5 h-5 md:w-6 md:h-6" />
+          </div>
+          Registro de Operaciones
+        </h1>
+        <p class="text-slate-500 mt-2 font-medium text-sm md:text-base">Monitorea y gestiona el flujo de envíos, tasas y estados en tiempo real.</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
         <button 
           id="btnExportar"
-          class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+          class="flex-1 md:flex-none bg-white border border-slate-200 text-slate-700 px-4 md:px-5 py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 font-bold text-sm flex items-center justify-center gap-2 shadow-sm btn-interactive"
         >
-          📥 Exportar CSV
+          <Download class="w-4 h-4" /> <span class="hidden sm:inline">Exportar CSV</span>
         </button>
         <button 
           id="btnFiltrar"
-          class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
+          class="flex-1 md:flex-none bg-indigo-600 text-white px-4 md:px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all duration-300 font-bold text-sm flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(79,70,229,0.2)] btn-interactive"
         >
-          🔍 Filtrar
+          <Filter class="w-4 h-4" /> <span class="hidden sm:inline">Filtros</span>
         </button>
       </div>
     </div>
 
-    <!-- Filtros rápidos -->
-    <div class="flex gap-2 flex-wrap">
-      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors">
-        Hoy
-      </button>
-      <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
-        Esta semana
-      </button>
-      <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
-        Este mes
-      </button>
-      <select class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm">
-        <option>Todos los estados</option>
-        <option>Completado</option>
-        <option>Procesando</option>
-        <option>Pendiente</option>
-        <option>Fallido</option>
-      </select>
+    <!-- Resumen KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div class="bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-indigo-900/50 text-white relative overflow-hidden group card-hover anim-fade-in stagger-1">
+        <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 group-hover:opacity-40 transition-all duration-500">
+          <ArrowDownToLine class="w-12 h-12 md:w-16 md:h-16" />
+        </div>
+        <p class="text-indigo-200 text-[0.65rem] font-bold uppercase tracking-widest mb-1 relative z-10">Ingreso Total</p>
+        <p class="text-2xl md:text-3xl font-extrabold font-mono tracking-tight relative z-10">
+          <span class="text-indigo-400 text-lg md:text-xl mr-1">$</span>{totalIngreso.toLocaleString()}
+        </p>
+        <p class="text-indigo-300 text-xs font-semibold mt-2 relative z-10">Capital recibido en USD</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-emerald-900 via-slate-900 to-emerald-950 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-emerald-900/50 text-white relative overflow-hidden group card-hover anim-fade-in stagger-2">
+        <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 group-hover:opacity-40 transition-all duration-500">
+          <ArrowUpFromLine class="w-12 h-12 md:w-16 md:h-16" />
+        </div>
+        <p class="text-emerald-200 text-[0.65rem] font-bold uppercase tracking-widest mb-1 relative z-10">Salida Total</p>
+        <p class="text-2xl md:text-3xl font-extrabold font-mono tracking-tight relative z-10">
+          <span class="text-emerald-400 text-lg md:text-xl mr-1">₮</span>{totalSalida.toLocaleString()}
+        </p>
+        <p class="text-emerald-300 text-xs font-semibold mt-2 relative z-10">USDT entregados</p>
+      </div>
+
+      <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden card-hover anim-fade-in stagger-3">
+        <p class="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest mb-1">Tasa Promedio</p>
+        <p class="text-2xl md:text-3xl font-extrabold font-mono text-slate-800 tracking-tight">{tasaPromedio}</p>
+        <p class="text-slate-500 text-xs font-bold mt-2 bg-slate-50 inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-100 uppercase tracking-widest">
+           USD <ArrowRight class="w-3 h-3"/> VES
+        </p>
+      </div>
+
+      <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-4">
+         <div class="flex justify-between items-start mb-1">
+            <p class="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest">Pendientes</p>
+            <div class={pendientes > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-300'}><AlertCircle class="w-5 h-5"/></div>
+         </div>
+        <p class="text-2xl md:text-3xl font-extrabold font-mono text-slate-800 tracking-tight">{pendientes}</p>
+        <p class="text-amber-600 text-xs font-bold mt-2">Por procesar o aprobar</p>
+      </div>
     </div>
 
-    <!-- Tabla de transacciones -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <!-- Barra de búsqueda y filtros rápidos -->
+    <div class="bg-white rounded-2xl md:rounded-3xl p-3 md:p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 flex flex-col lg:flex-row gap-3 md:gap-4 items-stretch lg:items-center justify-between card-hover anim-fade-in stagger-5">
+      <div class="relative w-full lg:max-w-md group">
+        <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+        <input 
+          type="text" 
+          placeholder="Buscar por cliente, ID o banco..." 
+          class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-300 placeholder:text-slate-400 hover:bg-white hover:shadow-sm"
+        />
+      </div>
+      <div class="flex gap-2 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 scrollbar-hide">
+        <button class="whitespace-nowrap px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-indigo-700 transition-colors">Todos</button>
+        <button class="whitespace-nowrap px-4 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-100 hover:text-slate-800 transition-colors">Hoy</button>
+        <button class="whitespace-nowrap px-4 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-100 hover:text-slate-800 transition-colors">Semana</button>
+        <select class="px-4 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer hover:bg-white">
+          <option>Todos los estados</option>
+          <option>Completado</option>
+          <option>Procesando</option>
+          <option>Pendiente</option>
+          <option>Fallido</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden card-hover anim-fade-in">
       <div class="overflow-x-auto">
-        <table class="w-full">
+        <table class="w-full min-w-[900px]">
           <thead>
-            <tr class="text-left text-gray-500 text-sm border-b">
-              <th class="pb-3 font-medium">Fecha</th>
-              <th class="pb-3 font-medium">Cliente</th>
-              <th class="pb-3 font-medium">Monto Envío</th>
-              <th class="pb-3 font-medium">Monto Destino</th>
-              <th class="pb-3 font-medium">Tasa</th>
-              <th class="pb-3 font-medium">Método</th>
-              <th class="pb-3 font-medium">Destino</th>
-              <th class="pb-3 font-medium">Estado</th>
-              <th class="pb-3 font-medium">Comprobante</th>
-              <th class="pb-3 font-medium">Acciones</th>
+             <tr class="text-left text-slate-400 text-[0.65rem] font-bold uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
+              <th class="py-3 md:py-4 pl-4 md:pl-6 pr-3 whitespace-nowrap">Fecha</th>
+              <th class="py-3 md:py-4 px-3">Cliente</th>
+              <th class="py-3 md:py-4 px-3 whitespace-nowrap">Monto Envío</th>
+              <th class="py-3 md:py-4 px-3 whitespace-nowrap">Monto Destino</th>
+              <th class="py-3 md:py-4 px-3">Tasa</th>
+              <th class="py-3 md:py-4 px-3">Logística</th>
+              <th class="py-3 md:py-4 px-3">Estado</th>
+              <th class="py-3 md:py-4 px-3">Doc</th>
+              <th class="py-3 md:py-4 pr-4 md:pr-6 pl-3 text-right">Acción</th>
              </tr>
           </thead>
-          <tbody>
-            {transacciones.map((tx) => (
-              <tr key={tx.id} class="border-b hover:bg-gray-50 transition-colors">
-                <td class="py-4 text-sm">{tx.fecha}</td>
-                <td class="py-4">
-                  <div class="font-medium">{tx.cliente.nombre}</div>
-                  <div class="text-xs text-gray-500">{tx.cliente.email}</div>
+          <tbody class="divide-y divide-slate-50">
+            {transacciones.map((tx, idx) => (
+              <tr key={tx.id} class="table-row-anim group" style={{animationDelay: `${idx * 50}ms`}}>
+                <td class="py-3 md:py-4 pl-4 md:pl-6 pr-3 align-top">
+                  <div class="font-semibold text-[0.8rem] text-slate-600">{tx.fecha}</div>
+                  <div class="text-[0.65rem] font-mono text-slate-400 mt-0.5">#{tx.id.toString().padStart(5, '0')}</div>
                 </td>
-                <td class="py-4 font-medium">${tx.monto_usd} USD</td>
-                <td class="py-4">{tx.monto_ves.toLocaleString()} VES</td>
-                <td class="py-4">
-                  <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
+                <td class="py-3 md:py-4 px-3 align-top">
+                  <div class="font-bold text-[0.9rem] text-slate-800 tracking-tight group-hover:text-indigo-600 transition-colors">{tx.cliente.nombre}</div>
+                  <div class="text-[0.7rem] text-slate-500 font-semibold mt-0.5">{tx.cliente.email}</div>
+                </td>
+                <td class="py-3 md:py-4 px-3 align-top">
+                  <div class="font-bold font-mono text-[0.9rem] text-emerald-600">
+                    ${tx.monto_usd} <span class="text-[0.65rem] text-emerald-600/70 font-sans tracking-widest uppercase">USD</span>
+                  </div>
+                </td>
+                <td class="py-3 md:py-4 px-3 align-top">
+                  <div class="font-bold font-mono text-[0.9rem] text-slate-700">
+                    {tx.monto_ves.toLocaleString()} <span class="text-[0.65rem] text-slate-400 font-sans tracking-widest uppercase">VES</span>
+                  </div>
+                </td>
+                <td class="py-3 md:py-4 px-3 align-top">
+                  <span class="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.75rem] font-bold border border-slate-200 font-mono transition-all hover:bg-slate-200">
                     {tx.tasa}
                   </span>
                 </td>
-                <td class="py-4">
-                  <span class="px-2 py-1 bg-gray-100 rounded text-xs font-medium">
+                <td class="py-3 md:py-4 px-3 align-top">
+                  <div class="font-semibold text-[0.8rem] text-slate-700">{tx.destino}</div>
+                  <div class="inline-block px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[0.65rem] font-bold border border-indigo-100 uppercase tracking-widest mt-1 transition-all hover:bg-indigo-100">
                     {tx.metodo}
-                  </span>
+                  </div>
                 </td>
-                <td class="py-4 text-sm">{tx.destino}</td>
-                <td class="py-4" set:html={getEstadoBadge(tx.estado)} />
-                <td class="py-4">
+                <td class="py-3 md:py-4 px-3 align-top" set:html={getEstadoBadge(tx.estado)} />
+                <td class="py-3 md:py-4 px-3 align-top">
                   {tx.comprobante ? (
                     <button 
-                      onclick="abrirModalComprobante('{tx.comprobante_url}', '{tx.comprobante}')"
-                      class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                      onclick={`abrirModalComprobante('${tx.comprobante_url}', '${tx.comprobante}')`}
+                      class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-500 hover:text-indigo-600 flex flex-col items-center justify-center transition-all duration-300 group-hover:scale-110"
+                      title="Ver comprobante"
                     >
-                      📎 Ver
+                      <Paperclip class="w-4 h-4 pointer-events-none group-hover:-rotate-12 transition-transform" />
                     </button>
                   ) : (
-                    <span class="text-gray-400 text-sm">—</span>
+                    <span class="text-slate-300 text-sm font-black">—</span>
                   )}
                 </td>
-                <td class="py-4">
+                <td class="py-3 md:py-4 pr-4 md:pr-6 pl-3 align-top text-right">
                   <a 
                     href={`/admin/transacciones/${tx.id}`}
-                    class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 hover:scale-110"
+                    title="Ver detalles completos"
                   >
-                    Ver detalles →
+                    <ExternalLink class="w-4 h-4" />
                   </a>
                 </td>
               </tr>
@@ -229,58 +296,18 @@ const getEstadoBadge = (estado: string) => {
         </table>
       </div>
 
-      <!-- Paginación -->
-      <div class="flex justify-between items-center mt-6 pt-4 border-t">
-        <span class="text-sm text-gray-500">
-          Mostrando 1-6 de 24 transacciones
+      <!-- Footer / Paginación -->
+      <div class="px-4 md:px-6 py-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-50/50">
+        <span class="text-[0.75rem] font-bold text-slate-400 uppercase tracking-wider">
+          Mostrando <span class="text-slate-700">1-6</span> de <span class="text-slate-700">24</span>
         </span>
-        <div class="flex gap-2">
-          <button class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">←</button>
-          <button class="px-3 py-1 bg-blue-600 text-white rounded">1</button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">2</button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">3</button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">→</button>
+        <div class="flex gap-1.5">
+          <button class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg text-slate-400 hover:bg-white hover:text-slate-600 hover:border-slate-300 shadow-sm transition-all font-black text-xs hover:scale-105 active:scale-95">←</button>
+          <button class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg font-bold shadow-sm text-sm hover:bg-indigo-700 transition-all">1</button>
+          <button class="w-8 h-8 flex items-center justify-center border border-slate-200 bg-white rounded-lg text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all font-bold text-sm hover:scale-105 active:scale-95">2</button>
+          <button class="w-8 h-8 flex items-center justify-center border border-slate-200 bg-white rounded-lg text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all font-bold text-sm hover:scale-105 active:scale-95">3</button>
+          <button class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg text-slate-400 hover:bg-white hover:text-slate-600 hover:border-slate-300 shadow-sm transition-all font-black text-xs hover:scale-105 active:scale-95">→</button>
         </div>
-      </div>
-    </div>
-
-    <!-- Resumen rápido - TODOS LOS KPIS -->
-    <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-      <!-- Ingreso Total (NUEVO) -->
-      <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-lg">
-        <p class="text-blue-100 text-sm">💰 INGRESO TOTAL</p>
-        <p class="text-2xl font-bold">${totalIngreso.toLocaleString()}</p>
-        <p class="text-blue-100 text-xs">USD recibidos</p>
-      </div>
-      
-      <!-- Salida Total (NUEVO) -->
-      <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl p-4 shadow-lg">
-        <p class="text-emerald-100 text-sm">📤 SALIDA TOTAL</p>
-        <p class="text-2xl font-bold">${totalSalida.toLocaleString()}</p>
-        <p class="text-emerald-100 text-xs">USDT enviados</p>
-      </div>
-      
-      
-      
-      <!-- Transacciones hoy (EXISTENTE) -->
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Transacciones hoy</p>
-        <p class="text-2xl font-bold">7</p>
-        <p class="text-sm text-green-600">+2 vs ayer</p>
-      </div>
-      
-      <!-- Tasa promedio (EXISTENTE) -->
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Tasa promedio</p>
-        <p class="text-2xl font-bold">{tasaPromedio}</p>
-        <p class="text-sm text-gray-500">USD → VES</p>
-      </div>
-      
-      <!-- Pendientes (EXISTENTE) -->
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Pendientes</p>
-        <p class="text-2xl font-bold">3</p>
-        <p class="text-sm text-yellow-600">Por procesar</p>
       </div>
     </div>
   </div>
@@ -288,74 +315,101 @@ const getEstadoBadge = (estado: string) => {
   <!-- Botón flotante de nueva transacción -->
   <a 
     href="/admin/transacciones/nueva"
-    class="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg hover:bg-blue-700 transition-colors z-50"
+    class="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-indigo-600 text-white w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shadow-[0_8px_30px_rgba(79,70,229,0.4)] hover:bg-indigo-700 hover:scale-110 hover:-translate-y-1 transition-all duration-300 z-40 group btn-interactive"
     title="Nueva Transacción"
   >
-    +
+    <Plus class="w-5 h-5 md:w-7 md:h-7 group-hover:rotate-90 transition-transform duration-300" />
   </a>
 
   <!-- Modal para previsualizar comprobante -->
-  <div id="modalComprobante" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold">📎 Comprobante</h2>
-        <button onclick="cerrarModalComprobante()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+  <div id="modalComprobante" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center hidden z-50 transition-opacity p-0 md:p-4">
+    <div class="bg-white rounded-t-3xl md:rounded-3xl p-5 md:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-200 scale-95 transition-transform" id="modalContentDoc">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5">
+          <div class="p-2 bg-slate-100 text-slate-600 rounded-xl"><Paperclip class="w-5 h-5"/></div> Documento
+        </h2>
+        <button onclick="cerrarModalComprobante()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all duration-300 hover:rotate-90">
+           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
       </div>
-      <div id="comprobantePreview" class="flex justify-center items-center min-h-[300px] bg-gray-50 rounded-lg p-4">
-        <p class="text-gray-500">Cargando...</p>
+      <div id="comprobantePreview" class="flex justify-center items-center min-h-[200px] md:min-h-[300px] bg-slate-50 border border-slate-100 rounded-2xl p-4">
+        <div class="flex flex-col items-center gap-3 text-slate-400 animate-pulse">
+           <ExternalLink class="w-8 h-8" />
+           <p class="font-bold text-sm">Cargando visualización...</p>
+        </div>
       </div>
-      <div class="mt-4 flex justify-end">
-        <button onclick="cerrarModalComprobante()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cerrar</button>
+      <div class="mt-6 flex justify-end border-t border-slate-100 pt-6">
+        <button onclick="cerrarModalComprobante()" class="px-5 py-2.5 font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-700 rounded-xl transition-all duration-300">Cerrar Visor</button>
       </div>
     </div>
   </div>
 </AdminLayout>
 
 <script is:inline>
-  // Función para abrir modal con preview
   window.abrirModalComprobante = function(url, nombre) {
     var modal = document.getElementById('modalComprobante');
+    var modalContent = document.getElementById('modalContentDoc');
     var preview = document.getElementById('comprobantePreview');
     
     if (!url) {
-      preview.innerHTML = '<p class="text-red-500">No hay comprobante disponible</p>';
+      preview.innerHTML = '<p class="text-red-500 font-bold px-4 py-2 bg-red-50 rounded-lg">No hay comprobante disponible</p>';
       modal.classList.remove('hidden');
+      modal.classList.add('anim-overlay');
+      setTimeout(() => { modalContent.style.transform = 'scale(1)'; modalContent.classList.add('anim-modal'); }, 10);
       return;
     }
     
     var extension = url.split('.').pop().toLowerCase();
     
     if (extension === 'pdf') {
-      preview.innerHTML = `<iframe src="${url}" class="w-full h-[70vh]" frameborder="0"></iframe>`;
+      preview.innerHTML = `<iframe src="${url}" class="w-full h-[50vh] md:h-[65vh] rounded-xl border border-slate-200 shadow-inner" frameborder="0"></iframe>`;
     } else if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extension)) {
-      preview.innerHTML = `<img src="${url}" alt="Comprobante" class="max-w-full max-h-[70vh] object-contain">`;
+      preview.innerHTML = `<img src="${url}" alt="Comprobante" class="max-w-full max-h-[50vh] md:max-h-[65vh] object-contain rounded-xl shadow-lg border border-slate-200">`;
     } else {
-      preview.innerHTML = `<p class="text-gray-500">No se puede previsualizar este tipo de archivo (${extension})</p><a href="${url}" target="_blank" class="text-blue-600 underline mt-2 inline-block">Descargar archivo</a>`;
+      preview.innerHTML = `
+        <div class="flex flex-col items-center gap-4 text-center">
+          <div class="p-4 bg-slate-100 rounded-full text-slate-400"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+          <p class="text-slate-500 font-medium">No se puede previsualizar este tipo de archivo <span class="font-mono bg-slate-200 px-1 py-0.5 rounded text-xs text-slate-600">.${extension}</span></p>
+          <a href="${url}" target="_blank" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm mt-2 transition-all btn-interactive">Descargar archivo original</a>
+        </div>
+      `;
     }
     
     modal.classList.remove('hidden');
+    modal.classList.add('anim-overlay');
+    setTimeout(() => { modalContent.style.transform = 'scale(1)'; modalContent.classList.add('anim-modal'); }, 10);
   };
   
   window.cerrarModalComprobante = function() {
     var modal = document.getElementById('modalComprobante');
+    var modalContent = document.getElementById('modalContentDoc');
     var preview = document.getElementById('comprobantePreview');
-    modal.classList.add('hidden');
-    preview.innerHTML = '<p class="text-gray-500">Cargando...</p>';
+    modalContent.style.transform = 'scale(0.95)';
+    modalContent.classList.remove('anim-modal');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      modal.classList.remove('anim-overlay');
+      preview.innerHTML = `
+        <div class="flex flex-col items-center gap-3 text-slate-400 animate-pulse">
+           <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+           <p class="font-bold text-sm">Cargando visualización...</p>
+        </div>
+      `;
+    }, 200);
   };
   
-  // Exportar CSV
   document.addEventListener('DOMContentLoaded', function() {
     var btnExportar = document.getElementById('btnExportar');
     if (btnExportar) {
       btnExportar.onclick = function() {
-        alert('📥 Exportando a CSV... (función por implementar)');
+        alert('Exportando a CSV... (función por implementar)');
       };
     }
     
     var btnFiltrar = document.getElementById('btnFiltrar');
     if (btnFiltrar) {
       btnFiltrar.onclick = function() {
-        alert('🔍 Filtros avanzados (función por implementar)');
+        alert('Filtros avanzados (función por implementar)');
       };
     }
   });

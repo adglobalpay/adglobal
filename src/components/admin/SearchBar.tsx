@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Search, Download, Filter } from 'lucide-react';
 
 export default function SearchBar() {
   const [query, setQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -9,36 +11,45 @@ export default function SearchBar() {
   };
 
   return (
-    <form onSubmit={handleSearch} className="max-w-md">
-      <div className="flex gap-2">
+    <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-stretch md:items-center w-full">
+      <form onSubmit={handleSearch} className="flex-1 w-full max-w-full md:max-w-xl relative group">
+        <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${isFocused ? 'text-indigo-500' : 'text-slate-400'}`}>
+          <Search className="h-5 w-5 transition-transform duration-300 group-focus-within:scale-110" />
+        </div>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar por nombre, email o teléfono..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          placeholder="Buscar por nombre, email, país o nivel..."
+          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 font-medium placeholder:text-slate-400 shadow-sm hover:bg-white hover:shadow-md"
         />
         <button
           type="submit"
-          className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+          className="absolute inset-y-1.5 right-1.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
         >
           Buscar
         </button>
+      </form>
+
+      <div className="flex gap-2 md:gap-3 w-full md:w-auto">
         <button
-        
-          className="ml-3 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          type="button"
+          className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-5 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 rounded-xl font-bold text-sm transition-all duration-300 shadow-sm hover:shadow-md active:scale-95"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          <span>Exportar</span>
+          <Filter className="w-4 h-4 transition-transform hover:rotate-12" />
+          <span className="hidden sm:inline">Filtros</span>
+        </button>
+        <button
+          type="button"
+          className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-5 py-3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 rounded-xl font-bold text-sm transition-all duration-300 shadow-sm hover:shadow-md active:scale-95"
+          onClick={() => alert('Función de exportación en desarrollo')}
+        >
+          <Download className="w-4 h-4 transition-transform hover:-translate-y-0.5" />
+          <span className="hidden sm:inline">Exportar CSV</span>
         </button>
       </div>
-    </form>
+    </div>
   );
 }

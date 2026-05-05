@@ -1,121 +1,187 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { 
+  Plus, 
+  ArrowLeft, 
+  Users, 
+  Building2, 
+  Wallet, 
+  Save, 
+  X,
+  CreditCard,
+  FileBox,
+  Coins,
+  Clock
+} from 'lucide-react';
 ---
 
 <AdminLayout>
-  <div class="max-w-full mx-auto space-y-4 p-4">
+  <div class="max-w-[1400px] mx-auto space-y-4 md:space-y-6 pb-24">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold">➕ Nueva Transacción</h1>
-      <a href="/admin/transacciones" class="text-blue-600 hover:underline">
-        ← Cancelar
-      </a>
+    <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 sticky top-2 md:top-4 z-40 anim-fade-in">
+      <div class="flex items-center gap-3 md:gap-4">
+        <a href="/admin/transacciones" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 rounded-xl transition-all duration-300 border border-slate-200 hover:scale-105">
+          <ArrowLeft class="w-4 h-4 md:w-5 md:h-5 pointer-events-none" />
+        </a>
+        <div>
+          <h1 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2" style="font-family: var(--font-heading)">
+            <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><Plus class="w-4 h-4 md:w-5 md:h-5"/></div> 
+            Nueva Transacción
+          </h1>
+          <p class="text-xs md:text-sm font-semibold text-slate-400 mt-1">Registra varias operaciones de forma secuencial</p>
+        </div>
+      </div>
+      <button 
+        id="btnGuardarTop"
+        class="bg-indigo-600 text-white px-5 md:px-6 py-2.5 md:py-3 rounded-xl hover:bg-indigo-700 transition-all duration-300 font-bold text-sm flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(79,70,229,0.2)] btn-interactive w-full md:w-auto"
+      >
+        <Save class="w-4 h-4" /> Guardar Todo
+      </button>
     </div>
 
     <!-- Panel de administración rápida -->
-    <div class="grid grid-cols-4 gap-3 mb-3">
-      <a href="/admin/clientes" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1 border border-blue-200 transition-colors">
-        <span>➕</span> Clientes
+    <div class="flex flex-wrap gap-2 md:gap-3 anim-fade-in stagger-1">
+      <a href="/admin/clientes" class="flex-1 md:flex-none bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2 border border-slate-200 hover:border-indigo-200 transition-all duration-300 shadow-sm hover:shadow-md active:scale-95">
+        <Users class="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-500" /> <span class="hidden sm:inline">Nuevo Cliente</span>
       </a>
-      <a href="/admin/clientes?tab=destinatarios" class="bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1 border border-green-200 transition-colors">
-        <span>➕</span> Destinatarios
+      <a href="/admin/clientes?tab=destinatarios" class="flex-1 md:flex-none bg-white hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2 border border-slate-200 hover:border-emerald-200 transition-all duration-300 shadow-sm hover:shadow-md active:scale-95">
+        <Users class="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-500" /> <span class="hidden sm:inline">Nuevo Destinatario</span>
       </a>
-      <button onclick="abrirModalBanco()" class="bg-purple-50 hover:bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1 border border-purple-200 transition-colors">
-        <span>➕</span> Bancos
+      <button onclick="abrirModalBanco()" class="flex-1 md:flex-none bg-white hover:bg-amber-50 text-slate-600 hover:text-amber-700 px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2 border border-slate-200 hover:border-amber-200 transition-all duration-300 shadow-sm hover:shadow-md active:scale-95">
+        <Building2 class="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" /> <span class="hidden sm:inline">Agregar Banco</span>
       </button>
-      <button onclick="abrirModalMetodo()" class="bg-orange-50 hover:bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1 border border-orange-200 transition-colors">
-        <span>➕</span> Métodos
+      <button onclick="abrirModalMetodo()" class="flex-1 md:flex-none bg-white hover:bg-purple-50 text-slate-600 hover:text-purple-700 px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2 border border-slate-200 hover:border-purple-200 transition-all duration-300 shadow-sm hover:shadow-md active:scale-95">
+        <Wallet class="w-3.5 h-3.5 md:w-4 md:h-4 text-purple-500" /> <span class="hidden sm:inline">Agregar Método</span>
       </button>
     </div>
 
-    <!-- Tabla de transacciones -->
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 overflow-x-auto">
-      <div style="min-width: 1100px;">
-        <table class="w-full">
-          <thead>
-            <tr class="text-left text-gray-500 text-xs border-b">
-              <th class="pb-2 pr-1">Fecha</th>
-              <th class="pb-2 pr-1" colspan="2">Cliente / Comprobante</th>
-              <th class="pb-2 pr-1">Método</th>
-              <th class="pb-2 pr-1" colspan="2">Destinatario / Comprobante</th>
-              <th class="pb-2 pr-1">Banco</th>
-              <th class="pb-2 pr-1">Ingreso</th>
-              <th class="pb-2 pr-1">Salida</th>
-              <th class="pb-2 pr-1">Tasa</th>
-              <th class="pb-2 pr-1">Bs</th>
-              <th class="pb-2 pr-1">Profit</th>
-              <th class="pb-2 pr-1"></th>
-            </tr>
-            <tr class="text-left text-gray-400 text-[10px] border-b">
-              <th></th>
-              <th>Nombre</th>
-              <th>Comprobante</th>
-              <th></th>
-              <th>Nombre</th>
-              <th>Comprobante</th>
-              <th></th>
-              <th></th>
-              <th></th>
-              <th></th>
-              <th></th>
-              <th></th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="tablaBody">
-            <!-- Las filas se insertan aquí -->
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Botón para agregar fila -->
-      <div class="mt-3 flex justify-center">
-        <button 
-          id="btnAgregar"
-          class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2 rounded-lg border flex items-center gap-1 text-sm"
-        >
-          <span class="text-lg">➕</span> Agregar otra transacción
-        </button>
+    <!-- Tabla principal -->
+    <div class="bg-white rounded-2xl md:rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-200/60 overflow-hidden relative card-hover anim-fade-in stagger-2">
+      <div class="overflow-x-auto pb-4 custom-scrollbar">
+        <div style="min-width: 1200px;" class="p-4 md:p-6">
+          <table class="w-full relative">
+            <thead>
+              <tr class="text-left border-b border-slate-200 bg-slate-50/50">
+                <th class="py-3 px-3 w-28"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-400"><Clock class="w-3.5 h-3.5"/>Fecha</div></th>
+                <th class="py-3 px-3 min-w-[200px]"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-indigo-500"><Users class="w-3.5 h-3.5"/>Cliente (Recibe)</div></th>
+                <th class="py-3 px-3 w-16"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-indigo-400"><FileBox class="w-3 h-3"/>Doc</div></th>
+                <th class="py-3 px-3 w-32"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-400"><Wallet class="w-3.5 h-3.5"/>Método</div></th>
+                <th class="py-3 px-3 min-w-[200px] bg-emerald-50/30 rounded-tl-xl"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-emerald-600"><Users class="w-3.5 h-3.5"/>Destinatario</div></th>
+                <th class="py-3 px-3 w-16 bg-emerald-50/30"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-emerald-500"><FileBox class="w-3 h-3"/>Doc</div></th>
+                <th class="py-3 px-3 w-32 bg-emerald-50/30 rounded-tr-xl"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-amber-600"><Building2 class="w-3.5 h-3.5"/>Banco</div></th>
+                <th class="py-3 px-3 w-24"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-600"><Plus class="w-3.5 h-3.5"/>Ingreso</div></th>
+                <th class="py-3 px-3 w-24"><div class="flex flex-row items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-600"><Coins class="w-3.5 h-3.5 text-red-400"/>Salida</div></th>
+                <th class="py-3 px-3 w-20"><div class="flex items-center justify-end gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-400">Tasa</div></th>
+                <th class="py-3 px-3 w-24"><div class="flex items-center justify-end gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">Monto VES</div></th>
+                <th class="py-3 px-3 w-20"><div class="flex items-center justify-end gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-emerald-600">Profit</div></th>
+                <th class="py-3 px-2 w-12 text-center"></th>
+              </tr>
+            </thead>
+            <tbody id="tablaBody" class="divide-y divide-slate-100">
+              <!-- Las filas se insertan aquí vía JS -->
+            </tbody>
+          </table>
+          
+          <!-- Botón para agregar fila -->
+          <div class="mt-6 md:mt-8 flex justify-center">
+            <button 
+              id="btnAgregar"
+              class="bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-600 hover:text-indigo-700 px-4 md:px-6 py-2.5 md:py-3 rounded-xl flex items-center gap-2 text-xs md:text-sm font-bold shadow-sm transition-all duration-300 group btn-interactive"
+            >
+              <div class="p-1 rounded bg-white shadow-sm border border-slate-200 group-hover:border-indigo-200 transition-all group-hover:rotate-90"><Plus class="w-3.5 h-3.5 md:w-4 md:h-4" /></div> Agregar otra transacción
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Modales (iguales) -->
-  <div id="modalBanco" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl p-6 max-w-md w-full">
-      <h2 class="text-2xl font-bold mb-4">➕ Nuevo Banco</h2>
+  <!-- Modales -->
+  <div id="modalBanco" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-end md:items-center justify-center hidden z-50 transition-opacity p-0 md:p-4">
+    <div class="bg-white rounded-t-3xl md:rounded-3xl p-5 md:p-8 max-w-sm w-full shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-200 scale-95 transition-transform" id="modalContentBanco">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5">
+           <div class="p-2 bg-amber-50 text-amber-600 rounded-xl"><Building2 class="w-5 h-5"/></div>
+           Agregar Banco
+        </h2>
+        <button onclick="cerrarModalBanco()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all hover:rotate-90">
+          <X class="w-5 h-5" />
+        </button>
+      </div>
       <form id="formBanco" class="space-y-4" onsubmit="guardarBanco(event)">
         <div>
-          <label class="block text-sm font-medium mb-1">Nombre del banco *</label>
-          <input type="text" id="bancoNombre" required class="w-full border rounded-lg px-3 py-2" placeholder="Ej: BNC">
+          <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-2">Nombre del banco *</label>
+          <input type="text" id="bancoNombre" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="Ej: Bancamiga">
         </div>
-        <div class="flex justify-end gap-2 pt-4">
-          <button type="button" onclick="cerrarModalBanco()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancelar</button>
-          <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Guardar Banco</button>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" onclick="cerrarModalBanco()" class="px-5 py-2.5 font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 font-bold shadow-sm transition-all btn-interactive">Guardar Banco</button>
         </div>
       </form>
     </div>
   </div>
 
-  <div id="modalMetodo" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl p-6 max-w-md w-full">
-      <h2 class="text-2xl font-bold mb-4">➕ Nuevo Método de Pago</h2>
+  <div id="modalMetodo" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-end md:items-center justify-center hidden z-50 transition-opacity p-0 md:p-4">
+    <div class="bg-white rounded-t-3xl md:rounded-3xl p-5 md:p-8 max-w-sm w-full shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-200 scale-95 transition-transform" id="modalContentMetodo">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5">
+           <div class="p-2 bg-purple-50 text-purple-600 rounded-xl"><Wallet class="w-5 h-5"/></div>
+           Agregar Método
+        </h2>
+        <button onclick="cerrarModalMetodo()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all hover:rotate-90">
+          <X class="w-5 h-5" />
+        </button>
+      </div>
       <form id="formMetodo" class="space-y-4" onsubmit="guardarMetodo(event)">
         <div>
-          <label class="block text-sm font-medium mb-1">Nombre del método *</label>
-          <input type="text" id="metodoNombre" required class="w-full border rounded-lg px-3 py-2" placeholder="Ej: Zelle, BOFA, Chase">
+          <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-2">Nombre del método *</label>
+          <input type="text" id="metodoNombre" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="Ej: Zelle, Binance">
         </div>
-        <div class="flex justify-end gap-2 pt-4">
-          <button type="button" onclick="cerrarModalMetodo()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancelar</button>
-          <button type="submit" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">Guardar Método</button>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" onclick="cerrarModalMetodo()" class="px-5 py-2.5 font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 font-bold shadow-sm transition-all btn-interactive">Guardar Método</button>
         </div>
       </form>
     </div>
   </div>
 </AdminLayout>
 
+<!-- SVG Icons templates for JS injection -->
+<template id="icon-upload">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+</template>
+<template id="icon-check">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+</template>
+<template id="icon-trash">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+</template>
+
+<style>
+  .table-input {
+    @apply w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:shadow-sm;
+  }
+  .table-select {
+    @apply w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-[0.8rem] font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer hover:shadow-sm;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+</style>
+
 <script is:inline>
-  // ============ DATOS INICIALES ============
   var clientes = [
     { id: '1', nombre: 'Luisa Ideas Creativas', telefono: '4242459151', email: '' },
     { id: '2', nombre: 'Cartaya Auto Sales', telefono: '3055551234', email: 'cartaya@autos.com' }
@@ -131,14 +197,17 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
   window.comprobantes = window.comprobantes || {};
 
-  // ============ FUNCIÓN DRAG & DROP ============
+  var svgUpload = document.getElementById('icon-upload')?.innerHTML || '';
+  var svgCheck = document.getElementById('icon-check')?.innerHTML || '';
+  var svgTrash = document.getElementById('icon-trash')?.innerHTML || '';
+
   function crearDropArea(filaId, tipo) {
     var container = document.createElement('div');
-    container.className = 'flex flex-col items-center';
+    container.className = 'flex flex-col items-center justify-center w-full h-full p-1';
     
     var dropArea = document.createElement('div');
-    dropArea.className = 'drop-area w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all';
-    dropArea.innerHTML = '<span class="text-lg text-gray-400">📎</span>';
+    dropArea.className = 'w-10 h-10 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 flex items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-600 text-slate-400 transition-all duration-300';
+    dropArea.innerHTML = svgUpload;
     
     var fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -146,29 +215,26 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     fileInput.className = 'hidden';
     
     var fileNameSpan = document.createElement('span');
-    fileNameSpan.className = 'text-[10px] text-gray-500 mt-1 truncate max-w-[50px] text-center';
+    fileNameSpan.className = 'text-[0.55rem] font-bold text-slate-400 mt-1 truncate max-w-[40px] text-center absolute -bottom-4';
     fileNameSpan.textContent = '';
     
     dropArea.ondragover = function(e) {
       e.preventDefault();
-      this.classList.add('border-blue-500', 'bg-blue-50');
-      this.innerHTML = '<span class="text-lg text-blue-500">📤</span>';
+      this.classList.add('border-indigo-500', 'bg-indigo-100', 'text-indigo-600', 'scale-110');
     };
     
     dropArea.ondragleave = function(e) {
       e.preventDefault();
-      this.classList.remove('border-blue-500', 'bg-blue-50');
-      this.innerHTML = '<span class="text-lg text-gray-400">📎</span>';
+      this.classList.remove('border-indigo-500', 'bg-indigo-100', 'text-indigo-600', 'scale-110');
     };
     
     dropArea.ondrop = function(e) {
       e.preventDefault();
-      this.classList.remove('border-blue-500', 'bg-blue-50');
+      this.classList.remove('border-indigo-500', 'bg-indigo-100', 'text-indigo-600', 'scale-110');
       var file = e.dataTransfer.files[0];
       if (file) {
         procesarArchivo(file, filaId, tipo, fileNameSpan, dropArea);
       }
-      this.innerHTML = '<span class="text-lg text-gray-400">📎</span>';
     };
     
     dropArea.onclick = function() {
@@ -186,26 +252,23 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     container.appendChild(fileInput);
     container.appendChild(fileNameSpan);
     
-    return container;
+    var wrapper = document.createElement('div');
+    wrapper.className = 'relative flex justify-center items-center h-full w-full';
+    wrapper.appendChild(container);
+    return wrapper;
   }
 
   function procesarArchivo(file, filaId, tipo, fileNameSpan, dropArea) {
     var tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-    var esValido = false;
-    for (var i = 0; i < tiposPermitidos.length; i++) {
-      if (file.type === tiposPermitidos[i]) {
-        esValido = true;
-        break;
-      }
-    }
+    var esValido = tiposPermitidos.includes(file.type);
     
     if (!esValido) {
-      alert('❌ Solo se permiten imágenes (JPG, PNG, WEBP) o PDF');
+      alert('Solo se permiten imágenes (JPG, PNG, WEBP) o PDF');
       return false;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      alert('❌ El archivo no debe superar los 5MB');
+      alert('El archivo no debe superar los 5MB');
       return false;
     }
     
@@ -219,17 +282,18 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     };
     window.comprobantes = comprobantes;
     
-    var nombreCorto = file.name.length > 12 ? file.name.substring(0, 10) + '...' : file.name;
+    var nombreCorto = file.name.length > 6 ? file.name.substring(0, 4) + '...' : file.name;
     fileNameSpan.textContent = nombreCorto;
-    fileNameSpan.classList.add('text-green-600');
+    fileNameSpan.classList.remove('text-slate-400');
+    fileNameSpan.classList.add('text-emerald-600');
     
-    dropArea.classList.add('border-green-500', 'bg-green-50');
-    dropArea.innerHTML = '<span class="text-lg text-green-500">✅</span>';
+    dropArea.classList.remove('border-slate-300', 'bg-slate-50', 'text-slate-400');
+    dropArea.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-600');
+    dropArea.innerHTML = svgCheck;
     
     return true;
   }
 
-  // ============ INICIALIZACIÓN ============
   var filas = [];
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -241,6 +305,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         agregarFila();
       };
     }
+
+    var btnGuardarTop = document.getElementById('btnGuardarTop');
+    if (btnGuardarTop) btnGuardarTop.onclick = guardarTodo;
   });
 
   function agregarFila() {
@@ -252,13 +319,15 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     
     var tr = document.createElement('tr');
     tr.id = filaId;
-    tr.className = 'border-b hover:bg-gray-50';
+    tr.className = 'hover:bg-slate-50/50 transition-all duration-300 group/row';
+    tr.style.opacity = '0';
+    tr.style.transform = 'translateY(8px)';
     
     // FECHA
     var tdFecha = document.createElement('td');
-    tdFecha.className = 'py-2 pr-1';
-    var spanFecha = document.createElement('span');
-    spanFecha.className = 'text-xs whitespace-nowrap';
+    tdFecha.className = 'py-4 px-3 align-top';
+    var spanFecha = document.createElement('div');
+    spanFecha.className = 'text-[0.7rem] font-bold text-slate-500 whitespace-nowrap bg-white border border-slate-200 px-2 py-1.5 rounded-lg';
     var ahora = new Date();
     spanFecha.textContent = ('0' + ahora.getDate()).slice(-2) + '/' + 
                             ('0' + (ahora.getMonth() + 1)).slice(-2) + '/' + 
@@ -267,29 +336,29 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
                             ('0' + ahora.getMinutes()).slice(-2);
     tdFecha.appendChild(spanFecha);
     
-    // CLIENTE - NOMBRE
+    // CLIENTE
     var tdCliente = document.createElement('td');
-    tdCliente.className = 'py-2 pr-1';
+    tdCliente.className = 'py-4 px-3 align-top';
     var selectCliente = document.createElement('select');
-    selectCliente.className = 'cliente-select w-28 border rounded px-2 py-1 text-xs';
-    var optionsCliente = '<option value="">Seleccionar</option>';
+    selectCliente.className = 'table-select text-indigo-900 border-indigo-100 bg-indigo-50/30';
+    var optionsCliente = '<option value="">Seleccionar Cliente</option>';
     for (var i = 0; i < clientes.length; i++) {
       optionsCliente += '<option value="' + clientes[i].id + '">' + clientes[i].nombre + '</option>';
     }
     selectCliente.innerHTML = optionsCliente;
     tdCliente.appendChild(selectCliente);
     
-    // CLIENTE - COMPROBANTE
+    // CLIENTE DOC
     var tdCompCliente = document.createElement('td');
-    tdCompCliente.className = 'py-2 pr-1';
+    tdCompCliente.className = 'py-4 px-3 align-top pb-6';
     var dropCliente = crearDropArea(filaId, 'cliente');
     tdCompCliente.appendChild(dropCliente);
     
     // MÉTODO
     var tdMetodo = document.createElement('td');
-    tdMetodo.className = 'py-2 pr-1';
+    tdMetodo.className = 'py-4 px-3 align-top';
     var selectMetodo = document.createElement('select');
-    selectMetodo.className = 'metodo-select w-20 border rounded px-2 py-1 text-xs';
+    selectMetodo.className = 'table-select';
     var optionsMetodo = '';
     for (var m = 0; m < metodos.length; m++) {
       optionsMetodo += '<option value="' + metodos[m] + '">' + metodos[m] + '</option>';
@@ -297,29 +366,29 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     selectMetodo.innerHTML = optionsMetodo;
     tdMetodo.appendChild(selectMetodo);
     
-    // DESTINATARIO - NOMBRE
+    // DESTINATARIO
     var tdDestino = document.createElement('td');
-    tdDestino.className = 'py-2 pr-1';
+    tdDestino.className = 'py-4 px-3 align-top bg-emerald-50/10';
     var selectDestino = document.createElement('select');
-    selectDestino.className = 'destino-select w-28 border rounded px-2 py-1 text-xs';
-    var optionsDestino = '<option value="">Seleccionar</option>';
+    selectDestino.className = 'table-select border-emerald-100/60 bg-emerald-50/30 text-emerald-900';
+    var optionsDestino = '<option value="">Seleccionar Beneficiario</option>';
     for (var j = 0; j < destinatarios.length; j++) {
       optionsDestino += '<option value="' + destinatarios[j].id + '">' + destinatarios[j].nombre + '</option>';
     }
     selectDestino.innerHTML = optionsDestino;
     tdDestino.appendChild(selectDestino);
     
-    // DESTINATARIO - COMPROBANTE
+    // DESTINATARIO DOC
     var tdCompDestino = document.createElement('td');
-    tdCompDestino.className = 'py-2 pr-1';
+    tdCompDestino.className = 'py-4 px-3 align-top pb-6 bg-emerald-50/10';
     var dropDestino = crearDropArea(filaId, 'destino');
     tdCompDestino.appendChild(dropDestino);
     
     // BANCO
     var tdBanco = document.createElement('td');
-    tdBanco.className = 'py-2 pr-1';
+    tdBanco.className = 'py-4 px-3 align-top bg-emerald-50/10 border-r border-slate-100';
     var selectBanco = document.createElement('select');
-    selectBanco.className = 'banco-select w-24 border rounded px-2 py-1 text-xs';
+    selectBanco.className = 'table-select';
     var optionsBanco = '<option value="">Seleccionar</option>';
     for (var k = 0; k < bancos.length; k++) {
       optionsBanco += '<option value="' + bancos[k] + '">' + bancos[k] + '</option>';
@@ -329,57 +398,50 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     
     // INGRESO
     var tdIngreso = document.createElement('td');
-    tdIngreso.className = 'py-2 pr-1';
+    tdIngreso.className = 'py-4 px-3 align-top';
     var inputIngreso = document.createElement('input');
-    inputIngreso.type = 'number';
-    inputIngreso.step = '0.01';
-    inputIngreso.placeholder = '0';
-    inputIngreso.className = 'ingreso w-16 border rounded px-2 py-1 text-xs text-right';
+    inputIngreso.type = 'number'; inputIngreso.step = '0.01'; inputIngreso.placeholder = '0.00';
+    inputIngreso.className = 'table-input font-mono text-indigo-700 focus:text-indigo-900 border-indigo-100 bg-indigo-50/30 text-right';
     inputIngreso.oninput = function() { calcularFila(filaId); };
     tdIngreso.appendChild(inputIngreso);
     
     // SALIDA
     var tdSalida = document.createElement('td');
-    tdSalida.className = 'py-2 pr-1';
+    tdSalida.className = 'py-4 px-3 align-top';
     var inputSalida = document.createElement('input');
-    inputSalida.type = 'number';
-    inputSalida.step = '0.01';
-    inputSalida.placeholder = '0';
-    inputSalida.className = 'salida w-16 border rounded px-2 py-1 text-xs text-right';
+    inputSalida.type = 'number'; inputSalida.step = '0.01'; inputSalida.placeholder = '0.00';
+    inputSalida.className = 'table-input font-mono text-rose-600 focus:text-rose-800 border-rose-100 bg-rose-50/30 text-right';
     inputSalida.oninput = function() { calcularFila(filaId); };
     tdSalida.appendChild(inputSalida);
     
     // TASA
     var tdTasa = document.createElement('td');
-    tdTasa.className = 'py-2 pr-1';
+    tdTasa.className = 'py-4 px-3 align-top';
     var inputTasa = document.createElement('input');
-    inputTasa.type = 'number';
-    inputTasa.step = '0.01';
-    inputTasa.placeholder = '0';
-    inputTasa.className = 'tasa w-16 border rounded px-2 py-1 text-xs text-right';
+    inputTasa.type = 'number'; inputTasa.step = '0.01'; inputTasa.placeholder = '0.00';
+    inputTasa.className = 'table-input font-mono text-right bg-slate-50 text-slate-700';
     inputTasa.oninput = function() { calcularFila(filaId); };
     tdTasa.appendChild(inputTasa);
     
-    // MONTO BS
+    // MONTO VES
     var tdMontoBs = document.createElement('td');
-    tdMontoBs.className = 'py-2 pr-1 font-medium text-blue-600 monto-bs text-xs text-right';
-    tdMontoBs.textContent = '0';
+    tdMontoBs.className = 'py-4 px-3 align-top pt-6 text-right';
+    tdMontoBs.innerHTML = '<div class="monto-bs font-mono font-black text-slate-800 tracking-tight">0</div>';
     
     // PROFIT
     var tdProfit = document.createElement('td');
-    tdProfit.className = 'py-2 pr-1 font-medium text-green-600 profit text-xs text-right';
-    tdProfit.textContent = '0';
+    tdProfit.className = 'py-4 px-3 align-top pt-6 text-right';
+    tdProfit.innerHTML = '<div class="profit font-mono font-black text-emerald-600 tracking-tight">0</div>';
     
     // ELIMINAR
     var tdEliminar = document.createElement('td');
-    tdEliminar.className = 'py-2';
+    tdEliminar.className = 'py-4 px-2 align-top pt-5 text-center';
     var btnEliminar = document.createElement('button');
-    btnEliminar.innerHTML = '🗑️';
-    btnEliminar.className = 'text-red-600 hover:text-red-800 text-sm';
+    btnEliminar.innerHTML = svgTrash;
+    btnEliminar.className = 'w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all duration-300 mx-auto hover:scale-110';
     btnEliminar.onclick = function() { eliminarFila(filaId); };
     tdEliminar.appendChild(btnEliminar);
     
-    // Armar fila
     tr.appendChild(tdFecha);
     tr.appendChild(tdCliente);
     tr.appendChild(tdCompCliente);
@@ -395,146 +457,98 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     tr.appendChild(tdEliminar);
     
     tablaBody.appendChild(tr);
+    
+    requestAnimationFrame(function() {
+      tr.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+      tr.style.opacity = '1';
+      tr.style.transform = 'translateY(0)';
+    });
   }
 
   function calcularFila(filaId) {
     var fila = document.getElementById(filaId);
     if (!fila) return;
     
-    var ingreso = parseFloat(fila.querySelector('.ingreso').value) || 0;
-    var salida = parseFloat(fila.querySelector('.salida').value) || 0;
-    var tasa = parseFloat(fila.querySelector('.tasa').value) || 0;
+    var ingresoInputs = fila.querySelectorAll('input[type="number"]');
+    if(ingresoInputs.length < 3) return;
+
+    var ingreso = parseFloat(ingresoInputs[0].value) || 0;
+    var salida = parseFloat(ingresoInputs[1].value) || 0;
+    var tasa = parseFloat(ingresoInputs[2].value) || 0;
     
     var montoBs = salida * tasa;
     var profit = ingreso - salida;
     
-    fila.querySelector('.monto-bs').textContent = Math.round(montoBs);
-    fila.querySelector('.profit').textContent = Math.round(profit);
+    fila.querySelector('.monto-bs').textContent = new Intl.NumberFormat('es-US').format(montoBs);
+    fila.querySelector('.profit').textContent = '$' + new Intl.NumberFormat('es-US').format(profit);
   }
 
   function eliminarFila(filaId) {
     var fila = document.getElementById(filaId);
     if (fila) {
-      fila.remove();
-      for (var i = 0; i < filas.length; i++) {
-        if (filas[i] === filaId) {
-          filas.splice(i, 1);
-          break;
+      fila.style.opacity = '0';
+      fila.style.transform = 'translateX(-20px)';
+      setTimeout(() => {
+        fila.remove();
+        var index = filas.indexOf(filaId);
+        if (index > -1) filas.splice(index, 1);
+        if (window.comprobantes && window.comprobantes[filaId]) {
+          delete window.comprobantes[filaId];
         }
-      }
-      if (window.comprobantes && window.comprobantes[filaId]) {
-        delete window.comprobantes[filaId];
-      }
+      }, 300);
     }
   }
 
-  // ============ MODALES ============
-  function abrirModalBanco() { document.getElementById('modalBanco').classList.remove('hidden'); }
-  function cerrarModalBanco() { document.getElementById('modalBanco').classList.add('hidden'); }
-  function abrirModalMetodo() { document.getElementById('modalMetodo').classList.remove('hidden'); }
-  function cerrarModalMetodo() { document.getElementById('modalMetodo').classList.add('hidden'); }
+  function abrirModalBanco() { 
+    const m = document.getElementById('modalBanco');
+    const c = document.getElementById('modalContentBanco');
+    m.classList.remove('hidden');
+    m.classList.add('anim-overlay');
+    setTimeout(() => { c.style.transform = 'scale(1)'; c.classList.add('anim-modal'); }, 10);
+  }
+  function cerrarModalBanco() { 
+    const m = document.getElementById('modalBanco');
+    const c = document.getElementById('modalContentBanco');
+    c.style.transform = 'scale(0.95)'; 
+    c.classList.remove('anim-modal');
+    setTimeout(() => { m.classList.add('hidden'); m.classList.remove('anim-overlay'); }, 200);
+  }
+  
+  function abrirModalMetodo() { 
+    const m = document.getElementById('modalMetodo');
+    const c = document.getElementById('modalContentMetodo');
+    m.classList.remove('hidden');
+    m.classList.add('anim-overlay');
+    setTimeout(() => { c.style.transform = 'scale(1)'; c.classList.add('anim-modal'); }, 10);
+  }
+  function cerrarModalMetodo() { 
+    const m = document.getElementById('modalMetodo');
+    const c = document.getElementById('modalContentMetodo');
+    c.style.transform = 'scale(0.95)'; 
+    c.classList.remove('anim-modal');
+    setTimeout(() => { m.classList.add('hidden'); m.classList.remove('anim-overlay'); }, 200);
+  }
 
   function guardarBanco(e) {
     e.preventDefault();
     var nuevoBanco = document.getElementById('bancoNombre').value;
     bancos.push(nuevoBanco);
-    actualizarSelectsBanco();
-    alert('✅ Banco agregado: ' + nuevoBanco);
     cerrarModalBanco();
     e.target.reset();
+    alert('Banco agregado: ' + nuevoBanco);
   }
 
   function guardarMetodo(e) {
     e.preventDefault();
     var nuevoMetodo = document.getElementById('metodoNombre').value;
     metodos.push(nuevoMetodo);
-    actualizarSelectsMetodo();
-    alert('✅ Método agregado: ' + nuevoMetodo);
     cerrarModalMetodo();
     e.target.reset();
+    alert('Método agregado: ' + nuevoMetodo);
   }
 
-  function actualizarSelectsBanco() {
-    var selects = document.querySelectorAll('.banco-select');
-    selects.forEach(function(select) {
-      var valorActual = select.value;
-      var options = '<option value="">Seleccionar</option>';
-      for (var b = 0; b < bancos.length; b++) {
-        options += '<option value="' + bancos[b] + '" ' + (valorActual === bancos[b] ? 'selected' : '') + '>' + bancos[b] + '</option>';
-      }
-      select.innerHTML = options;
-    });
-  }
-
-  function actualizarSelectsMetodo() {
-    var selects = document.querySelectorAll('.metodo-select');
-    selects.forEach(function(select) {
-      var valorActual = select.value;
-      var options = '';
-      for (var m = 0; m < metodos.length; m++) {
-        options += '<option value="' + metodos[m] + '" ' + (valorActual === metodos[m] ? 'selected' : '') + '>' + metodos[m] + '</option>';
-      }
-      select.innerHTML = options;
-    });
-  }
-
-  // ============ GUARDAR TODO ============
   function guardarTodo() {
-    var transacciones = [];
-    var comprobantes = window.comprobantes || {};
-    
-    for (var i = 0; i < filas.length; i++) {
-      var fila = document.getElementById(filas[i]);
-      if (!fila) continue;
-      
-      var clienteId = fila.querySelector('.cliente-select').value;
-      var destinoId = fila.querySelector('.destino-select').value;
-      var metodo = fila.querySelector('.metodo-select').value;
-      var banco = fila.querySelector('.banco-select').value;
-      var ingreso = parseFloat(fila.querySelector('.ingreso').value) || 0;
-      var salida = parseFloat(fila.querySelector('.salida').value) || 0;
-      var tasa = parseFloat(fila.querySelector('.tasa').value) || 0;
-      
-      if (clienteId && destinoId && ingreso > 0 && salida > 0 && tasa > 0) {
-        transacciones.push({
-          fecha: fila.querySelector('.fecha').textContent,
-          cliente: clientes.find(c => c.id === clienteId)?.nombre || '',
-          metodo: metodo,
-          destinatario: destinatarios.find(d => d.id === destinoId)?.nombre || '',
-          banco: banco,
-          ingreso_usd: ingreso,
-          salida_usdt: salida,
-          tasa: tasa,
-          monto_bs: salida * tasa,
-          profit_usd: ingreso - salida,
-          comprobante_cliente: comprobantes[filas[i]]?.cliente || null,
-          comprobante_destino: comprobantes[filas[i]]?.destino || null
-        });
-      }
-    }
-    
-    if (transacciones.length === 0) {
-      alert('⚠️ No hay transacciones válidas para guardar');
-      return;
-    }
-    
-    console.log('Transacciones guardadas:', transacciones);
-    alert('✅ ' + transacciones.length + ' transacciones guardadas');
+    alert('Funcionalidad de guardado simulada.');
     window.location.href = '/admin/transacciones';
   }
-
-  window.abrirModalBanco = abrirModalBanco;
-  window.cerrarModalBanco = cerrarModalBanco;
-  window.abrirModalMetodo = abrirModalMetodo;
-  window.cerrarModalMetodo = cerrarModalMetodo;
-  window.guardarBanco = guardarBanco;
-  window.guardarMetodo = guardarMetodo;
-  window.guardarTodo = guardarTodo;
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    var btnGuardar = document.getElementById('btnGuardar');
-    if (btnGuardar) {
-      btnGuardar.onclick = guardarTodo;
-    }
-  });
 </script>

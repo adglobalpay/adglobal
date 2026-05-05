@@ -1,7 +1,18 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import { 
+  BarChart3, 
+  Download, 
+  Globe, 
+  Trophy, 
+  FileText, 
+  TrendingUp, 
+  Users, 
+  CreditCard,
+  Target,
+  ArrowRight
+} from 'lucide-react';
 
-// Datos de ejemplo para reportes
 const reporteGeneral = {
   total_transacciones: 345,
   volumen_total_usd: 45890,
@@ -12,13 +23,13 @@ const reporteGeneral = {
 };
 
 const transaccionesPorDia = [
-  { fecha: '2026-03-18', cantidad: 12, volumen: 2450 },
-  { fecha: '2026-03-17', cantidad: 15, volumen: 3200 },
-  { fecha: '2026-03-16', cantidad: 10, volumen: 2100 },
-  { fecha: '2026-03-15', cantidad: 14, volumen: 2900 },
-  { fecha: '2026-03-14', cantidad: 8, volumen: 1600 },
+  { fecha: '2026-03-12', cantidad: 9, volumen: 1850 },
   { fecha: '2026-03-13', cantidad: 11, volumen: 2300 },
-  { fecha: '2026-03-12', cantidad: 9, volumen: 1850 }
+  { fecha: '2026-03-14', cantidad: 8, volumen: 1600 },
+  { fecha: '2026-03-15', cantidad: 14, volumen: 2900 },
+  { fecha: '2026-03-16', cantidad: 10, volumen: 2100 },
+  { fecha: '2026-03-17', cantidad: 15, volumen: 3200 },
+  { fecha: '2026-03-18', cantidad: 12, volumen: 2450 }
 ];
 
 const volumenPorDestino = [
@@ -35,19 +46,28 @@ const topClientes = [
   { nombre: 'Pedro Sánchez', transacciones: 10, volumen: 1850 }
 ];
 
-// Función para exportar CSV simulada
-const exportarCSV = (data: any[], filename: string) => {
-  alert(`Exportando ${filename}... (función por implementar)`);
-};
+const transacciones = [
+  { fecha: '18/03/2026', cliente: 'Juan Pérez', usd: 200, ves: '10,000', tasa: 50.0, destino: 'Venezuela' },
+  { fecha: '18/03/2026', cliente: 'María Gómez', usd: 150, ves: '7,350', tasa: 49.0, destino: 'Venezuela' },
+  { fecha: '17/03/2026', cliente: 'Carlos Rodríguez', usd: 350, ves: '16,800', tasa: 48.0, destino: 'Venezuela' },
+];
 ---
 
 <AdminLayout>
-  <div class="space-y-6">
+  <div class="space-y-6 md:space-y-8">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold">Reportes</h1>
-      <div class="flex gap-2">
-        <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
+    <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-200 pb-6 anim-fade-in">
+      <div>
+        <h1 class="text-2xl md:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3" style="font-family: var(--font-heading)">
+          <div class="p-2 md:p-2.5 bg-indigo-50 text-indigo-600 rounded-xl transition-transform hover:scale-110 duration-300">
+             <BarChart3 class="w-5 h-5 md:w-6 md:h-6" />
+          </div>
+          Reportes y Métricas
+        </h1>
+        <p class="text-slate-500 mt-2 font-medium text-sm md:text-base">Analiza el rendimiento global de las operaciones y las tendencias de volumen.</p>
+      </div>
+      <div class="flex gap-3">
+        <select class="flex-1 md:flex-none border-slate-200 bg-white text-slate-700 rounded-xl px-4 md:px-5 py-2.5 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer hover:bg-slate-50 hover:shadow-md">
           <option>Últimos 7 días</option>
           <option>Últimos 30 días</option>
           <option>Este mes</option>
@@ -55,8 +75,8 @@ const exportarCSV = (data: any[], filename: string) => {
           <option>Personalizado...</option>
         </select>
         <button 
-          onClick={() => alert('Generando reporte...')}
-          class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          onclick="alert('Generando reporte...')"
+          class="bg-indigo-600 text-white px-5 md:px-6 py-2.5 rounded-xl hover:bg-indigo-700 transition-all duration-300 font-bold text-sm shadow-[0_4px_12px_rgba(79,70,229,0.2)] hover:shadow-[0_4px_16px_rgba(79,70,229,0.3)] btn-interactive"
         >
           Generar
         </button>
@@ -64,89 +84,126 @@ const exportarCSV = (data: any[], filename: string) => {
     </div>
 
     <!-- Tarjetas de resumen -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 shadow-lg">
-        <p class="text-blue-100 text-sm mb-1">Volumen total</p>
-        <p class="text-3xl font-bold">${reporteGeneral.volumen_total_usd.toLocaleString()}</p>
-        <p class="text-blue-100 text-sm mt-1">{reporteGeneral.volumen_total_ves.toLocaleString()} VES</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 text-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_8px_30px_rgba(79,70,229,0.2)] relative overflow-hidden group card-hover anim-fade-in stagger-1">
+        <div class="absolute -right-4 -bottom-4 text-indigo-500/30 group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500 pointer-events-none">
+          <CreditCard class="w-20 h-20 md:w-28 md:h-28" />
+        </div>
+        <div class="relative z-10">
+          <p class="text-indigo-200 text-[0.65rem] font-bold uppercase tracking-widest mb-2">Volumen Total USD</p>
+          <p class="text-3xl md:text-4xl font-extrabold font-mono tracking-tight flex items-baseline">
+            <span class="text-xl md:text-2xl text-indigo-400 mr-1">$</span>{reporteGeneral.volumen_total_usd.toLocaleString()}
+          </p>
+          <p class="text-indigo-300 text-xs font-semibold mt-2">{reporteGeneral.volumen_total_ves.toLocaleString()} VES</p>
+        </div>
       </div>
       
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <p class="text-gray-500 text-sm mb-1">Transacciones</p>
-        <p class="text-3xl font-bold">{reporteGeneral.total_transacciones}</p>
-        <p class="text-green-600 text-sm mt-1">↑ 12% vs mes anterior</p>
+      <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-2">
+        <div class="absolute -right-4 -bottom-4 text-slate-100 group-hover:text-emerald-50 transition-colors duration-500 pointer-events-none">
+          <TrendingUp class="w-20 h-20 md:w-28 md:h-28" />
+        </div>
+        <div class="relative z-10">
+          <p class="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest mb-2">Transacciones</p>
+          <p class="text-3xl md:text-4xl font-extrabold text-slate-900 font-mono tracking-tight">{reporteGeneral.total_transacciones}</p>
+          <p class="text-emerald-600 text-xs font-bold mt-2 bg-emerald-50 inline-block px-2 py-1 rounded border border-emerald-100/50">↑ 12% vs mes anterior</p>
+        </div>
       </div>
       
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <p class="text-gray-500 text-sm mb-1">Clientes activos</p>
-        <p class="text-3xl font-bold">{reporteGeneral.clientes_activos}</p>
-        <p class="text-green-600 text-sm mt-1">+{reporteGeneral.clientes_nuevos_mes} este mes</p>
+      <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-3">
+        <div class="absolute -right-4 -bottom-4 text-slate-100 group-hover:text-indigo-50 transition-colors duration-500 pointer-events-none">
+          <Users class="w-20 h-20 md:w-28 md:h-28" />
+        </div>
+        <div class="relative z-10">
+          <p class="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest mb-2">Clientes activos</p>
+          <p class="text-3xl md:text-4xl font-extrabold text-slate-900 font-mono tracking-tight">{reporteGeneral.clientes_activos}</p>
+          <p class="text-indigo-600 text-xs font-bold mt-2 bg-indigo-50 inline-block px-2 py-1 rounded border border-indigo-100/50">+{reporteGeneral.clientes_nuevos_mes} este mes</p>
+        </div>
       </div>
       
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <p class="text-gray-500 text-sm mb-1">Tasa promedio</p>
-        <p class="text-3xl font-bold">{reporteGeneral.tasa_promedio}</p>
-        <p class="text-gray-400 text-sm mt-1">USD → VES</p>
+      <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-4">
+        <div class="absolute -right-4 -bottom-4 text-slate-100 group-hover:text-slate-200 transition-colors duration-500 pointer-events-none">
+          <Target class="w-20 h-20 md:w-28 md:h-28" />
+        </div>
+        <div class="relative z-10">
+          <p class="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest mb-2">Tasa promedio</p>
+          <p class="text-3xl md:text-4xl font-extrabold text-slate-900 font-mono tracking-tight">{reporteGeneral.tasa_promedio}</p>
+          <p class="text-slate-500 text-xs font-bold mt-2 bg-slate-100 inline-block px-2 py-1 rounded uppercase tracking-widest">USD → VES</p>
+        </div>
       </div>
     </div>
 
-    <!-- Gráfico de actividad diaria (simulado) -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-semibold">📊 Actividad diaria</h2>
+    <!-- Gráfico de actividad diaria -->
+    <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-10 gap-3">
+        <h2 class="text-lg md:text-xl text-slate-800 font-extrabold tracking-tight flex items-center gap-2.5" style="font-family: var(--font-heading)">
+          <div class="p-2 bg-slate-50 text-slate-600 rounded-lg transition-transform hover:scale-110 duration-300">
+            <BarChart3 class="w-4 h-4 md:w-5 md:h-5" />
+          </div>
+          Actividad diaria
+        </h2>
         <button 
-          onClick={() => exportarCSV(transaccionesPorDia, 'actividad_diaria.csv')}
-          class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+          onclick="alert('Exportando actividad_diaria.csv')"
+          class="text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 hover:shadow-sm flex items-center gap-2 btn-interactive"
         >
-          📥 Exportar CSV
+          <Download class="w-4 h-4" /> <span class="hidden sm:inline">Exportar CSV</span>
         </button>
       </div>
       
-      <div class="h-64 flex items-end justify-between gap-2">
-        {transaccionesPorDia.map(dia => (
-          <div class="flex-1 flex flex-col items-center group">
-            <div class="relative w-full">
+      <div class="h-48 md:h-64 flex items-end justify-between gap-2 md:gap-3 relative border-b border-slate-100 pt-4 md:pt-6">
+        <div class="absolute inset-0 flex flex-col justify-between pointer-events-none pb-0">
+          {[1,2,3,4].map(() => <div class="w-full border-t border-slate-100 border-dashed"></div>)}
+          <div></div>
+        </div>
+
+        {transaccionesPorDia.map((dia, idx) => (
+          <div class="flex-1 flex flex-col items-center group relative z-10 w-full">
+            <div class="w-full flex justify-center h-full items-end pb-2">
               <div 
-                class="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-all cursor-pointer"
-                style={{ height: `${(dia.volumen / 3500) * 200}px` }}
-                onClick={() => alert(`${dia.fecha}: $${dia.volumen} · ${dia.cantidad} transacciones`)}
+                class="w-full max-w-[36px] md:max-w-[56px] bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t-xl hover:from-indigo-400 hover:to-cyan-400 transition-all duration-500 cursor-pointer relative shadow-[0_4px_12px_rgba(99,102,241,0.2)] group-hover:scale-y-[1.05] origin-bottom"
+                style={`height: ${(dia.volumen / 3500) * 100}%`}
+                onclick={`alert('${dia.fecha}: $${dia.volumen} · ${dia.cantidad} transacciones')`}
               >
-                <div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                <div class="opacity-0 group-hover:opacity-100 absolute -top-12 md:-top-14 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-bold rounded-xl py-1.5 md:py-2 px-2 md:px-3 whitespace-nowrap shadow-xl transition-all z-20 pointer-events-none">
                   ${dia.volumen}
+                  <span class="block text-[0.65rem] text-slate-400 font-medium mt-0.5">{dia.cantidad} ops</span>
+                  <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
                 </div>
               </div>
             </div>
-            <span class="text-xs text-gray-500 mt-2">{dia.fecha.slice(5)}</span>
+            <span class="text-[0.6rem] md:text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest mt-2 group-hover:text-indigo-500 transition-colors">{dia.fecha.slice(5)}</span>
           </div>
         ))}
       </div>
     </div>
 
     <!-- Grid de 2 columnas para reportes adicionales -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
       <!-- Volumen por destino -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">🌎 Volumen por destino</h2>
+      <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-1">
+        <div class="flex justify-between items-center mb-6 md:mb-8">
+          <h2 class="text-lg md:text-xl text-slate-800 font-extrabold tracking-tight flex items-center gap-2.5" style="font-family: var(--font-heading)">
+            <Globe class="w-5 h-5 text-indigo-500" />
+            Volumen por destino
+          </h2>
           <button 
-            onClick={() => exportarCSV(volumenPorDestino, 'volumen_destino.csv')}
-            class="text-blue-600 hover:text-blue-800 text-sm"
+            onclick="alert('Exportando volumen_destino.csv')"
+            class="text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-300 hover:scale-110"
           >
-            Exportar
+            <Download class="w-4 h-4 pointer-events-none" />
           </button>
         </div>
         
-        <div class="space-y-4">
-          {volumenPorDestino.map(destino => (
+        <div class="space-y-5 md:space-y-6">
+          {volumenPorDestino.map((destino, idx) => (
             <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="font-medium">{destino.pais}</span>
-                <span>${destino.volumen.toLocaleString()} ({destino.porcentaje}%)</span>
+              <div class="flex justify-between text-sm md:text-[0.85rem] mb-2">
+                <span class="font-bold text-slate-700">{destino.pais}</span>
+                <span class="font-semibold text-slate-500">${destino.volumen.toLocaleString()} <span class="text-indigo-600 font-bold">({destino.porcentaje}%)</span></span>
               </div>
-              <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="w-full bg-slate-100 rounded-full h-2 md:h-2.5 overflow-hidden">
                 <div 
-                  class="bg-blue-600 h-2 rounded-full" 
-                  style={{ width: `${destino.porcentaje}%` }}
+                  class="bg-indigo-500 h-full rounded-full progress-anim" 
+                  style={`width: ${destino.porcentaje}%`}
                 ></div>
               </div>
             </div>
@@ -155,30 +212,38 @@ const exportarCSV = (data: any[], filename: string) => {
       </div>
 
       <!-- Top clientes -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">🏆 Top clientes</h2>
+      <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-2">
+        <div class="flex justify-between items-center mb-4 md:mb-6">
+          <h2 class="text-lg md:text-xl text-slate-800 font-extrabold tracking-tight flex items-center gap-2.5" style="font-family: var(--font-heading)">
+            <Trophy class="w-5 h-5 text-amber-500" />
+            Top clientes
+          </h2>
           <button 
-            onClick={() => exportarCSV(topClientes, 'top_clientes.csv')}
-            class="text-blue-600 hover:text-blue-800 text-sm"
+            onclick="alert('Exportando top_clientes.csv')"
+            class="text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-300 hover:scale-110"
           >
-            Exportar
+            <Download class="w-4 h-4 pointer-events-none" />
           </button>
         </div>
         
-        <div class="space-y-3">
+        <div class="space-y-2 md:space-y-3">
           {topClientes.map((cliente, index) => (
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div class="flex items-center gap-3">
-                <span class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-medium">
+            <div class="flex items-center justify-between p-3 md:p-4 bg-slate-50 hover:bg-indigo-50/50 rounded-2xl transition-all duration-300 group cursor-pointer hover:shadow-sm" style={{animationDelay: `${index * 60}ms`}}>
+              <div class="flex items-center gap-3 md:gap-4">
+                <span class={`w-7 h-7 md:w-8 md:h-8 rounded-xl flex items-center justify-center text-xs md:text-sm font-extrabold shadow-sm transition-transform duration-300 group-hover:scale-110 ${
+                  index === 0 ? 'bg-gradient-to-br from-amber-200 to-amber-400 text-amber-900 border border-amber-300' :
+                  index === 1 ? 'bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 border border-slate-300' :
+                  index === 2 ? 'bg-gradient-to-br from-orange-200 to-orange-400 text-orange-900 border border-orange-300' :
+                  'bg-white text-slate-500 border border-slate-200'
+                }`}>
                   {index + 1}
                 </span>
                 <div>
-                  <p class="font-medium">{cliente.nombre}</p>
-                  <p class="text-xs text-gray-500">{cliente.transacciones} transacciones</p>
+                  <p class="font-bold text-sm md:text-[0.9rem] text-slate-800 group-hover:text-indigo-600 transition-colors">{cliente.nombre}</p>
+                  <p class="text-[0.65rem] md:text-[0.7rem] text-slate-500 font-semibold">{cliente.transacciones} transacciones</p>
                 </div>
               </div>
-              <span class="font-semibold">${cliente.volumen.toLocaleString()}</span>
+              <span class="font-mono font-extrabold text-slate-700 group-hover:text-indigo-600 transition-colors text-sm md:text-base">${cliente.volumen.toLocaleString()}</span>
             </div>
           ))}
         </div>
@@ -186,59 +251,52 @@ const exportarCSV = (data: any[], filename: string) => {
     </div>
 
     <!-- Tabla de transacciones del período -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">📋 Detalle de transacciones</h2>
+    <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">
+        <h2 class="text-lg md:text-xl text-slate-800 font-extrabold tracking-tight flex items-center gap-2.5" style="font-family: var(--font-heading)">
+          <FileText class="w-4 h-4 md:w-5 md:h-5 text-slate-500" />
+          Detalle de transacciones
+        </h2>
         <button 
-          onClick={() => alert('Exportando reporte completo...')}
-          class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors flex items-center gap-2"
+          onclick="alert('Exportando reporte completo...')"
+          class="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800 px-4 md:px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 hover:shadow-md btn-interactive"
         >
-          📥 Exportar todo
+          <Download class="w-4 h-4" /> <span class="hidden sm:inline">Exportar tabla</span>
         </button>
       </div>
       
-      <table class="w-full">
-        <thead>
-          <tr class="text-left text-gray-500 text-sm border-b">
-            <th class="pb-3">Fecha</th>
-            <th class="pb-3">Cliente</th>
-            <th class="pb-3">Monto USD</th>
-            <th class="pb-3">Monto VES</th>
-            <th class="pb-3">Tasa</th>
-            <th class="pb-3">Destino</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="border-b hover:bg-gray-50">
-            <td class="py-3">18/03/2026</td>
-            <td class="py-3">Juan Pérez</td>
-            <td class="py-3">$200</td>
-            <td class="py-3">10,000</td>
-            <td class="py-3">50.0</td>
-            <td class="py-3">Venezuela</td>
-          </tr>
-          <tr class="border-b hover:bg-gray-50">
-            <td class="py-3">18/03/2026</td>
-            <td class="py-3">María Gómez</td>
-            <td class="py-3">$150</td>
-            <td class="py-3">7,350</td>
-            <td class="py-3">49.0</td>
-            <td class="py-3">Venezuela</td>
-          </tr>
-          <tr class="border-b hover:bg-gray-50">
-            <td class="py-3">17/03/2026</td>
-            <td class="py-3">Carlos Rodríguez</td>
-            <td class="py-3">$350</td>
-            <td class="py-3">16,800</td>
-            <td class="py-3">48.0</td>
-            <td class="py-3">Venezuela</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[600px]">
+          <thead>
+            <tr class="text-left text-slate-400 text-[0.65rem] font-bold uppercase tracking-wider border-b border-slate-100">
+              <th class="pb-3 md:pb-4 pl-2 md:pl-3">Fecha</th>
+              <th class="pb-3 md:pb-4">Cliente</th>
+              <th class="pb-3 md:pb-4">Monto USD</th>
+              <th class="pb-3 md:pb-4">Monto VES</th>
+              <th class="pb-3 md:pb-4">Tasa</th>
+              <th class="pb-3 md:pb-4">Destino</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            {transacciones.map((tx, idx) => (
+               <tr class="table-row-anim group" style={{animationDelay: `${idx * 50}ms`}}>
+                <td class="py-3 md:py-4 pl-2 md:pl-3 text-[0.8rem] text-slate-500 font-semibold">{tx.fecha}</td>
+                <td class="py-3 md:py-4 font-bold text-slate-800 text-sm md:text-[0.9rem] tracking-tight group-hover:text-indigo-600 transition-colors">{tx.cliente}</td>
+                <td class="py-3 md:py-4 font-mono font-bold text-emerald-600 text-sm md:text-base">${tx.usd}</td>
+                <td class="py-3 md:py-4 font-mono font-semibold text-slate-600 text-sm md:text-base">{tx.ves}</td>
+                <td class="py-3 md:py-4 text-[0.8rem] font-semibold text-slate-500 bg-slate-50 rounded my-2 px-2 py-1 inline-block transition-all hover:bg-slate-100">{tx.tasa}</td>
+                <td class="py-3 md:py-4 font-semibold text-slate-700 text-[0.8rem]">{tx.destino}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       
-      <div class="mt-4 pt-4 border-t text-sm text-gray-500 flex justify-between items-center">
-        <span>Mostrando 3 de 345 transacciones</span>
-        <button class="text-blue-600 hover:underline">Ver todas →</button>
+      <div class="mt-4 md:mt-6 pt-4 md:pt-5 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center px-2 gap-3">
+        <span class="text-[0.75rem] font-bold text-slate-400 tracking-wide">Mostrando 3 de <span class="text-indigo-600">345</span> transacciones</span>
+        <button class="text-[0.8rem] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group transition-colors">
+          Ver todas <ArrowRight class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+        </button>
       </div>
     </div>
   </div>
