@@ -1,6 +1,7 @@
 ---
 // src/layouts/AdminLayout.astro
 import Sidebar from '../components/admin/Sidebar';
+import ToastProvider from '../components/admin/ToastProvider';
 import CustomSelectInit from '../components/CustomSelectInit.astro';
 ---
 
@@ -318,6 +319,7 @@ import CustomSelectInit from '../components/CustomSelectInit.astro';
     </main>
   </div>
 
+  <ToastProvider client:load />
   <CustomSelectInit />
 
   <script is:inline>
@@ -327,6 +329,16 @@ import CustomSelectInit from '../components/CustomSelectInit.astro';
       if (!token) {
         window.location.replace('/admin/login');
       }
+    })();
+
+    // Interceptar alert() y convertir en toast
+    (function() {
+      var originalAlert = window.alert;
+      window.alert = function(message) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'info', message: message }
+        }));
+      };
     })();
   </script>
 </body>

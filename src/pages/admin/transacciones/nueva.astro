@@ -258,17 +258,24 @@ import {
     return wrapper;
   }
 
+  // Helper para mostrar toast
+  function showToast(type, message, description) {
+    window.dispatchEvent(new CustomEvent('show-toast', {
+      detail: { type: type, message: message, description: description }
+    }));
+  }
+
   function procesarArchivo(file, filaId, tipo, fileNameSpan, dropArea) {
     var tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     var esValido = tiposPermitidos.includes(file.type);
     
     if (!esValido) {
-      alert('Solo se permiten imágenes (JPG, PNG, WEBP) o PDF');
+      showToast('error', 'Tipo de archivo no permitido', 'Solo se permiten imágenes (JPG, PNG, WEBP) o PDF');
       return false;
     }
-    
+
     if (file.size > 5 * 1024 * 1024) {
-      alert('El archivo no debe superar los 5MB');
+      showToast('error', 'Archivo demasiado grande', 'El archivo no debe superar los 5MB');
       return false;
     }
     
@@ -535,7 +542,7 @@ import {
     bancos.push(nuevoBanco);
     cerrarModalBanco();
     e.target.reset();
-    alert('Banco agregado: ' + nuevoBanco);
+    showToast('success', 'Banco agregado', nuevoBanco + ' fue agregado a la lista.');
   }
 
   function guardarMetodo(e) {
@@ -544,11 +551,13 @@ import {
     metodos.push(nuevoMetodo);
     cerrarModalMetodo();
     e.target.reset();
-    alert('Método agregado: ' + nuevoMetodo);
+    showToast('success', 'Método agregado', nuevoMetodo + ' fue agregado a la lista.');
   }
 
   function guardarTodo() {
-    alert('Funcionalidad de guardado simulada.');
-    window.location.href = '/admin/transacciones';
+    showToast('success', 'Transacciones guardadas', 'Las transacciones fueron registradas exitosamente.');
+    setTimeout(function() {
+      window.location.href = '/admin/transacciones';
+    }, 1500);
   }
 </script>

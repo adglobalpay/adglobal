@@ -84,6 +84,45 @@ export default function CapitalOperador() {
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const currentMovimientos = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  function downloadCSV(filename: string, headers: string[], rows: (string | number | null)[][]) {
+    const csv = ['\uFEFF' + headers.join(','), ...rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  const handleExport = () => {
+    if (filtered.length === 0) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'warning', message: 'Sin datos para exportar', description: 'No hay movimientos para exportar.' }
+      }));
+      return;
+    }
+    const headers = ['Fecha', 'Descripción', 'Tipo', 'Monto USD', 'Monto Fiat', 'Cobertura', 'Balance Final', 'Tasa', 'Fee', 'Método'];
+    const rows = filtered.map(m => [
+      new Date(m.fecha).toLocaleString('es-ES'),
+      m.descripcion,
+      m.tipo,
+      m.montoUSD,
+      m.montoFiat ?? '',
+      m.cobertura,
+      m.balanceAfter,
+      m.rate ?? '',
+      m.fee ?? '',
+      m.metodo ?? ''
+    ]);
+    downloadCSV(`movimientos_capital_${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
+    window.dispatchEvent(new CustomEvent('show-toast', {
+      detail: { type: 'success', message: 'CSV exportado', description: `${filtered.length} movimientos exportados.` }
+    }));
+  };
+
   return (
     <div className="p-3 border-t border-white/5 bg-slate-950">
       <div 
@@ -199,7 +238,7 @@ export default function CapitalOperador() {
                     className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium placeholder-slate-400"
                   />
                 </div>
-                <button className="h-9 px-3 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 flex items-center gap-2 text-sm font-medium transition-colors">
+                <button onClick={handleExport} className="h-9 px-3 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 flex items-center gap-2 text-sm font-medium transition-colors">
                   <Download size={16} /> <span className="hidden sm:inline">Exportar</span>
                 </button>
               </div>

@@ -153,57 +153,11 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
 </AdminLayout>
 
 <script is:inline>
-  if (!window.clientesGlobal) {
-    window.clientesGlobal = [
-      { 
-        id: '1', 
-        first_name: 'Luisa', 
-        last_name: 'Ideas Creativas', 
-        telefono: '4242459151', 
-        email: '', 
-        pais: 'us',
-        metodo: 'Zelle',
-        notas: 'Cliente frecuente, envía los viernes',
-        kyc: 'verified',
-        ofac: 'ok',
-        transactions: [
-          { amount: 150, date: '2026-03-19' },
-          { amount: 200, date: '2026-03-10' },
-          { amount: 100, date: '2026-03-01' }
-        ]
-      },
-      { 
-        id: '2', 
-        first_name: 'Cartaya', 
-        last_name: 'Auto Sales', 
-        telefono: '3055551234', 
-        email: 'cartaya@autos.com', 
-        pais: 'us',
-        metodo: 'Zelle',
-        notas: 'Empresa, envía a varios familiares',
-        kyc: 'verified',
-        ofac: 'ok',
-        transactions: [
-          { amount: 500, date: '2026-03-18' },
-          { amount: 450, date: '2026-03-15' },
-          { amount: 600, date: '2026-03-10' },
-          { amount: 550, date: '2026-03-05' }
-        ]
-      },
-      { 
-        id: '3', 
-        first_name: 'María', 
-        last_name: 'Josefina', 
-        telefono: '7865556789', 
-        email: 'maria.j@email.com', 
-        pais: 'us',
-        metodo: 'Zelle',
-        notas: 'Cliente nuevo',
-        kyc: 'pending',
-        ofac: 'review',
-        transactions: []
-      }
-    ];
+  // Helper para mostrar toast
+  function showToast(type, message, description) {
+    window.dispatchEvent(new CustomEvent('show-toast', {
+      detail: { type: type, message: message, description: description }
+    }));
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -237,26 +191,58 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
     }, 200);
   }
 
-  function guardarCliente(e) {
+  async function guardarCliente(e) {
     e.preventDefault();
-    
-    var nuevoCliente = {
-      id: 'c' + Date.now(),
-      first_name: document.getElementById('clienteNombre').value.split(' ')[0] || '',
-      last_name: document.getElementById('clienteNombre').value.split(' ').slice(1).join(' ') || '',
-      telefono: document.getElementById('clienteTelefono').value,
+
+    var nombreCompleto = document.getElementById('clienteNombre').value.trim();
+    var partes = nombreCompleto.split(' ');
+    var firstName = partes[0] || '';
+    var lastName = partes.slice(1).join(' ') || '';
+
+    var payload = {
+      firstName: firstName,
+      lastName: lastName,
+      phone: document.getElementById('clienteTelefono').value,
       email: document.getElementById('clienteEmail').value,
-      pais: document.getElementById('clientePais').value,
-      metodo: document.getElementById('clienteMetodo').value,
-      notas: document.getElementById('clienteNotas').value,
-      kyc: 'pending',
-      ofac: 'pending',
-      transactions: []
+      country: document.getElementById('clientePais').value,
+      preferredMethod: document.getElementById('clienteMetodo').value,
+      notes: document.getElementById('clienteNotas').value
     };
-    
-    window.clientesGlobal.push(nuevoCliente);
-    alert('✅ Cliente agregado: ' + nuevoCliente.first_name + ' ' + nuevoCliente.last_name);
-    window.location.reload();
+
+    var token = localStorage.getItem('adglobal_token');
+    if (!token) {
+      showToast('error', 'No autenticado', 'Por favor inicia sesión nuevamente.');
+      return;
+    }
+
+    try {
+      var res = await fetch('http://localhost:3001/api/clients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(payload)
+      });
+
+      var data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al crear cliente');
+      }
+
+      showToast('success', 'Cliente creado', payload.firstName + ' ' + payload.lastName + ' fue registrado exitosamente.');
+
+      // Cerrar modal y limpiar formulario
+      document.getElementById('formCliente').reset();
+      cerrarModalCliente();
+
+      // Notificar a la tabla para que refresque sin recargar la página
+      window.dispatchEvent(new CustomEvent('clients:refresh'));
+
+    } catch (err) {
+      showToast('error', 'Error al crear cliente', err.message);
+    }
   }
 
   // === DROPDOWN CUSTOM DE MÉTODO ===
