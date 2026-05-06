@@ -1,7 +1,6 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 
-// Define el tipo de las props que recibirá la página
 export interface Props {
   cliente: {
     id: string;
@@ -42,7 +41,6 @@ export interface Props {
   };
 }
 
-// Função getStaticPaths: gera as rotas para cada ID de cliente
 export async function getStaticPaths() {
   const clientes = [
     {
@@ -113,336 +111,347 @@ export async function getStaticPaths() {
 }
 
 const { cliente } = Astro.props;
-
 if (!cliente) {
   return Astro.redirect('/404');
 }
 
-const fullName = cliente.last_name 
-  ? `${cliente.first_name} ${cliente.last_name}`
-  : cliente.first_name;
+const fullName = cliente.last_name ? `${cliente.first_name} ${cliente.last_name}` : cliente.first_name;
+const totalUsd = cliente.transactions.reduce((sum, t) => sum + t.monto_usd, 0);
+const totalTx = cliente.transactions.length;
+
+const levelInfo = totalTx >= 8 ? { name: 'Diamante', color: 'bg-cyan-50 text-cyan-700 border-cyan-200', icon: '💎' }
+  : totalTx >= 5 ? { name: 'Platino', color: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: '🏆' }
+  : totalTx >= 3 ? { name: 'Oro', color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: '🥇' }
+  : totalTx >= 1 ? { name: 'Plata', color: 'bg-slate-100 text-slate-700 border-slate-300', icon: '🥈' }
+  : { name: 'Bronce', color: 'bg-amber-50 text-amber-700 border-amber-200', icon: '🥉' };
+
+const kycStatusColor = cliente.kyc.estado === 'Verificado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  : cliente.kyc.estado === 'Pendiente' ? 'bg-amber-50 text-amber-700 border-amber-200'
+  : 'bg-rose-50 text-rose-700 border-rose-200';
+
+const ofacStatusColor = cliente.ofac === 'Sin coincidencias' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  : 'bg-amber-50 text-amber-700 border-amber-200';
 ---
 
 <AdminLayout>
-  <div class="max-w-6xl mx-auto space-y-6 p-4">
-    <!-- Breadcrumb y navegación -->
-    <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
-      <a href="/admin/clientes" class="hover:text-blue-600">Clientes</a>
-      <span>›</span>
-      <span class="text-gray-700">{fullName}</span>
-    </div>
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-xs md:text-sm text-slate-400 font-medium anim-fade-in-up stagger-1">
+      <a href="/admin/clientes" class="hover:text-indigo-600 transition-colors">Clientes</a>
+      <svg class="w-3.5 h-3.5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+      <span class="text-slate-700 font-semibold">{fullName}</span>
+    </nav>
 
-    <!-- Header con información principal -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div class="flex justify-between items-start">
+    <!-- Header Card -->
+    <div class="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-8 anim-fade-in-up stagger-2 card-hover">
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
         <div class="flex items-start gap-4">
-          <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+          <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white text-xl md:text-2xl font-bold shadow-lg shadow-indigo-500/20 shrink-0 float-anim">
             {fullName.charAt(0)}
           </div>
-          <div>
-            <h1 class="text-3xl font-bold flex items-center gap-2">
-              {fullName}
-              <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                🥉 Bronce
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" style="font-family: var(--font-heading);">{fullName}</h1>
+              <span class={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${levelInfo.color}`}>
+                <span>{levelInfo.icon}</span> {levelInfo.name}
               </span>
-            </h1>
-            <div class="flex items-center gap-4 mt-2 text-gray-600">
-              <span class="flex items-center gap-1">📧 {cliente.email || 'No registrado'}</span>
-              <span class="flex items-center gap-1">📱 {cliente.phone}</span>
-              <span class="flex items-center gap-1">🌎 {cliente.country.toUpperCase()}</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500 font-medium">
+              <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                {cliente.email || 'Sin correo'}
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                {cliente.phone}
+              </span>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">
+                {cliente.country.toUpperCase()}
+              </span>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">
+                {cliente.metod || 'N/A'}
+              </span>
             </div>
             {cliente.notes && (
-              <div class="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
-                📝 {cliente.notes}
+              <div class="mt-3 p-3 bg-slate-50 rounded-xl text-sm text-slate-600 font-medium border border-slate-100">
+                <span class="text-slate-400 mr-1">📝</span> {cliente.notes}
               </div>
             )}
           </div>
         </div>
-        
-        <div class="flex gap-2">
-          <a
-            href={`/admin/transacciones/nueva?clienteId=${cliente.id}`}
-            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-          >
-            + Nueva transacción
+        <div class="flex gap-2 shrink-0">
+          <a href={`/admin/transacciones/nueva?clienteId=${cliente.id}`} class="btn-interactive inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/25">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Nueva transacción
           </a>
         </div>
       </div>
     </div>
 
-    <!-- Tarjetas de resumen -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Total transacciones</p>
-        <p class="text-2xl font-bold">{cliente.transactions.length}</p>
-      </div>
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Total enviado</p>
-        <p class="text-2xl font-bold">
-          ${cliente.transactions.reduce((sum, t) => sum + t.monto_usd, 0).toLocaleString()}
-        </p>
-      </div>
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Destinatarios</p>
-        <p class="text-2xl font-bold">{cliente.destinatarios.length}</p>
-      </div>
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Referidos</p>
-        <p class="text-2xl font-bold">{cliente.referred_count}</p>
-      </div>
-    </div>
-
-    <!-- SECCIÓN KYC / VERIFICACIÓN -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold flex items-center gap-2">
-          <span>🪪</span> Verificación KYC
-        </h2>
-        <div class="flex gap-2">
-          <button 
-            onclick="enviarKYC()"
-            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm flex items-center gap-2"
-          >
-            <span class="text-lg">📧</span> Enviar link KYC
-          </button>
-          <button 
-            onclick="abrirModalSubirDocumentos()"
-            class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm flex items-center gap-2"
-          >
-            📤 Subir documentos
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div class="p-4 bg-gray-50 rounded-lg">
-          <p class="text-sm text-gray-500 mb-1">Estado actual</p>
-          <p class={`text-lg font-semibold ${cliente.kyc.estado === 'Verificado' ? 'text-green-600' : 'text-yellow-600'}`}>
-            {cliente.kyc.estado === 'Verificado' ? '✅ Verificado' : 
-             cliente.kyc.estado === 'Pendiente' ? '⏳ Pendiente' : 
-             cliente.kyc.estado === 'Rechazado' ? '❌ Rechazado' : '📝 Por iniciar'}
-          </p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-lg">
-          <p class="text-sm text-gray-500 mb-1">Fecha de verificación</p>
-          <p class="font-medium">{cliente.kyc.fecha || '—'}</p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-lg">
-          <p class="text-sm text-gray-500 mb-1">Método de verificación</p>
-          <p class="font-medium">{cliente.kyc.metodo || '—'}</p>
-        </div>
-      </div>
-
-      {cliente.kyc.documentos && cliente.kyc.documentos.length > 0 && (
-        <div class="mt-4">
-          <h3 class="font-medium text-gray-700 mb-2">Documentos subidos</h3>
-          <div class="flex flex-wrap gap-2">
-            {cliente.kyc.documentos.map(doc => (
-              <button 
-                onclick="alert(`Ver documento: ${doc}`)"
-                class="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm hover:bg-gray-200"
-              >
-                📄 {doc}
-              </button>
-            ))}
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 anim-fade-in-up stagger-3">
+      {[
+        { label: 'Transacciones', value: totalTx.toString(), icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+        { label: 'Total enviado', value: `$${totalUsd.toLocaleString()}`, icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Destinatarios', value: cliente.destinatarios.length.toString(), icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', color: 'text-cyan-600', bg: 'bg-cyan-50' },
+        { label: 'Referidos', value: cliente.referred_count.toString(), icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7.5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>', color: 'text-amber-600', bg: 'bg-amber-50' }
+      ].map((stat, i) => (
+        <div class="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={`animation-delay: ${0.3 + i * 0.05}s`}>
+          <div class={`w-9 h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>
+            <Fragment set:html={stat.icon} />
           </div>
+          <p class="text-xs font-bold uppercase tracking-wider text-slate-400">{stat.label}</p>
+          <p class="text-xl md:text-2xl font-bold text-slate-800 mt-1 tracking-tight" style="font-family: var(--font-heading);">{stat.value}</p>
         </div>
-      )}
-
-      {cliente.kyc.ultima_solicitud && (
-        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-          <p class="text-sm text-blue-700">📧 Última solicitud enviada: {cliente.kyc.ultima_solicitud}</p>
-        </div>
-      )}
+      ))}
     </div>
 
-    <!-- SECCIÓN OFAC MEJORADA -->
-    <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">🛡️</span>
-          <h3 class="font-semibold text-lg">OFAC (Listas de Sanciones)</h3>
-        </div>
-        <div class="flex gap-2">
-          <a 
-            href="https://sanctionssearch.ofac.treas.gov/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-colors"
-            title="Abrir OFAC Sanctions Search"
-          >
-            🔍 Buscar en OFAC
-          </a>
-          <button 
-            onclick="ofacBuscarManual()"
-            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-colors"
-            title="Buscar con nombre pre-cargado"
-          >
-            ⚡ Búsqueda rápida
-          </button>
-        </div>
-      </div>
-      
-      <div class="space-y-3 text-sm">
-        <div class="flex items-center gap-2">
-          <span class="text-gray-500">Estado actual:</span>
-          <span class={`font-medium ${cliente.ofac === 'Sin coincidencias' ? 'text-green-600' : 'text-yellow-600'}`}>
-            {cliente.ofac === 'Sin coincidencias' ? '✅ Sin coincidencias' : '⚠️ Revisión pendiente'}
-          </span>
-        </div>
-        <div>
-          <span class="text-gray-500">Última verificación:</span>
-          <span class="ml-2">16/03/2026 10:25</span>
-        </div>
-        
-        <div class="mt-3 p-3 bg-gray-50 rounded-lg">
-          <p class="font-medium text-gray-700 mb-2 text-xs">📋 Nombre para búsqueda en OFAC:</p>
-          <div class="flex items-center gap-2">
-            <code class="bg-white px-3 py-1.5 rounded border text-sm font-mono flex-1">
-              {cliente.first_name} {cliente.last_name}
-            </code>
-            <button 
-              onclick="copiarTexto('{cliente.first_name} {cliente.last_name}')"
-              class="bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded text-sm transition-colors"
-              title="Copiar nombre"
-            >
-              📋 Copiar
+    <!-- KYC + OFAC Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 anim-fade-in-up stagger-4">
+      <!-- KYC -->
+      <div class="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div>
+              <h2 class="text-base md:text-lg font-bold text-slate-800" style="font-family: var(--font-heading);">Verificación KYC</h2>
+              <p class="text-xs text-slate-400 font-medium">Identidad validada</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="enviarKYC()" class="btn-interactive px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              Enviar link
+            </button>
+            <button onclick="abrirModalSubirDocumentos()" class="px-3 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+              Subir
             </button>
           </div>
-          <p class="text-xs text-gray-400 mt-2">1. Copia el nombre<br>2. Pégalo en la búsqueda de OFAC<br>3. Ajusta el slider a 80<br>4. Si no hay coincidencias, está OK</p>
         </div>
 
-        <div class="mt-2 pt-2 border-t">
-          <p class="text-xs text-gray-500 mb-2">📜 Historial de verificaciones:</p>
-          <ul class="text-xs text-gray-500 space-y-1">
-            <li>• 16/03/2026 10:25 - Sin coincidencias</li>
-            <li>• 10/03/2026 09:15 - Sin coincidencias</li>
-            <li>• 01/03/2026 14:30 - Sin coincidencias</li>
-          </ul>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1">Estado</p>
+            <span class={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border ${kycStatusColor}`}>
+              {cliente.kyc.estado === 'Verificado' ? (
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              ) : (
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              )}
+              {cliente.kyc.estado}
+            </span>
+          </div>
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1">Fecha</p>
+            <p class="text-sm font-bold text-slate-700">{cliente.kyc.fecha || '—'}</p>
+          </div>
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1">Método</p>
+            <p class="text-sm font-bold text-slate-700">{cliente.kyc.metodo || '—'}</p>
+          </div>
         </div>
 
-        <div class="mt-3 pt-2">
-          <button 
-            onclick="marcarOFACVerificado()"
-            class="w-full border border-green-300 bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
-          >
-            ✅ Marcar como verificado (sin coincidencias)
-          </button>
-        </div>
+        {cliente.kyc.documentos && cliente.kyc.documentos.length > 0 && (
+          <div>
+            <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Documentos</p>
+            <div class="flex flex-wrap gap-2">
+              {cliente.kyc.documentos.map(doc => (
+                <button onclick={`alert('Ver documento: ${doc}')`} class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-all border border-slate-200">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  {doc}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
 
-    <!-- Información personal -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <h2 class="text-xl font-semibold mb-4">📋 Información personal</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <p class="text-sm text-gray-500">Nombre completo</p>
-          <p class="font-medium">{fullName}</p>
+      <!-- OFAC -->
+      <div class="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <h2 class="text-base md:text-lg font-bold text-slate-800" style="font-family: var(--font-heading);">Verificación OFAC</h2>
+              <p class="text-xs text-slate-400 font-medium">Listas de sanciones</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <a href="https://sanctionssearch.ofac.treas.gov/" target="_blank" rel="noopener noreferrer" class="px-3 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              OFAC
+            </a>
+            <button onclick="marcarOFACVerificado()" class={`px-3 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 border ${ofacStatusColor}`}>
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              Marcar OK
+            </button>
+          </div>
         </div>
-        <div>
-          <p class="text-sm text-gray-500">Email</p>
-          <p class="font-medium">{cliente.email || 'No registrado'}</p>
+
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Estado actual</span>
+            <span class={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border ${ofacStatusColor}`}>
+              {cliente.ofac === 'Sin coincidencias' ? (
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              ) : (
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+              )}
+              {cliente.ofac}
+            </span>
+          </div>
+          <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Nombre para búsqueda</p>
+          <div class="flex items-center gap-2">
+            <code class="flex-1 bg-white px-3 py-2 rounded-lg border border-slate-200 text-sm font-mono text-slate-700">{fullName}</code>
+            <button onclick={`copiarTexto('${fullName}')`} class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5 shrink-0">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              Copiar
+            </button>
+          </div>
         </div>
+
         <div>
-          <p class="text-sm text-gray-500">Teléfono</p>
-          <p class="font-medium">{cliente.phone}</p>
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">País</p>
-          <p class="font-medium">{cliente.country.toUpperCase()}</p>
+          <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Historial de verificaciones</p>
+          <div class="space-y-2">
+            {['16/03/2026 10:25', '10/03/2026 09:15', '01/03/2026 14:30'].map((fecha, idx) => (
+              <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                <span>{fecha}</span>
+                <span class="text-emerald-600 font-bold">— Sin coincidencias</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Destinatarios -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">👥 Destinatarios</h2>
-        <button 
-          onclick="alert('Agregar destinatario')"
-          class="text-blue-600 hover:text-blue-800 text-sm"
-        >
-          + Agregar
-        </button>
+    <div class="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-5 card-hover">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <h2 class="text-base md:text-lg font-bold text-slate-800" style="font-family: var(--font-heading);">Destinatarios</h2>
+            <p class="text-xs text-slate-400 font-medium">{cliente.destinatarios.length} registrados</p>
+          </div>
+        </div>
+        <a href={`/admin/clientes/${cliente.id}/destinatarios`} class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-all">
+              Ver todos
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
       </div>
-      <div class="space-y-3">
-        {cliente.destinatarios.map(dest => (
-          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <div>
-              <p class="font-medium">{dest.nombre}</p>
-              <p class="text-sm text-gray-500">{dest.relacion} · {dest.banco}</p>
-              <p class="text-xs text-gray-400">{dest.telefono}</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {cliente.destinatarios.map((dest, idx) => (
+          <div class="group p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all duration-300">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0">
+                  {dest.nombre.charAt(0)}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-bold text-sm text-slate-800 truncate">{dest.nombre}</p>
+                  <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-white rounded text-[0.6rem] font-black uppercase tracking-wider text-slate-500 border border-slate-200">{dest.relacion}</span>
+                </div>
+              </div>
             </div>
-            <button 
-              onclick="alert(`Editar destinatario ${dest.nombre}`)"
-              class="text-blue-600 hover:text-blue-800 text-sm"
-            >
-              Editar
-            </button>
+            <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Teléfono</p>
+                <p class="font-mono font-medium text-slate-700">{dest.telefono}</p>
+              </div>
+              <div>
+                <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Banco</p>
+                <p class="font-medium text-slate-700">{dest.banco}</p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Cuenta</p>
+                <p class="font-mono font-medium text-slate-700 bg-white px-2 py-1 rounded border border-slate-100 mt-0.5">{dest.cuenta}</p>
+              </div>
+            </div>
           </div>
         ))}
       </div>
     </div>
 
-    <!-- Badges especiales -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <h2 class="text-xl font-semibold mb-4">🏅 Badges especiales</h2>
-      {cliente.referred_count > 0 && (
-        <div class="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-          <span class="text-2xl">🤝</span>
-          <div>
-            <p class="font-medium">Referidor</p>
-            <p class="text-sm text-gray-600">Ha referido a {cliente.referred_count} clientes</p>
-          </div>
+    <!-- Badges -->
+    {(cliente.referred_count > 0 || cliente.referred_by) && (
+      <div class="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-6 card-hover">
+        <h2 class="text-base md:text-lg font-bold text-slate-800 mb-4 flex items-center gap-2" style="font-family: var(--font-heading);">
+          <svg class="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          Logros
+        </h2>
+        <div class="flex flex-wrap gap-2">
+          {cliente.referred_count > 0 && (
+            <div class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200 text-sm font-bold">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7.5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+              Referidor · {cliente.referred_count} clientes
+            </div>
+          )}
+          {cliente.referred_by && (
+            <div class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 text-sm font-bold">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Cliente referido
+            </div>
+          )}
         </div>
-      )}
-      {cliente.referred_by && (
-        <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg mt-2">
-          <span class="text-2xl">📢</span>
-          <div>
-            <p class="font-medium">Recomendado</p>
-            <p class="text-sm text-gray-600">Vino por otro cliente</p>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    )}
 
     <!-- Historial de transacciones -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">📊 Historial de transacciones</h2>
-        <a href={`/admin/transacciones?cliente=${cliente.id}`} class="text-blue-600 hover:underline text-sm">
-          Ver todas →
-        </a>
+    <div class="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-7 card-hover">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          </div>
+          <div>
+            <h2 class="text-base md:text-lg font-bold text-slate-800" style="font-family: var(--font-heading);">Historial de transacciones</h2>
+            <p class="text-xs text-slate-400 font-medium">{totalTx} envíos registrados</p>
+          </div>
+        </div>
+        <a href={`/admin/transacciones?cliente=${cliente.id}`} class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-all">
+              Ver todas
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full">
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-100">
+        <table class="w-full min-w-[600px]">
           <thead>
-            <tr class="text-left text-gray-500 text-sm border-b">
-              <th class="pb-3">Fecha</th>
-              <th class="pb-3">Destinatario</th>
-              <th class="pb-3">Monto USD</th>
-              <th class="pb-3">Monto VES</th>
-              <th class="pb-3">Estado</th>
-              <th class="pb-3"></th>
-             </tr>
+            <tr class="text-left text-slate-400 text-[0.6rem] font-bold uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
+              <th class="py-3 pl-4 md:pl-6 pr-3">Fecha</th>
+              <th class="py-3 px-3">Destinatario</th>
+              <th class="py-3 px-3">Monto USD</th>
+              <th class="py-3 px-3">Monto VES</th>
+              <th class="py-3 px-3">Estado</th>
+              <th class="py-3 pr-4 md:pr-6 pl-3 text-right">Acción</th>
+            </tr>
           </thead>
-          <tbody>
-            {cliente.transactions.map(tx => (
-              <tr class="border-b hover:bg-gray-50" key={tx.id}>
-                <td class="py-3">{tx.fecha}</td>
-                <td class="py-3">{tx.destinatario}</td>
-                <td class="py-3 font-medium">${tx.monto_usd}</td>
-                <td class="py-3">Bs. {tx.monto_ves.toLocaleString()}</td>
-                <td class="py-3">
-                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+          <tbody class="divide-y divide-slate-50">
+            {cliente.transactions.map((tx, idx) => (
+              <tr class="table-row-anim group" style={`opacity: 0; animation: fadeInUp 0.4s ease-out ${idx * 0.06}s forwards`}>
+                <td class="py-3 pl-4 md:pl-6 pr-3 text-sm font-semibold text-slate-700">{tx.fecha}</td>
+                <td class="py-3 px-3 text-sm text-slate-600 font-medium">{tx.destinatario}</td>
+                <td class="py-3 px-3 text-sm font-bold text-slate-800 font-mono">${tx.monto_usd}</td>
+                <td class="py-3 px-3 text-sm text-slate-500 font-mono">Bs. {tx.monto_ves.toLocaleString()}</td>
+                <td class="py-3 px-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[0.6rem] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                     {tx.estado}
                   </span>
                 </td>
-                <td class="py-3">
-                  <a href={`/admin/transacciones/${tx.id}`} class="text-blue-600 hover:underline text-sm">
-                    Ver
+                <td class="py-3 pr-4 md:pr-6 pl-3 text-right">
+                  <a href={`/admin/transacciones/${tx.id}`} class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-all">
+                    Ver <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
                   </a>
                 </td>
               </tr>
@@ -454,26 +463,20 @@ const fullName = cliente.last_name
   </div>
 </AdminLayout>
 
-<!-- Script con todas las funciones -->
 <script is:inline>
-  // ============ FUNCIONES KYC ============
   function enviarKYC() {
     const email = '{cliente.email}' || '';
     const nombre = '{cliente.first_name} {cliente.last_name}';
-    
     if (!email) {
-      alert('⚠️ El cliente no tiene email registrado. Por favor agregue un email antes de enviar la solicitud KYC.');
+      alert('⚠️ El cliente no tiene email registrado.');
       return;
     }
-    
     const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const link = `https://adglobalpay.com/kyc/${token}`;
-    
-    if (confirm(`📧 Enviar solicitud KYC a ${email}?\n\nSe enviará un enlace para que ${nombre} complete su verificación de identidad.`)) {
-      alert(`✅ Solicitud KYC enviada a ${email}\n\nEl cliente recibirá un email con instrucciones.\n\n🔗 Link: ${link}`);
+    if (confirm(`Enviar solicitud KYC a ${email}?`)) {
+      alert(`Solicitud enviada a ${email}\nLink: ${link}`);
     }
   }
-
   function abrirModalSubirDocumentos() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -482,37 +485,28 @@ const fullName = cliente.last_name
     input.onchange = function(e) {
       const files = e.target.files;
       if (files.length > 0) {
-        alert(`✅ ${files.length} documento(s) seleccionado(s) para subir.\n\n(Simulación - aquí se subirían al servidor)`);
+        alert(`${files.length} documento(s) seleccionado(s) (simulación)`);
       }
     };
     input.click();
   }
-
-  // ============ FUNCIONES OFAC ============
   function ofacBuscarManual() {
     const nombre = '{cliente.first_name} {cliente.last_name}';
     window.open('https://sanctionssearch.ofac.treas.gov/', '_blank');
-    
-    alert(`🔍 OFAC: Buscar "${nombre}"\n\n📋 Instrucciones:\n1. Pega el nombre en el buscador\n2. Ajusta el slider a 80\n3. Haz clic en Search\n4. Revisa los resultados\n5. Si no hay coincidencias, marca como verificado\n\n✅ Nombre copiado al portapapeles`);
-    
     navigator.clipboard.writeText(nombre).catch(() => {});
   }
-
   function copiarTexto(texto) {
     navigator.clipboard.writeText(texto).then(() => {
-      alert(`✅ Nombre copiado: "${texto}"\n\nPéguelo en la búsqueda de OFAC.`);
+      alert(`Nombre copiado: "${texto}"`);
     }).catch(() => {
-      alert('❌ No se pudo copiar automáticamente. Seleccione y copie manualmente.');
+      alert('No se pudo copiar automáticamente');
     });
   }
-
   function marcarOFACVerificado() {
-    if (confirm('¿Confirmar que no hay coincidencias OFAC para este cliente?\n\nSe registrará la verificación en el historial.')) {
-      alert('✅ Verificación OFAC registrada\n\nSe ha guardado en el historial del cliente.');
+    if (confirm('¿Confirmar que no hay coincidencias OFAC?')) {
+      alert('Verificación OFAC registrada');
     }
   }
-
-  // Exponer funciones globales
   window.enviarKYC = enviarKYC;
   window.abrirModalSubirDocumentos = abrirModalSubirDocumentos;
   window.ofacBuscarManual = ofacBuscarManual;

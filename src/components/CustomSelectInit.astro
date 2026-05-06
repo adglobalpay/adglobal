@@ -1,0 +1,332 @@
+<script is:inline>
+(function() {
+  'use strict';
+
+  const STYLE_ID = 'custom-select-style';
+  if (!document.getElementById(STYLE_ID)) {
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      .custom-select-wrapper { position: relative; display: block; width: 100%; }
+      .custom-select-original {
+        position: absolute !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .custom-select-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        color: #334155;
+        font-size: 0.875rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        outline: none;
+        min-height: 44px;
+        text-align: left;
+      }
+      .custom-select-trigger:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 2px 8px -2px rgba(15,23,42,0.06);
+      }
+      .custom-select-trigger:focus,
+      .custom-select-trigger:focus-visible,
+      .custom-select-wrapper.open .custom-select-trigger {
+        border-color: #818cf8;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.15), 0 4px 12px -4px rgba(99,102,241,0.15);
+        background: #ffffff;
+      }
+      .custom-select-trigger-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+      .custom-select-trigger-arrow {
+        width: 16px;
+        height: 16px;
+        color: #94a3b8;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        flex-shrink: 0;
+      }
+      .custom-select-wrapper.open .custom-select-trigger-arrow {
+        transform: rotate(180deg);
+        color: #6366f1;
+      }
+      .custom-select-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow: 0 20px 50px -12px rgba(15,23,42,0.18), 0 0 0 1px rgba(226,232,240,0.4);
+        z-index: 100;
+        max-height: 280px;
+        overflow-y: auto;
+        opacity: 0;
+        transform: scale(0.96) translateY(-6px);
+        pointer-events: none;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 0.375rem;
+      }
+      .custom-select-wrapper.open .custom-select-dropdown {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        pointer-events: auto;
+      }
+      .custom-select-dropdown.up {
+        top: auto;
+        bottom: calc(100% + 6px);
+        transform: scale(0.96) translateY(6px);
+      }
+      .custom-select-wrapper.open .custom-select-dropdown.up {
+        transform: scale(1) translateY(0);
+      }
+      .custom-select-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #475569;
+        transition: all 0.15s ease;
+        outline: none;
+        min-height: 36px;
+      }
+      .custom-select-option:hover,
+      .custom-select-option.focused {
+        background: #f1f5f9;
+        color: #1e293b;
+      }
+      .custom-select-option.selected {
+        background: #eef2ff;
+        color: #4f46e5;
+        font-weight: 700;
+      }
+      .custom-select-option-check {
+        width: 16px;
+        height: 16px;
+        margin-left: auto;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        color: #6366f1;
+        flex-shrink: 0;
+      }
+      .custom-select-option.selected .custom-select-option-check {
+        opacity: 1;
+      }
+      .custom-select-dropdown::-webkit-scrollbar { width: 5px; }
+      .custom-select-dropdown::-webkit-scrollbar-track { background: transparent; }
+      .custom-select-dropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+      @media (max-width: 768px) {
+        .custom-select-dropdown { max-height: 240px; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function createSVGElement(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html.trim();
+    return div.firstChild;
+  }
+
+  const arrowSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
+  const checkSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+  function initCustomSelect(originalSelect) {
+    if (originalSelect._customSelectInit) return;
+    originalSelect._customSelectInit = true;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+    originalSelect.parentNode.insertBefore(wrapper, originalSelect);
+    wrapper.appendChild(originalSelect);
+    originalSelect.classList.add('custom-select-original');
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.innerHTML = `<span class="custom-select-trigger-text"></span><span class="custom-select-trigger-arrow">${arrowSVG}</span>`;
+    wrapper.appendChild(trigger);
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'custom-select-dropdown';
+    dropdown.setAttribute('role', 'listbox');
+    wrapper.appendChild(dropdown);
+
+    let focusedIndex = -1;
+    let isOpen = false;
+
+    function getOptions() {
+      return Array.from(originalSelect.querySelectorAll('option'));
+    }
+
+    function getSelectedIndex() {
+      return getOptions().findIndex(o => o.selected);
+    }
+
+    function renderOptions() {
+      dropdown.innerHTML = '';
+      const opts = getOptions();
+      opts.forEach((opt, idx) => {
+        const item = document.createElement('div');
+        item.className = 'custom-select-option' + (opt.selected ? ' selected' : '');
+        item.setAttribute('role', 'option');
+        item.setAttribute('data-index', idx);
+        item.setAttribute('tabindex', '-1');
+        item.innerHTML = `<span>${opt.textContent}</span><span class="custom-select-option-check">${checkSVG}</span>`;
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectOption(idx);
+        });
+        item.addEventListener('mouseenter', () => {
+          focusedIndex = idx;
+          updateFocus();
+        });
+        dropdown.appendChild(item);
+      });
+    }
+
+    function updateTrigger() {
+      const selected = originalSelect.options[originalSelect.selectedIndex];
+      trigger.querySelector('.custom-select-trigger-text').textContent = selected ? selected.textContent : '';
+      trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function updateFocus() {
+      dropdown.querySelectorAll('.custom-select-option').forEach((el, idx) => {
+        el.classList.toggle('focused', idx === focusedIndex);
+      });
+    }
+
+    function selectOption(index) {
+      const opts = getOptions();
+      if (index < 0 || index >= opts.length) return;
+      opts.forEach((o, i) => { o.selected = i === index; });
+      originalSelect.selectedIndex = index;
+      renderOptions();
+      updateTrigger();
+      closeDropdown();
+      originalSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      // Also fire onchange attribute if present
+      if (originalSelect.onchange) originalSelect.onchange(new Event('change'));
+    }
+
+    function openDropdown() {
+      if (isOpen) return;
+      isOpen = true;
+      wrapper.classList.add('open');
+      renderOptions();
+      focusedIndex = getSelectedIndex();
+      updateFocus();
+      // Auto-flip if near bottom
+      const rect = wrapper.getBoundingClientRect();
+      const dropdownHeight = 280;
+      if (rect.bottom + dropdownHeight + 10 > window.innerHeight) {
+        dropdown.classList.add('up');
+      } else {
+        dropdown.classList.remove('up');
+      }
+      document.addEventListener('click', onDocClick);
+      document.addEventListener('keydown', onKeyDown);
+    }
+
+    function closeDropdown() {
+      if (!isOpen) return;
+      isOpen = false;
+      wrapper.classList.remove('open');
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKeyDown);
+    }
+
+    function toggleDropdown(e) {
+      e.stopPropagation();
+      if (isOpen) closeDropdown(); else openDropdown();
+    }
+
+    function onDocClick(e) {
+      if (!wrapper.contains(e.target)) closeDropdown();
+    }
+
+    function onKeyDown(e) {
+      if (!isOpen) return;
+      const opts = getOptions();
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        focusedIndex = Math.min(focusedIndex + 1, opts.length - 1);
+        updateFocus();
+        scrollToFocused();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        focusedIndex = Math.max(focusedIndex - 1, 0);
+        updateFocus();
+        scrollToFocused();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        selectOption(focusedIndex);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDropdown();
+      }
+    }
+
+    function scrollToFocused() {
+      const el = dropdown.querySelector(`.custom-select-option[data-index="${focusedIndex}"]`);
+      if (el) el.scrollIntoView({ block: 'nearest' });
+    }
+
+    trigger.addEventListener('click', toggleDropdown);
+
+    // Sync if native select changes programmatically
+    originalSelect.addEventListener('change', () => {
+      renderOptions();
+      updateTrigger();
+    });
+
+    // Observe DOM changes in select (options added/removed)
+    const observer = new MutationObserver(() => {
+      renderOptions();
+      updateTrigger();
+    });
+    observer.observe(originalSelect, { childList: true, subtree: true, attributes: true });
+
+    updateTrigger();
+  }
+
+  function scan() {
+    document.querySelectorAll('select.custom-select:not([data-cs-init])').forEach(sel => {
+      sel.setAttribute('data-cs-init', '1');
+      initCustomSelect(sel);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scan);
+  } else {
+    scan();
+  }
+  // Re-scan periodically for dynamically added selects
+  setInterval(scan, 500);
+})();
+</script>

@@ -1,6 +1,7 @@
 ---
 // src/layouts/AdminLayout.astro
 import Sidebar from '../components/admin/Sidebar';
+import CustomSelectInit from '../components/CustomSelectInit.astro';
 ---
 
 <!DOCTYPE html>
@@ -316,5 +317,17 @@ import Sidebar from '../components/admin/Sidebar';
       </div>
     </main>
   </div>
+
+  <CustomSelectInit />
+
+  <script is:inline>
+    // Proteccion de rutas admin: redirigir a login si no hay token
+    (function() {
+      var token = localStorage.getItem('adglobal_token');
+      if (!token) {
+        window.location.replace('/admin/login');
+      }
+    })();
+  </script>
 </body>
 </html>

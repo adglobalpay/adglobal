@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   BadgeDollarSign,
   X,
-  Menu
+  Menu,
+  LogOut
 } from 'lucide-react';
 
 interface NavItem {
@@ -28,6 +29,14 @@ interface InactiveClient {
   lastTx: string;
   days: number;
   phone?: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
 }
 
 const getClientesInactivos = (): InactiveClient[] => {
@@ -50,10 +59,20 @@ export default function Sidebar() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
     setInactiveClients(getClientesInactivos());
+    
+    // Load user from localStorage
+    try {
+      const raw = localStorage.getItem('adglobal_user');
+      if (raw) setUser(JSON.parse(raw));
+    } catch (e) {
+      console.error('Error parsing user:', e);
+    }
+    
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -64,6 +83,12 @@ export default function Sidebar() {
     };
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('adglobal_token');
+    localStorage.removeItem('adglobal_user');
+    window.location.href = '/admin/login';
+  };
+
   const navItems: NavItem[] = [
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
     { name: 'Clientes', path: '/admin/clientes', icon: <Users size={20} />, badge: inactiveClients.length },
@@ -73,6 +98,9 @@ export default function Sidebar() {
   ];
 
   const closeMobile = () => setIsMobileOpen(false);
+
+  const userName = user ? `${user.firstName} ${user.lastName || ''}`.trim() : 'AD Gomez';
+  const userRole = user ? user.role : 'Administrador';
 
   return (
     <>
@@ -249,10 +277,17 @@ export default function Sidebar() {
             <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center text-indigo-400 font-bold text-xs shadow-inner group-hover:scale-105 transition-transform">
               <Fingerprint size={16} />
             </div>
-            <div>
-              <p className="text-slate-200 text-sm font-semibold tracking-tight">AD Gomez</p>
-              <p className="text-[0.65rem] uppercase tracking-wider text-slate-500 font-medium">Administrador</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-slate-200 text-sm font-semibold tracking-tight truncate">{userName}</p>
+              <p className="text-[0.65rem] uppercase tracking-wider text-slate-500 font-medium">{userRole}</p>
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+              title="Cerrar sesión"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </aside>

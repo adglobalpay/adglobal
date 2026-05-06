@@ -141,7 +141,7 @@ export default function NuevaTransaccionForm() {
             <select
               value={form.metodo}
               onChange={e => setForm({...form, metodo: e.target.value as any})}
-              class="w-full border p-2 rounded"
+              className="custom-select w-full border p-2 rounded"
             >
               <option>USDT</option>
               <option>EFECTIVO</option>
