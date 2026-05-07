@@ -118,12 +118,12 @@ function getLevelInfo(totalTx: number) {
   return { name: 'Bronce', color: 'bg-amber-50 text-amber-700 border-amber-200', icon: '🥉' };
 }
 
-export default function ClientDetailPage() {
+export default function ClientDetailPage({ clientId: clientIdProp }: { clientId: string }) {
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const clientId = window.location.pathname.split('/').pop() || '';
+  const clientId = clientIdProp;
 
   const loadClient = useCallback(async () => {
     setLoading(true);

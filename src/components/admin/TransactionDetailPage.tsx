@@ -73,7 +73,7 @@ const ESTADO_CONFIG: Record<string, { bg: string; text: string; border: string; 
   }
 };
 
-export default function TransactionDetailPage() {
+export default function TransactionDetailPage({ txId: txIdProp }: { txId: string }) {
   const [tx, setTx] = useState<TransactionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -81,7 +81,7 @@ export default function TransactionDetailPage() {
   const [notas, setNotas] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const txId = window.location.pathname.split('/').pop() || '';
+  const txId = txIdProp;
 
   const loadTx = useCallback(async () => {
     setLoading(true);

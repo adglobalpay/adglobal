@@ -47,7 +47,7 @@ function downloadCSV(filename: string, headers: string[], rows: (string | number
   URL.revokeObjectURL(url);
 }
 
-export default function RecipientsPage() {
+export default function RecipientsPage({ clientId: clientIdProp }: { clientId: string }) {
   const [client, setClient] = useState<Client | null>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +64,7 @@ export default function RecipientsPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
-  const clientId = window.location.pathname.split('/')[3] || '';
+  const clientId = clientIdProp;
   const fullName = client ? `${client.firstName} ${client.lastName || ''}`.trim() : '—';
 
   const loadData = useCallback(async () => {

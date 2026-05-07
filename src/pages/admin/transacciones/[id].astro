@@ -12,5 +12,5 @@ export async function getStaticPaths() {
 ---
 
 <AdminLayout>
-  <TransactionDetailPage client:load />
+  <TransactionDetailPage client:load txId={Astro.params.id} />
 </AdminLayout>

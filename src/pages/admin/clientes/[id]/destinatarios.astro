@@ -14,5 +14,5 @@ export async function getStaticPaths() {
 ---
 
 <AdminLayout>
-  <RecipientsPage client:load />
+  <RecipientsPage client:load clientId={Astro.params.id} />
 </AdminLayout>
