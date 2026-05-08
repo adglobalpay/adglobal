@@ -215,8 +215,10 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
       return;
     }
 
+    var API_URL = window.__ADGLOBAL_API_URL__ || 'http://localhost:3001';
+
     try {
-      var res = await fetch('http://localhost:3001/api/clients', {
+      var res = await fetch(API_URL + '/api/clients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

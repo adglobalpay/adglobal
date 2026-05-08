@@ -3,6 +3,8 @@
 import Sidebar from '../components/admin/Sidebar';
 import ToastProvider from '../components/admin/ToastProvider';
 import CustomSelectInit from '../components/CustomSelectInit.astro';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 ---
 
 <!DOCTYPE html>
@@ -18,6 +20,10 @@ import CustomSelectInit from '../components/CustomSelectInit.astro';
   <link rel="icon" href="/img/logo.webp" type="image/webp" />
   
   <title>AD Global Pay - Panel</title>
+
+  <script is:inline define:vars={{ API_URL }}>
+    window.__ADGLOBAL_API_URL__ = API_URL;
+  </script>
 
   <style is:global>
     :root {
