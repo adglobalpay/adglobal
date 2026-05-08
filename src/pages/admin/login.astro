@@ -1,6 +1,8 @@
 ---
 // src/pages/admin/login.astro
 import ToastProvider from '../../components/admin/ToastProvider';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 ---
 
 <!DOCTYPE html>
@@ -224,6 +226,9 @@ import ToastProvider from '../../components/admin/ToastProvider';
 
   <ToastProvider client:load />
 
+  <script is:inline define:vars={{ API_URL }}>
+    window.__ADGLOBAL_API_URL__ = API_URL;
+  </script>
   <script is:inline>
     (function() {
       // Helper para mostrar toast
@@ -281,7 +286,8 @@ import ToastProvider from '../../components/admin/ToastProvider';
           if (errorMsg) errorMsg.classList.add('hidden');
           
           try {
-            var res = await fetch('http://localhost:3001/api/auth/login', {
+            var API_URL = window.__ADGLOBAL_API_URL__ || 'http://localhost:3001';
+            var res = await fetch(API_URL + '/api/auth/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ email: email, password: password })
