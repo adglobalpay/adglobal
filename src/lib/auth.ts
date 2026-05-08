@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
 const TOKEN_KEY = 'adglobal_token';
 const USER_KEY = 'adglobal_user';
 
