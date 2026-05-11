@@ -63,9 +63,10 @@ export default function ConfigPage() {
     async function load() {
       setLoading(true);
       try {
-        const [cfgData, usersData] = await Promise.all([
+        const [cfgData, usersData, monthlyStats] = await Promise.all([
           apiFetch('/api/config').catch(() => ({} as ConfigMap)),
-          apiFetch('/api/users').catch(() => ([] as SystemUser[]))
+          apiFetch('/api/users').catch(() => ([] as SystemUser[])),
+          apiFetch('/api/stats/monthly').catch(() => ({ profitGlobal: 0, volumenMensual: 0 }))
         ]);
         setConfig(cfgData);
         setUsers(usersData);
@@ -98,8 +99,8 @@ export default function ConfigPage() {
             comision_global: cfgData['profit.comision_global'] || prev.comision_global,
             tasa_costo: cfgData['profit.tasa_costo'] || prev.tasa_costo,
             meta_operador: cfgData['profit.meta_operador'] || prev.meta_operador,
-            volumen_mensual: cfgData['profit.volumen_mensual'] || prev.volumen_mensual,
-            profit_global: cfgData['profit.profit_global'] || prev.profit_global,
+          volumen_mensual: String(monthlyStats.volumenMensual || 0),
+          profit_global: String(monthlyStats.profitGlobal || 0),
             binance_api_key: cfgData['binance.api_key'] || prev.binance_api_key,
             binance_api_secret: cfgData['binance.api_secret'] || prev.binance_api_secret,
             binance_alert_limit: cfgData['binance.alert_limit'] || prev.binance_alert_limit,
@@ -151,8 +152,6 @@ export default function ConfigPage() {
         'profit.comision_global': form.comision_global,
         'profit.tasa_costo': form.tasa_costo,
         'profit.meta_operador': form.meta_operador,
-        'profit.volumen_mensual': form.volumen_mensual,
-        'profit.profit_global': form.profit_global,
         'binance.api_key': form.binance_api_key,
         'binance.api_secret': form.binance_api_secret,
         'binance.alert_limit': form.binance_alert_limit,
@@ -364,21 +363,35 @@ export default function ConfigPage() {
               ))}
             </div>
             <div className="space-y-4">
-              {[
-                { key: 'meta_operador', label: 'Meta Mensual del Operador', prefix: '$' },
-                { key: 'volumen_mensual', label: 'Volumen Mensual', prefix: '$' },
-                { key: 'profit_global', label: 'Profit Global', prefix: '$' }
-              ].map(field => (
-                <div key={field.key}>
-                  <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">{field.label}</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">{field.prefix}</span>
-                    <input type="number" value={(form as any)[field.key]} onChange={e => updateField(field.key, e.target.value)}
-                      min={0} step={100}
-                      className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm" />
-                  </div>
+              <div>
+                <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Meta Mensual del Operador</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
+                  <input type="number" value={form.meta_operador} onChange={e => updateField('meta_operador', e.target.value)}
+                    min={0} step={100}
+                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm" />
                 </div>
-              ))}
+              </div>
+              <div>
+                <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Volumen Mensual</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
+                  <input type="number" value={form.volumen_mensual} disabled
+                    className="w-full pl-8 pr-4 py-3 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl font-mono font-semibold outline-none cursor-not-allowed" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.6rem] font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">AUTO</span>
+                </div>
+                <p className="text-[0.65rem] text-slate-400 mt-1 font-medium">Suma de ingresos del mes en curso</p>
+              </div>
+              <div>
+                <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Profit Global</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
+                  <input type="number" value={form.profit_global} disabled
+                    className="w-full pl-8 pr-4 py-3 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl font-mono font-semibold outline-none cursor-not-allowed" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.6rem] font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">AUTO</span>
+                </div>
+                <p className="text-[0.65rem] text-slate-400 mt-1 font-medium">Suma de profits del mes en curso</p>
+              </div>
             </div>
           </div>
           <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100">
