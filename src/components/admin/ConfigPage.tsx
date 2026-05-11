@@ -71,13 +71,45 @@ export default function ConfigPage() {
         setUsers(usersData);
 
         // Map backend config keys to form
-        setForm(prev => ({
-          ...prev,
-          porcentaje_operador: cfgData['profit.porcentaje_operador'] || prev.porcentaje_operador,
-          comision_global: cfgData['profit.comision_global'] || prev.comision_global,
-          tasa_costo: cfgData['profit.tasa_costo'] || prev.tasa_costo,
-          meta_operador: cfgData['profit.meta_operador'] || prev.meta_operador,
-        }));
+        setForm(prev => {
+          // Parsear dias laborales como JSON si viene del backend
+          let diasLaborales = prev.dias_laborales;
+          if (cfgData['schedule.dias_laborales']) {
+            try {
+              const parsed = JSON.parse(cfgData['schedule.dias_laborales']);
+              if (Array.isArray(parsed)) diasLaborales = parsed;
+            } catch { /* ignorar */ }
+          }
+
+          return {
+            ...prev,
+            usd_ves_compra: cfgData['rates.usd_ves_compra'] || prev.usd_ves_compra,
+            usd_ves_venta: cfgData['rates.usd_ves_venta'] || prev.usd_ves_venta,
+            margen: cfgData['rates.margen'] || prev.margen,
+            max_por_transaccion: cfgData['limits.max_por_transaccion'] || prev.max_por_transaccion,
+            min_por_transaccion: cfgData['limits.min_por_transaccion'] || prev.min_por_transaccion,
+            max_diario_por_cliente: cfgData['limits.max_diario_por_cliente'] || prev.max_diario_por_cliente,
+            max_mensual_por_cliente: cfgData['limits.max_mensual_por_cliente'] || prev.max_mensual_por_cliente,
+            hora_inicio: cfgData['schedule.hora_inicio'] || prev.hora_inicio,
+            hora_fin: cfgData['schedule.hora_fin'] || prev.hora_fin,
+            zona_horaria: cfgData['schedule.zona_horaria'] || prev.zona_horaria,
+            dias_laborales: diasLaborales,
+            porcentaje_operador: cfgData['profit.porcentaje_operador'] || prev.porcentaje_operador,
+            comision_global: cfgData['profit.comision_global'] || prev.comision_global,
+            tasa_costo: cfgData['profit.tasa_costo'] || prev.tasa_costo,
+            meta_operador: cfgData['profit.meta_operador'] || prev.meta_operador,
+            volumen_mensual: cfgData['profit.volumen_mensual'] || prev.volumen_mensual,
+            profit_global: cfgData['profit.profit_global'] || prev.profit_global,
+            binance_api_key: cfgData['binance.api_key'] || prev.binance_api_key,
+            binance_api_secret: cfgData['binance.api_secret'] || prev.binance_api_secret,
+            binance_alert_limit: cfgData['binance.alert_limit'] || prev.binance_alert_limit,
+            binance_alert_email: cfgData['binance.alert_email'] || prev.binance_alert_email,
+            binance_check_frequency: cfgData['binance.check_frequency'] || prev.binance_check_frequency,
+            session_timeout: cfgData['security.session_timeout'] || prev.session_timeout,
+            twofa_enabled: cfgData['security.twofa_enabled'] === 'true',
+            audit_enabled: cfgData['security.audit_enabled'] === 'true',
+          };
+        });
       } catch (err) {
         console.error('Error cargando config:', err);
       } finally {
@@ -103,19 +135,38 @@ export default function ConfigPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updates = [
-        { key: 'profit.porcentaje_operador', value: form.porcentaje_operador },
-        { key: 'profit.comision_global', value: form.comision_global },
-        { key: 'profit.tasa_costo', value: form.tasa_costo },
-        { key: 'profit.meta_operador', value: form.meta_operador },
-      ];
+      const payload: Record<string, string> = {
+        'rates.usd_ves_compra': form.usd_ves_compra,
+        'rates.usd_ves_venta': form.usd_ves_venta,
+        'rates.margen': form.margen,
+        'limits.max_por_transaccion': form.max_por_transaccion,
+        'limits.min_por_transaccion': form.min_por_transaccion,
+        'limits.max_diario_por_cliente': form.max_diario_por_cliente,
+        'limits.max_mensual_por_cliente': form.max_mensual_por_cliente,
+        'schedule.hora_inicio': form.hora_inicio,
+        'schedule.hora_fin': form.hora_fin,
+        'schedule.zona_horaria': form.zona_horaria,
+        'schedule.dias_laborales': JSON.stringify(form.dias_laborales),
+        'profit.porcentaje_operador': form.porcentaje_operador,
+        'profit.comision_global': form.comision_global,
+        'profit.tasa_costo': form.tasa_costo,
+        'profit.meta_operador': form.meta_operador,
+        'profit.volumen_mensual': form.volumen_mensual,
+        'profit.profit_global': form.profit_global,
+        'binance.api_key': form.binance_api_key,
+        'binance.api_secret': form.binance_api_secret,
+        'binance.alert_limit': form.binance_alert_limit,
+        'binance.alert_email': form.binance_alert_email,
+        'binance.check_frequency': form.binance_check_frequency,
+        'security.session_timeout': form.session_timeout,
+        'security.twofa_enabled': String(form.twofa_enabled),
+        'security.audit_enabled': String(form.audit_enabled),
+      };
 
-      await Promise.all(updates.map(u =>
-        apiFetch(`/api/config/${u.key}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ value: u.value })
-        }).catch(() => null)
-      ));
+      await apiFetch('/api/config/bulk', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
 
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'success', message: 'Configuración guardada', description: 'Los cambios fueron guardados correctamente.' }
