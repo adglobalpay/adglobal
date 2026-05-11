@@ -9,7 +9,6 @@ import {
   MessageCircle, 
   PartyPopper,
   Fingerprint,
-  ShieldCheck,
   BadgeDollarSign,
   X,
   Menu,
@@ -116,9 +115,7 @@ export default function Sidebar() {
               {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center shadow-md">
-                <ShieldCheck size={14} className="text-white" />
-              </div>
+              <img src="/img/logo.webp" alt="AD Global Pay" className="w-7 h-7 rounded-lg shadow-md object-cover" />
               <span className="text-sm font-bold text-white tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>AD Global Pay</span>
             </div>
           </div>
@@ -148,9 +145,7 @@ export default function Sidebar() {
       >
         {/* Logo Area */}
         <div className="p-4 lg:p-6 border-b border-white/5 bg-slate-950 flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 float-anim">
-            <ShieldCheck size={18} className="text-white" />
-          </div>
+          <img src="/img/logo.webp" alt="AD Global Pay" className="w-9 h-9 rounded-xl shadow-lg shadow-indigo-500/20 float-anim object-cover" />
           <div>
             <h2 className="text-[1.05rem] font-bold tracking-tight text-white" style={{ fontFamily: 'var(--font-heading)' }}>AD Global Pay</h2>
             <span className="text-[0.65rem] uppercase tracking-widest text-slate-400 font-medium font-sans">Panel Admin</span>
