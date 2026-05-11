@@ -104,15 +104,26 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Mobile sticky topbar */}
       {isMobile && (
-        <button
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="fixed top-4 left-4 z-50 w-10 h-10 bg-slate-950 text-white rounded-xl flex items-center justify-center shadow-lg border border-slate-800 lg:hidden"
-          aria-label="Toggle menu"
-        >
-          {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <header className="fixed top-0 left-0 right-0 h-14 z-50 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-4 lg:hidden">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileOpen(!isMobileOpen)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-all"
+              aria-label="Toggle menu"
+            >
+              {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center shadow-md">
+                <ShieldCheck size={14} className="text-white" />
+              </div>
+              <span className="text-sm font-bold text-white tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>AD Global Pay</span>
+            </div>
+          </div>
+          <span className="text-[0.7rem] font-semibold uppercase tracking-widest text-slate-500">Panel Admin</span>
+        </header>
       )}
 
       {/* Mobile overlay */}
@@ -132,10 +143,11 @@ export default function Sidebar() {
           border-r border-slate-900/50 shadow-2xl z-40
           transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${isLoaded ? 'opacity-100' : 'opacity-0'}
+          overflow-hidden
         `}
       >
         {/* Logo Area */}
-        <div className="p-6 border-b border-white/5 bg-slate-950 flex items-center gap-3">
+        <div className="p-4 lg:p-6 border-b border-white/5 bg-slate-950 flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 float-anim">
             <ShieldCheck size={18} className="text-white" />
           </div>
@@ -146,7 +158,7 @@ export default function Sidebar() {
         </div>
         
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+        <nav className="px-3 py-3 lg:py-6 space-y-1 shrink-0">
           {navItems.map((item, index) => {
             const isActive = currentPath === item.path || (currentPath !== '/admin' && item.path !== '/admin' && currentPath.startsWith(item.path));
             return (
@@ -191,11 +203,8 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Spacer */}
-        <div className="flex-1"></div>
-
         {/* Capital Component */}
-        <div className="px-3 pb-2">
+        <div className="px-3 pb-2 shrink-0">
           <CapitalOperador />
         </div>
 
@@ -205,6 +214,7 @@ export default function Sidebar() {
             className={`absolute bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] border border-slate-200/60 z-50 overflow-hidden transform origin-bottom-left anim-modal ${
               isMobile ? 'left-4 right-4 bottom-20 w-auto' : 'left-64 bottom-24 ml-4 w-96'
             }`}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center gap-3">
               <div className="p-2 bg-rose-100 text-rose-500 rounded-xl">
@@ -243,10 +253,12 @@ export default function Sidebar() {
                     {client.phone && (
                       <a
                         href={getWhatsAppLink(client.phone, client.name.split(' ')[0])}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-white hover:bg-emerald-500 mt-2 p-2.5 bg-emerald-50 rounded-xl transition-all duration-300 border border-emerald-100 w-full group/whatsapp"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          window.open(getWhatsAppLink(client.phone, client.name.split(' ')[0]), '_blank', 'noopener,noreferrer');
+                        }}
                       >
                         <MessageCircle size={14} className="group-hover/whatsapp:scale-110 transition-transform" />
                         <span>Contactar por WhatsApp</span>
@@ -266,7 +278,7 @@ export default function Sidebar() {
 
         {/* User Profile */}
         <div 
-          className="p-4 border-t border-white/5 bg-slate-950/80 backdrop-blur-sm m-3 rounded-xl border transition-all duration-300 hover:border-white/10 hover:bg-slate-900/80 cursor-pointer group"
+          className="p-3 lg:p-4 border-t border-white/5 bg-slate-950/80 backdrop-blur-sm m-3 rounded-xl border transition-all duration-300 hover:border-white/10 hover:bg-slate-900/80 cursor-pointer group shrink-0"
           style={{ 
             opacity: isLoaded ? 1 : 0,
             transform: isLoaded ? 'translateY(0)' : 'translateY(10px)',

@@ -124,19 +124,19 @@ export default function CapitalOperador() {
   };
 
   return (
-    <div className="p-3 border-t border-white/5 bg-slate-950">
+    <div className="p-2 lg:p-3 border-t border-white/5 bg-slate-950">
       <div 
-        className="rounded-xl p-4 cursor-pointer transition-all bg-gradient-to-b from-slate-900 to-slate-900/50 border border-slate-800 hover:border-indigo-500/30 group relative overflow-hidden"
+        className="rounded-xl p-3 lg:p-4 cursor-pointer transition-all bg-gradient-to-b from-slate-900 to-slate-900/50 border border-slate-800 hover:border-indigo-500/30 group relative overflow-hidden"
         onClick={() => setShowDetails(!showDetails)}
       >
         <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-all group-hover:bg-indigo-500/10"></div>
         
-        <div className="flex items-center justify-between mb-4 relative z-10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
-              <Wallet size={16} />
+        <div className="flex items-center justify-between mb-2 lg:mb-4 relative z-10">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+              <Wallet size={14} className="lg:w-4 lg:h-4" />
             </div>
-            <span className="text-sm font-semibold tracking-tight text-slate-200" style={{ fontFamily: 'var(--font-heading)' }}>Capital Operativo</span>
+            <span className="text-xs lg:text-sm font-semibold tracking-tight text-slate-200" style={{ fontFamily: 'var(--font-heading)' }}>Capital Operativo</span>
           </div>
           {loading ? (
             <div className="w-4 h-4 border-2 border-slate-700 border-t-indigo-400 rounded-full animate-spin"></div>
@@ -145,18 +145,18 @@ export default function CapitalOperador() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-1 relative z-10">
-          <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800/60">
-            <p className="text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-1">Binance (USDT)</p>
-            <p className="text-base font-bold text-indigo-400 font-mono tracking-tight flex items-baseline gap-0.5">
-              <span className="text-[0.7rem] text-indigo-500/70">$</span>
+        <div className="grid grid-cols-2 gap-2 lg:gap-3 mb-1 relative z-10">
+          <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60">
+            <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">Binance (USDT)</p>
+            <p className="text-sm lg:text-base font-bold text-indigo-400 font-mono tracking-tight flex items-baseline gap-0.5">
+              <span className="text-[0.65rem] lg:text-[0.7rem] text-indigo-500/70">$</span>
               {capital.binanceBalance.toLocaleString()}
             </p>
           </div>
           
-          <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800/60">
-            <p className="text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-1">Fiat Disponible</p>
-            <p className={`text-base font-bold font-mono tracking-tight ${capital.fiatAvailable < 100000 ? 'text-rose-400' : 'text-emerald-400'}`}>
+          <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60">
+            <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">Fiat Disponible</p>
+            <p className={`text-sm lg:text-base font-bold font-mono tracking-tight ${capital.fiatAvailable < 100000 ? 'text-rose-400' : 'text-emerald-400'}`}>
               {capital.fiatAvailable.toLocaleString()}
             </p>
           </div>

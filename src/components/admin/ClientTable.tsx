@@ -358,11 +358,11 @@ export default function ClientTable({ limit }: Props) {
                   </td>
                   <td className="py-4 pr-6 pl-3 align-top text-right">
                     <div className="flex flex-col items-end gap-2">
-                      <a href={`/admin/clientes/${client.id}`} className="inline-flex items-center gap-1 text-[0.75rem] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                      <a href={`/admin/clientes/perfil?id=${client.id}`} className="inline-flex items-center gap-1 text-[0.75rem] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
                         Perfil <ChevronRight className="w-3 h-3" />
                       </a>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <a href={`/admin/clientes/${client.id}/destinatarios`} className="w-7 h-7 inline-flex items-center justify-center rounded-md bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors border border-slate-200 group relative" title="Ver destinatarios">
+                        <a href={`/admin/clientes/destinatarios?id=${client.id}`} className="w-7 h-7 inline-flex items-center justify-center rounded-md bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors border border-slate-200 group relative" title="Ver destinatarios">
                           <Users className="w-3.5 h-3.5" />
                           <span className="absolute -top-1.5 -right-1.5 bg-slate-800 text-white text-[0.55rem] font-bold px-1.5 rounded-full z-10">{client._count.recipients}</span>
                         </a>

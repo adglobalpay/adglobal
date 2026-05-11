@@ -48,6 +48,7 @@ function downloadCSV(filename: string, headers: string[], rows: (string | number
 }
 
 export default function RecipientsPage({ clientId: clientIdProp }: { clientId: string }) {
+  const urlClientId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '';
   const [client, setClient] = useState<Client | null>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +65,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
-  const clientId = clientIdProp;
+  const clientId = clientIdProp || urlClientId;
   const fullName = client ? `${client.firstName} ${client.lastName || ''}`.trim() : '—';
 
   const loadData = useCallback(async () => {
@@ -286,7 +287,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
       <nav className="flex items-center gap-2 text-xs md:text-sm text-slate-400 font-medium anim-fade-in-up stagger-1">
         <a href="/admin/clientes" className="hover:text-indigo-600 transition-colors">Clientes</a>
         <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
-        <a href={`/admin/clientes/${clientId}`} className="hover:text-indigo-600 transition-colors">{fullName}</a>
+        <a href={`/admin/clientes/perfil?id=${clientId}`} className="hover:text-indigo-600 transition-colors">{fullName}</a>
         <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
         <span className="text-slate-700 font-semibold">Destinatarios</span>
       </nav>

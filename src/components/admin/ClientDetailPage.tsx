@@ -123,7 +123,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const clientId = clientIdProp;
+  const clientId = clientIdProp || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
 
   const loadClient = useCallback(async () => {
     setLoading(true);
@@ -414,7 +414,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               <p className="text-xs text-slate-400 font-medium">{client.recipients.length} registrados</p>
             </div>
           </div>
-          <a href={`/admin/clientes/${client.id}/destinatarios`} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-all">
+          <a href={`/admin/clientes/destinatarios?id=${client.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-all">
             Ver todos <ArrowRight className="w-3.5 h-3.5" />
           </a>
         </div>

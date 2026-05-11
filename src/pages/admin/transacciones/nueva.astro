@@ -57,24 +57,24 @@ import {
 
     <!-- Tabla principal -->
     <div class="bg-white rounded-2xl md:rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-200/60 overflow-hidden relative card-hover anim-fade-in stagger-2">
-      <div class="overflow-x-auto pb-4 custom-scrollbar">
-        <div style="min-width: 1200px;" class="p-4 md:p-6">
-          <table class="w-full relative">
+      <div class="overflow-x-auto pb-2 custom-scrollbar">
+        <div class="p-2 md:p-4 lg:p-6">
+          <table class="w-full relative table-fixed">
             <thead>
               <tr class="text-left border-b border-slate-200 bg-slate-50/50">
-                <th class="py-3 px-3 w-28"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-400"><Clock class="w-3.5 h-3.5"/>Fecha</div></th>
-                <th class="py-3 px-3 min-w-[200px]"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-indigo-500"><Users class="w-3.5 h-3.5"/>Cliente (Recibe)</div></th>
-                <th class="py-3 px-3 w-16"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-indigo-400"><FileBox class="w-3 h-3"/>Doc</div></th>
-                <th class="py-3 px-3 w-32"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-400"><Wallet class="w-3.5 h-3.5"/>Método</div></th>
-                <th class="py-3 px-3 min-w-[200px] bg-emerald-50/30 rounded-tl-xl"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-emerald-600"><Users class="w-3.5 h-3.5"/>Destinatario</div></th>
-                <th class="py-3 px-3 w-16 bg-emerald-50/30"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-emerald-500"><FileBox class="w-3 h-3"/>Doc</div></th>
-                <th class="py-3 px-3 w-32 bg-emerald-50/30 rounded-tr-xl"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-amber-600"><Building2 class="w-3.5 h-3.5"/>Banco</div></th>
-                <th class="py-3 px-3 w-24"><div class="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-600"><Plus class="w-3.5 h-3.5"/>Ingreso</div></th>
-                <th class="py-3 px-3 w-24"><div class="flex flex-row items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-600"><Coins class="w-3.5 h-3.5 text-red-400"/>Salida</div></th>
-                <th class="py-3 px-3 w-20"><div class="flex items-center justify-end gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-400">Tasa</div></th>
-                <th class="py-3 px-3 w-24"><div class="flex items-center justify-end gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">Monto VES</div></th>
-                <th class="py-3 px-3 w-20"><div class="flex items-center justify-end gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-emerald-600">Profit</div></th>
-                <th class="py-3 px-2 w-12 text-center"></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[60px] md:w-[72px]"><div class="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap"><Clock class="w-3 h-3"/><span class="hidden md:inline">Fecha</span></div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[100px] md:w-[140px] lg:w-[160px]"><div class="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-indigo-500 whitespace-nowrap"><Users class="w-3 h-3"/>Cliente</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[40px] md:w-[48px]"><div class="flex items-center justify-center text-[0.6rem] font-bold uppercase tracking-widest text-indigo-400"><FileBox class="w-3 h-3"/></div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[70px] md:w-[90px] lg:w-[100px]"><div class="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap"><Wallet class="w-3 h-3"/>Método</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[100px] md:w-[140px] lg:w-[160px] bg-emerald-50/30 rounded-tl-xl"><div class="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-emerald-600 whitespace-nowrap"><Users class="w-3 h-3"/>Destino</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[40px] md:w-[48px] bg-emerald-50/30"><div class="flex items-center justify-center text-[0.6rem] font-bold uppercase tracking-widest text-emerald-500"><FileBox class="w-3 h-3"/></div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[70px] md:w-[90px] lg:w-[100px] bg-emerald-50/30 rounded-tr-xl"><div class="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-amber-600 whitespace-nowrap"><Building2 class="w-3 h-3"/>Banco</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[56px] md:w-[72px]"><div class="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-slate-600 whitespace-nowrap"><Plus class="w-3 h-3"/>Ent</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[56px] md:w-[72px]"><div class="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-slate-600 whitespace-nowrap"><Coins class="w-3 h-3 text-red-400"/>Sal</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[48px] md:w-[56px]"><div class="flex items-center justify-end gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">Tasa</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[56px] md:w-[72px]"><div class="flex items-center justify-end gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">VES</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[48px] md:w-[56px]"><div class="flex items-center justify-end gap-1 text-[0.6rem] font-bold uppercase tracking-widest text-emerald-600 whitespace-nowrap">Prof</div></th>
+                <th class="py-2 px-1 md:py-3 md:px-2 w-[32px] md:w-[40px] text-center"></th>
               </tr>
             </thead>
             <tbody id="tablaBody" class="divide-y divide-slate-100">
@@ -99,23 +99,26 @@ import {
   <!-- Modales -->
   <div id="modalBanco" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-end md:items-center justify-center hidden z-50 transition-opacity p-0 md:p-4">
     <div class="bg-white rounded-t-3xl md:rounded-3xl p-5 md:p-8 max-w-sm w-full shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-200 scale-95 transition-transform" id="modalContentBanco">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5">
            <div class="p-2 bg-amber-50 text-amber-600 rounded-xl"><Building2 class="w-5 h-5"/></div>
-           Agregar Banco
+           Bancos
         </h2>
         <button onclick="cerrarModalBanco()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all hover:rotate-90">
           <X class="w-5 h-5" />
         </button>
       </div>
-      <form id="formBanco" class="space-y-4" onsubmit="guardarBanco(event)">
-        <div>
-          <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-2">Nombre del banco *</label>
-          <input type="text" id="bancoNombre" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="Ej: Bancamiga">
+      <!-- Lista existente -->
+      <div id="listaBancos" class="mb-4 space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+      <!-- Formulario agregar -->
+      <form id="formBanco" class="space-y-3 border-t border-slate-100 pt-4" onsubmit="guardarBanco(event)">
+        <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider">Nuevo Banco</label>
+        <div class="flex gap-2">
+          <input type="text" id="bancoNombre" required class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="Ej: Bancamiga">
+          <button type="submit" class="px-4 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 font-bold shadow-sm transition-all btn-interactive text-sm">Agregar</button>
         </div>
-        <div class="flex justify-end gap-3 pt-4">
-          <button type="button" onclick="cerrarModalBanco()" class="px-5 py-2.5 font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all">Cancelar</button>
-          <button type="submit" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 font-bold shadow-sm transition-all btn-interactive">Guardar Banco</button>
+        <div class="flex justify-end">
+          <button type="button" onclick="cerrarModalBanco()" class="px-4 py-2 font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-sm">Cerrar</button>
         </div>
       </form>
     </div>
@@ -123,23 +126,26 @@ import {
 
   <div id="modalMetodo" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-end md:items-center justify-center hidden z-50 transition-opacity p-0 md:p-4">
     <div class="bg-white rounded-t-3xl md:rounded-3xl p-5 md:p-8 max-w-sm w-full shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-200 scale-95 transition-transform" id="modalContentMetodo">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5">
            <div class="p-2 bg-purple-50 text-purple-600 rounded-xl"><Wallet class="w-5 h-5"/></div>
-           Agregar Método
+           Métodos de Pago
         </h2>
         <button onclick="cerrarModalMetodo()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all hover:rotate-90">
           <X class="w-5 h-5" />
         </button>
       </div>
-      <form id="formMetodo" class="space-y-4" onsubmit="guardarMetodo(event)">
-        <div>
-          <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-2">Nombre del método *</label>
-          <input type="text" id="metodoNombre" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="Ej: Zelle, Binance">
+      <!-- Lista existente -->
+      <div id="listaMetodos" class="mb-4 space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+      <!-- Formulario agregar -->
+      <form id="formMetodo" class="space-y-3 border-t border-slate-100 pt-4" onsubmit="guardarMetodo(event)">
+        <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider">Nuevo Método</label>
+        <div class="flex gap-2">
+          <input type="text" id="metodoNombre" required class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="Ej: Zelle, Binance">
+          <button type="submit" class="px-4 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 font-bold shadow-sm transition-all btn-interactive text-sm">Agregar</button>
         </div>
-        <div class="flex justify-end gap-3 pt-4">
-          <button type="button" onclick="cerrarModalMetodo()" class="px-5 py-2.5 font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all">Cancelar</button>
-          <button type="submit" class="px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 font-bold shadow-sm transition-all btn-interactive">Guardar Método</button>
+        <div class="flex justify-end">
+          <button type="button" onclick="cerrarModalMetodo()" class="px-4 py-2 font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-sm">Cerrar</button>
         </div>
       </form>
     </div>
@@ -157,24 +163,24 @@ import {
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
 </template>
 
-<style>
+  <style>
   .table-input {
-    @apply w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:shadow-sm;
+    @apply w-full bg-slate-50 border border-slate-200 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:shadow-sm;
   }
   .table-select {
-    @apply w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-[0.8rem] font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer hover:shadow-sm;
+    @apply w-full bg-slate-50 border border-slate-200 rounded-md px-1 py-1 text-[0.7rem] font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer hover:shadow-sm;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar {
-    height: 8px;
+    height: 6px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: #f8fafc;
-    border-radius: 4px;
+    border-radius: 3px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 4px;
+    border-radius: 3px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
@@ -192,8 +198,23 @@ import {
     { id: '202', nombre: 'Ana Torres', telefono: '+58 414 7654321', banco: 'Mercantil', cuenta: '0105-4321-87-65432109' }
   ];
 
-  var bancos = ['Banesco', 'Mercantil', 'Banco Venezuela', 'Banco Provincial', 'BNC', 'BOD'];
-  var metodos = ['Zelle', 'BOFA', 'Chase', 'PNC', 'Debit Card', 'Efectivo', 'USDT'];
+  var bancos = [
+    { color: 'bg-blue-100 text-blue-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'Banesco' },
+    { color: 'bg-indigo-100 text-indigo-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'Mercantil' },
+    { color: 'bg-red-100 text-red-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'Banco Venezuela' },
+    { color: 'bg-amber-100 text-amber-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'Banco Provincial' },
+    { color: 'bg-cyan-100 text-cyan-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'BNC' },
+    { color: 'bg-purple-100 text-purple-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'BOD' },
+  ];
+  var metodos = [
+    { color: 'bg-green-100 text-green-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 0v20M7 7h10M7 17h10"/></svg>', nombre: 'Zelle' },
+    { color: 'bg-red-100 text-red-700', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'BOFA' },
+    { color: 'bg-blue-100 text-blue-700', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'Chase' },
+    { color: 'bg-orange-100 text-orange-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'PNC' },
+    { color: 'bg-slate-100 text-slate-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>', nombre: 'Debit Card' },
+    { color: 'bg-emerald-100 text-emerald-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>', nombre: 'Efectivo' },
+    { color: 'bg-yellow-100 text-yellow-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>', nombre: 'USDT' },
+  ];
 
   window.comprobantes = window.comprobantes || {};
 
@@ -203,10 +224,10 @@ import {
 
   function crearDropArea(filaId, tipo) {
     var container = document.createElement('div');
-    container.className = 'flex flex-col items-center justify-center w-full h-full p-1';
+    container.className = 'flex flex-col items-center justify-center w-full h-full p-0.5';
     
     var dropArea = document.createElement('div');
-    dropArea.className = 'w-10 h-10 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 flex items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-600 text-slate-400 transition-all duration-300';
+    dropArea.className = 'w-7 h-7 md:w-8 md:h-8 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 flex items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-600 text-slate-400 transition-all duration-300';
     dropArea.innerHTML = svgUpload;
     
     var fileInput = document.createElement('input');
@@ -215,7 +236,7 @@ import {
     fileInput.className = 'hidden';
     
     var fileNameSpan = document.createElement('span');
-    fileNameSpan.className = 'text-[0.55rem] font-bold text-slate-400 mt-1 truncate max-w-[40px] text-center absolute -bottom-4';
+    fileNameSpan.className = 'text-[0.5rem] font-bold text-slate-400 mt-0.5 truncate max-w-[28px] md:max-w-[32px] text-center absolute -bottom-3';
     fileNameSpan.textContent = '';
     
     dropArea.ondragover = function(e) {
@@ -332,9 +353,9 @@ import {
     
     // FECHA
     var tdFecha = document.createElement('td');
-    tdFecha.className = 'py-4 px-3 align-top';
+    tdFecha.className = 'py-2 px-1 md:py-3 md:px-2 align-top';
     var spanFecha = document.createElement('div');
-    spanFecha.className = 'text-[0.7rem] font-bold text-slate-500 whitespace-nowrap bg-white border border-slate-200 px-2 py-1.5 rounded-lg';
+    spanFecha.className = 'text-[0.6rem] md:text-[0.7rem] font-bold text-slate-500 whitespace-nowrap bg-white border border-slate-200 px-1 py-1 rounded-md';
     var ahora = new Date();
     spanFecha.textContent = ('0' + ahora.getDate()).slice(-2) + '/' + 
                             ('0' + (ahora.getMonth() + 1)).slice(-2) + '/' + 
@@ -345,10 +366,10 @@ import {
     
     // CLIENTE
     var tdCliente = document.createElement('td');
-    tdCliente.className = 'py-4 px-3 align-top';
+    tdCliente.className = 'py-2 px-1 md:py-3 md:px-2 align-top';
     var selectCliente = document.createElement('select');
     selectCliente.className = 'table-select text-indigo-900 border-indigo-100 bg-indigo-50/30';
-    var optionsCliente = '<option value="">Seleccionar Cliente</option>';
+    var optionsCliente = '<option value="">Sel...</option>';
     for (var i = 0; i < clientes.length; i++) {
       optionsCliente += '<option value="' + clientes[i].id + '">' + clientes[i].nombre + '</option>';
     }
@@ -357,13 +378,13 @@ import {
     
     // CLIENTE DOC
     var tdCompCliente = document.createElement('td');
-    tdCompCliente.className = 'py-4 px-3 align-top pb-6';
+    tdCompCliente.className = 'py-2 px-1 md:py-3 md:px-2 align-top';
     var dropCliente = crearDropArea(filaId, 'cliente');
     tdCompCliente.appendChild(dropCliente);
     
     // MÉTODO
     var tdMetodo = document.createElement('td');
-    tdMetodo.className = 'py-4 px-3 align-top';
+    tdMetodo.className = 'py-2 px-1 md:py-3 md:px-2 align-top';
     var selectMetodo = document.createElement('select');
     selectMetodo.className = 'table-select';
     var optionsMetodo = '';
@@ -375,10 +396,10 @@ import {
     
     // DESTINATARIO
     var tdDestino = document.createElement('td');
-    tdDestino.className = 'py-4 px-3 align-top bg-emerald-50/10';
+    tdDestino.className = 'py-2 px-1 md:py-3 md:px-2 align-top bg-emerald-50/10';
     var selectDestino = document.createElement('select');
     selectDestino.className = 'table-select border-emerald-100/60 bg-emerald-50/30 text-emerald-900';
-    var optionsDestino = '<option value="">Seleccionar Beneficiario</option>';
+    var optionsDestino = '<option value="">Sel...</option>';
     for (var j = 0; j < destinatarios.length; j++) {
       optionsDestino += '<option value="' + destinatarios[j].id + '">' + destinatarios[j].nombre + '</option>';
     }
@@ -387,16 +408,16 @@ import {
     
     // DESTINATARIO DOC
     var tdCompDestino = document.createElement('td');
-    tdCompDestino.className = 'py-4 px-3 align-top pb-6 bg-emerald-50/10';
+    tdCompDestino.className = 'py-2 px-1 md:py-3 md:px-2 align-top bg-emerald-50/10';
     var dropDestino = crearDropArea(filaId, 'destino');
     tdCompDestino.appendChild(dropDestino);
     
     // BANCO
     var tdBanco = document.createElement('td');
-    tdBanco.className = 'py-4 px-3 align-top bg-emerald-50/10 border-r border-slate-100';
+    tdBanco.className = 'py-2 px-1 md:py-3 md:px-2 align-top bg-emerald-50/10 border-r border-slate-100';
     var selectBanco = document.createElement('select');
     selectBanco.className = 'table-select';
-    var optionsBanco = '<option value="">Seleccionar</option>';
+    var optionsBanco = '<option value="">Sel</option>';
     for (var k = 0; k < bancos.length; k++) {
       optionsBanco += '<option value="' + bancos[k] + '">' + bancos[k] + '</option>';
     }
@@ -405,47 +426,47 @@ import {
     
     // INGRESO
     var tdIngreso = document.createElement('td');
-    tdIngreso.className = 'py-4 px-3 align-top';
+    tdIngreso.className = 'py-2 px-1 md:py-3 md:px-2 align-top';
     var inputIngreso = document.createElement('input');
-    inputIngreso.type = 'number'; inputIngreso.step = '0.01'; inputIngreso.placeholder = '0.00';
+    inputIngreso.type = 'number'; inputIngreso.step = '0.01'; inputIngreso.placeholder = '0';
     inputIngreso.className = 'table-input font-mono text-indigo-700 focus:text-indigo-900 border-indigo-100 bg-indigo-50/30 text-right';
     inputIngreso.oninput = function() { calcularFila(filaId); };
     tdIngreso.appendChild(inputIngreso);
     
     // SALIDA
     var tdSalida = document.createElement('td');
-    tdSalida.className = 'py-4 px-3 align-top';
+    tdSalida.className = 'py-2 px-1 md:py-3 md:px-2 align-top';
     var inputSalida = document.createElement('input');
-    inputSalida.type = 'number'; inputSalida.step = '0.01'; inputSalida.placeholder = '0.00';
+    inputSalida.type = 'number'; inputSalida.step = '0.01'; inputSalida.placeholder = '0';
     inputSalida.className = 'table-input font-mono text-rose-600 focus:text-rose-800 border-rose-100 bg-rose-50/30 text-right';
     inputSalida.oninput = function() { calcularFila(filaId); };
     tdSalida.appendChild(inputSalida);
     
     // TASA
     var tdTasa = document.createElement('td');
-    tdTasa.className = 'py-4 px-3 align-top';
+    tdTasa.className = 'py-2 px-1 md:py-3 md:px-2 align-top';
     var inputTasa = document.createElement('input');
-    inputTasa.type = 'number'; inputTasa.step = '0.01'; inputTasa.placeholder = '0.00';
+    inputTasa.type = 'number'; inputTasa.step = '0.01'; inputTasa.placeholder = '0';
     inputTasa.className = 'table-input font-mono text-right bg-slate-50 text-slate-700';
     inputTasa.oninput = function() { calcularFila(filaId); };
     tdTasa.appendChild(inputTasa);
     
     // MONTO VES
     var tdMontoBs = document.createElement('td');
-    tdMontoBs.className = 'py-4 px-3 align-top pt-6 text-right';
-    tdMontoBs.innerHTML = '<div class="monto-bs font-mono font-black text-slate-800 tracking-tight">0</div>';
+    tdMontoBs.className = 'py-2 px-1 md:py-3 md:px-2 align-top text-right';
+    tdMontoBs.innerHTML = '<div class="monto-bs font-mono font-bold text-slate-800 tracking-tight text-xs">0</div>';
     
     // PROFIT
     var tdProfit = document.createElement('td');
-    tdProfit.className = 'py-4 px-3 align-top pt-6 text-right';
-    tdProfit.innerHTML = '<div class="profit font-mono font-black text-emerald-600 tracking-tight">0</div>';
+    tdProfit.className = 'py-2 px-1 md:py-3 md:px-2 align-top text-right';
+    tdProfit.innerHTML = '<div class="profit font-mono font-bold text-emerald-600 tracking-tight text-xs">0</div>';
     
     // ELIMINAR
     var tdEliminar = document.createElement('td');
-    tdEliminar.className = 'py-4 px-2 align-top pt-5 text-center';
+    tdEliminar.className = 'py-2 px-1 md:py-3 md:px-2 align-top text-center';
     var btnEliminar = document.createElement('button');
     btnEliminar.innerHTML = svgTrash;
-    btnEliminar.className = 'w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all duration-300 mx-auto hover:scale-110';
+    btnEliminar.className = 'w-6 h-6 md:w-8 md:h-8 inline-flex items-center justify-center rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all duration-300 mx-auto hover:scale-110';
     btnEliminar.onclick = function() { eliminarFila(filaId); };
     tdEliminar.appendChild(btnEliminar);
     
@@ -506,9 +527,71 @@ import {
     }
   }
 
+  function renderListaBancos() {
+    var cont = document.getElementById('listaBancos');
+    if (!cont) return;
+    if (bancos.length === 0) {
+      cont.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Sin bancos todavía</p>';
+      return;
+    }
+    cont.innerHTML = bancos.map(function(b, idx) {
+      return '<div class="flex items-center gap-2" id="banco-item-' + idx + '">' +
+        '<div class="flex-1 flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 banco-label" data-idx="' + idx + '">' +
+          '<span class="w-6 h-6 flex items-center justify-center rounded-md flex-shrink-0 ' + b.color + '">' + b.icon + '</span>' +
+          '<span class="text-sm font-semibold text-slate-700">' + b.nombre + '</span>' +
+        '</div>' +
+        '<input type="text" class="flex-1 text-sm font-semibold text-slate-700 bg-white border border-amber-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-200 banco-edit hidden" data-idx="' + idx + '" value="' + b.nombre + '">' +
+        '<button onclick="editarBanco(' + idx + ')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all" title="Editar"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>' +
+        '<button onclick="confirmarEditBanco(' + idx + ')" class="w-7 h-7 items-center justify-center rounded-lg text-amber-600 hover:bg-amber-50 transition-all hidden banco-save-btn" data-idx="' + idx + '" title="Guardar"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></button>' +
+        '<button onclick="eliminarBanco(' + idx + ')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Eliminar"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function editarBanco(idx) {
+    var label = document.querySelector('.banco-label[data-idx="' + idx + '"]');
+    var input = document.querySelector('.banco-edit[data-idx="' + idx + '"]');
+    var saveBtn = document.querySelector('.banco-save-btn[data-idx="' + idx + '"]');
+    if (!label || !input) return;
+    label.classList.add('hidden');
+    input.classList.remove('hidden');
+    if (saveBtn) { saveBtn.classList.remove('hidden'); saveBtn.classList.add('flex'); }
+    input.focus();
+  }
+
+  function confirmarEditBanco(idx) {
+    var input = document.querySelector('.banco-edit[data-idx="' + idx + '"]');
+    if (!input || !input.value.trim()) return;
+    bancos[idx] = { color: bancos[idx].color, icon: bancos[idx].icon, nombre: input.value.trim() };
+    renderListaBancos();
+    actualizarSelectoresBanco();
+    showToast('success', 'Banco actualizado', bancos[idx].nombre + ' fue guardado.');
+  }
+
+  function eliminarBanco(idx) {
+    var nombre = bancos[idx].nombre;
+    bancos.splice(idx, 1);
+    renderListaBancos();
+    actualizarSelectoresBanco();
+    showToast('info', 'Banco eliminado', nombre + ' fue removido.');
+  }
+
+  function actualizarSelectoresBanco() {
+    document.querySelectorAll('#tablaBody tr').forEach(function(tr) {
+      var tds = tr.querySelectorAll('td');
+      var tdBanco = tds[6];
+      if (!tdBanco) return;
+      var sel = tdBanco.querySelector('select');
+      if (!sel) return;
+      var currentVal = sel.value;
+      sel.innerHTML = '<option value="">Seleccionar</option>' + bancos.map(function(b) { return '<option value="' + b.nombre + '"' + (b.nombre === currentVal ? ' selected' : '') + '>' + b.nombre + '</option>'; }).join('');
+    });
+  }
+
   function abrirModalBanco() { 
     const m = document.getElementById('modalBanco');
     const c = document.getElementById('modalContentBanco');
+    renderListaBancos();
     m.classList.remove('hidden');
     m.classList.add('anim-overlay');
     setTimeout(() => { c.style.transform = 'scale(1)'; c.classList.add('anim-modal'); }, 10);
@@ -521,9 +604,71 @@ import {
     setTimeout(() => { m.classList.add('hidden'); m.classList.remove('anim-overlay'); }, 200);
   }
   
+  function renderListaMetodos() {
+    var cont = document.getElementById('listaMetodos');
+    if (!cont) return;
+    if (metodos.length === 0) {
+      cont.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Sin métodos todavía</p>';
+      return;
+    }
+    cont.innerHTML = metodos.map(function(m, idx) {
+      return '<div class="flex items-center gap-2 group" id="metodo-item-' + idx + '">' +
+        '<div class="flex-1 flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 metodo-label" data-idx="' + idx + '">' +
+          '<span class="w-6 h-6 flex items-center justify-center rounded-md flex-shrink-0 ' + m.color + '">' + m.icon + '</span>' +
+          '<span class="text-sm font-semibold text-slate-700">' + m.nombre + '</span>' +
+        '</div>' +
+        '<input type="text" class="flex-1 text-sm font-semibold text-slate-700 bg-white border border-purple-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-purple-200 metodo-edit hidden" data-idx="' + idx + '" value="' + m.nombre + '">' +
+        '<button onclick="editarMetodo(' + idx + ')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all" title="Editar"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>' +
+        '<button onclick="confirmarEditMetodo(' + idx + ')" class="w-7 h-7 items-center justify-center rounded-lg text-purple-600 hover:bg-purple-50 transition-all hidden metodo-save-btn" data-idx="' + idx + '" title="Guardar"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></button>' +
+        '<button onclick="eliminarMetodo(' + idx + ')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Eliminar"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function editarMetodo(idx) {
+    var label = document.querySelector('.metodo-label[data-idx="' + idx + '"]');
+    var input = document.querySelector('.metodo-edit[data-idx="' + idx + '"]');
+    var saveBtn = document.querySelector('.metodo-save-btn[data-idx="' + idx + '"]');
+    if (!label || !input) return;
+    label.classList.add('hidden');
+    input.classList.remove('hidden');
+    if (saveBtn) { saveBtn.classList.remove('hidden'); saveBtn.classList.add('flex'); }
+    input.focus();
+  }
+
+  function confirmarEditMetodo(idx) {
+    var input = document.querySelector('.metodo-edit[data-idx="' + idx + '"]');
+    if (!input || !input.value.trim()) return;
+    metodos[idx] = { color: metodos[idx].color, icon: metodos[idx].icon, nombre: input.value.trim() };
+    renderListaMetodos();
+    actualizarSelectoresMetodo();
+    showToast('success', 'Método actualizado', metodos[idx].nombre + ' fue guardado.');
+  }
+
+  function eliminarMetodo(idx) {
+    var nombre = metodos[idx].nombre;
+    metodos.splice(idx, 1);
+    renderListaMetodos();
+    actualizarSelectoresMetodo();
+    showToast('info', 'Método eliminado', nombre + ' fue removido.');
+  }
+
+  function actualizarSelectoresMetodo() {
+    document.querySelectorAll('#tablaBody tr').forEach(function(tr) {
+      var tds = tr.querySelectorAll('td');
+      var tdMetodo = tds[3];
+      if (!tdMetodo) return;
+      var sel = tdMetodo.querySelector('select');
+      if (!sel) return;
+      var currentVal = sel.value;
+    sel.innerHTML = metodos.map(function(m) { return '<option value="' + m.nombre + '"' + (m.nombre === currentVal ? ' selected' : '') + '>' + m.nombre + '</option>'; }).join('');
+    });
+  }
+
   function abrirModalMetodo() { 
     const m = document.getElementById('modalMetodo');
     const c = document.getElementById('modalContentMetodo');
+    renderListaMetodos();
     m.classList.remove('hidden');
     m.classList.add('anim-overlay');
     setTimeout(() => { c.style.transform = 'scale(1)'; c.classList.add('anim-modal'); }, 10);
@@ -538,26 +683,147 @@ import {
 
   function guardarBanco(e) {
     e.preventDefault();
-    var nuevoBanco = document.getElementById('bancoNombre').value;
-    bancos.push(nuevoBanco);
-    cerrarModalBanco();
+    var nuevoBanco = document.getElementById('bancoNombre').value.trim();
+    if (!nuevoBanco) return;
+    var emojiBanco = document.getElementById('bancoEmoji') ? document.getElementById('bancoEmoji').value.trim() || '🏦' : '🏦';
+    bancos.push({ color: 'bg-blue-100 text-blue-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: nuevoBanco });
     e.target.reset();
+    renderListaBancos();
+    actualizarSelectoresBanco();
     showToast('success', 'Banco agregado', nuevoBanco + ' fue agregado a la lista.');
   }
 
   function guardarMetodo(e) {
     e.preventDefault();
-    var nuevoMetodo = document.getElementById('metodoNombre').value;
-    metodos.push(nuevoMetodo);
-    cerrarModalMetodo();
+    var nuevoMetodo = document.getElementById('metodoNombre').value.trim();
+    if (!nuevoMetodo) return;
+    var emojiMetodo = document.getElementById('metodoEmoji') ? document.getElementById('metodoEmoji').value.trim() || '💳' : '💳';
+    metodos.push({ color: 'bg-slate-100 text-slate-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>', nombre: nuevoMetodo });
     e.target.reset();
+    renderListaMetodos();
+    actualizarSelectoresMetodo();
     showToast('success', 'Método agregado', nuevoMetodo + ' fue agregado a la lista.');
   }
 
-  function guardarTodo() {
-    showToast('success', 'Transacciones guardadas', 'Las transacciones fueron registradas exitosamente.');
+  async function guardarTodo() {
+    var tablaBody = document.getElementById('tablaBody');
+    if (!tablaBody) return;
+    
+    var filasDom = tablaBody.querySelectorAll('tr');
+    if (filasDom.length === 0) {
+      showToast('warning', 'Sin transacciones', 'Agrega al menos una transacción antes de guardar.');
+      return;
+    }
+    
+    var transacciones = [];
+    var errores = [];
+    
+    filasDom.forEach(function(tr, idx) {
+      var tds = tr.querySelectorAll('td');
+      if (tds.length < 13) return;
+      
+      var clientId = tds[1].querySelector('select')?.value || '';
+      var metodoRaw = tds[3].querySelector('select')?.value || 'USDT';
+      var metodoMap = {
+        'USDT': 'USDT',
+        'Efectivo': 'EFECTIVO',
+        'Zelle': 'ZELLE',
+        'Venmo': 'VENMO',
+        'CashApp': 'CASHAPP',
+        'PayPal': 'PAYPAL',
+        'Wire': 'WIRE',
+        'Deposito': 'DEPOSITO',
+        'Pago Movil': 'PAGO_MOVIL',
+        'Transferencia': 'TRANSFERENCIA'
+      };
+      var metodo = metodoMap[metodoRaw] || 'TRANSFERENCIA';
+      var recipientId = tds[4].querySelector('select')?.value || null;
+      if (recipientId === '') recipientId = null;
+      var ingreso = parseFloat(tds[7].querySelector('input')?.value || '0');
+      var salida = parseFloat(tds[8].querySelector('input')?.value || '0');
+      var tasa = parseFloat(tds[9].querySelector('input')?.value || '0');
+      var montoBsText = tds[10].querySelector('.monto-bs')?.textContent?.replace(/,/g, '') || '0';
+      var montoVES = parseFloat(montoBsText);
+      var profitText = tds[11].querySelector('.profit')?.textContent?.replace(/[$,]/g, '') || '0';
+      var profitUSD = parseFloat(profitText);
+      
+      if (!clientId) {
+        errores.push('Fila ' + (idx + 1) + ': selecciona un cliente');
+        return;
+      }
+      if (ingreso <= 0) {
+        errores.push('Fila ' + (idx + 1) + ': el ingreso debe ser mayor a 0');
+        return;
+      }
+      if (salida <= 0) {
+        errores.push('Fila ' + (idx + 1) + ': la salida debe ser mayor a 0');
+        return;
+      }
+      if (tasa <= 0) {
+        errores.push('Fila ' + (idx + 1) + ': la tasa debe ser mayor a 0');
+        return;
+      }
+      
+      transacciones.push({
+        clientId: clientId,
+        recipientId: recipientId,
+        ingresoUSD: ingreso,
+        salidaUSDT: salida,
+        tasa: tasa,
+        montoVES: montoVES || (salida * tasa),
+        metodo: metodo,
+        profitUSD: profitUSD || (ingreso - salida),
+        estado: 'PENDING'
+      });
+    });
+    
+    if (errores.length > 0) {
+      showToast('error', 'Corrige los errores', errores[0]);
+      return;
+    }
+    
+    if (transacciones.length === 0) {
+      showToast('warning', 'Sin transacciones válidas', 'Completa al menos una fila correctamente.');
+      return;
+    }
+    
+    var token = localStorage.getItem('adglobal_token');
+    var API_URL = window.__ADGLOBAL_API_URL__ || 'https://backend-global-production.up.railway.app';
+    var guardadas = 0;
+    var fallidas = 0;
+    
+    for (var i = 0; i < transacciones.length; i++) {
+      try {
+        var res = await fetch(API_URL + '/api/transactions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify(transacciones[i])
+        });
+        
+        if (!res.ok) {
+          var errData = await res.json().catch(function() { return {}; });
+          console.error('Error fila ' + (i + 1) + ':', errData);
+          fallidas++;
+        } else {
+          guardadas++;
+        }
+      } catch (e) {
+        console.error('Error de red fila ' + (i + 1) + ':', e);
+        fallidas++;
+      }
+    }
+    
+    if (fallidas > 0) {
+      showToast('error', 'Error al guardar', 'Guardadas: ' + guardadas + ', Fallidas: ' + fallidas);
+      return;
+    }
+    
+    showToast('success', 'Transacciones guardadas', guardadas + ' transacción(es) registrada(s) exitosamente.');
     setTimeout(function() {
       window.location.href = '/admin/transacciones';
-    }, 1500);
+    }, 1200);
   }
 </script>
