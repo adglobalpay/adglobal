@@ -188,15 +188,73 @@ import {
 </style>
 
 <script is:inline>
-  var clientes = [
-    { id: '1', nombre: 'Luisa Ideas Creativas', telefono: '4242459151', email: '' },
-    { id: '2', nombre: 'Cartaya Auto Sales', telefono: '3055551234', email: 'cartaya@autos.com' }
-  ];
+  var clientes = [];
+  var destinatariosPorCliente = {};
 
-  var destinatarios = [
-    { id: '201', nombre: 'Carlos Mendoza', telefono: '+58 412 1234567', banco: 'Banco Venezuela', cuenta: '0102-1234-56-78901234' },
-    { id: '202', nombre: 'Ana Torres', telefono: '+58 414 7654321', banco: 'Mercantil', cuenta: '0105-4321-87-65432109' }
-  ];
+  var API_URL = window.__ADGLOBAL_API_URL__ || 'https://backend-global-production.up.railway.app';
+
+  async function cargarClientes() {
+    try {
+      var token = localStorage.getItem('adglobal_token');
+      var res = await fetch(API_URL + '/api/clients', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('Error cargando clientes');
+      var data = await res.json();
+      clientes = data.map(function(c) {
+        return {
+          id: c.id,
+          nombre: c.firstName + (c.lastName ? ' ' + c.lastName : ''),
+          telefono: c.phone || '',
+          email: c.email || ''
+        };
+      });
+    } catch (e) {
+      console.error('Error cargando clientes:', e);
+      showToast('error', 'Error', 'No se pudieron cargar los clientes. Recarga la página.');
+    }
+  }
+
+  async function cargarDestinatarios(clientId, selectDestino) {
+    if (!clientId) {
+      selectDestino.innerHTML = '<option value="">Sel...</option>';
+      return;
+    }
+    if (destinatariosPorCliente[clientId]) {
+      renderDestinatariosSelect(selectDestino, destinatariosPorCliente[clientId]);
+      return;
+    }
+    try {
+      var token = localStorage.getItem('adglobal_token');
+      var res = await fetch(API_URL + '/api/clients/' + clientId + '/recipients', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('Error cargando destinatarios');
+      var data = await res.json();
+      var lista = data.map(function(r) {
+        return {
+          id: r.id,
+          nombre: r.name,
+          telefono: r.phone || '',
+          banco: r.bank || '',
+          cuenta: r.accountNumber || ''
+        };
+      });
+      destinatariosPorCliente[clientId] = lista;
+      renderDestinatariosSelect(selectDestino, lista);
+    } catch (e) {
+      console.error('Error cargando destinatarios:', e);
+      selectDestino.innerHTML = '<option value="">Error</option>';
+    }
+  }
+
+  function renderDestinatariosSelect(selectDestino, lista) {
+    var html = '<option value="">Sel...</option>';
+    for (var i = 0; i < lista.length; i++) {
+      html += '<option value="' + lista[i].id + '">' + lista[i].nombre + '</option>';
+    }
+    selectDestino.innerHTML = html;
+  }
 
   var bancos = [
     { color: 'bg-blue-100 text-blue-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'Banesco' },
@@ -324,9 +382,10 @@ import {
 
   var filas = [];
 
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', async function() {
+    await cargarClientes();
     agregarFila();
-    
+
     var btnAgregar = document.getElementById('btnAgregar');
     if (btnAgregar) {
       btnAgregar.onclick = function() {
@@ -375,6 +434,9 @@ import {
     }
     selectCliente.innerHTML = optionsCliente;
     tdCliente.appendChild(selectCliente);
+
+    // Guardar referencia al select de destinatario para usarlo en onchange
+    var selectDestinoRef = null;
     
     // CLIENTE DOC
     var tdCompCliente = document.createElement('td');
@@ -387,9 +449,9 @@ import {
     tdMetodo.className = 'py-2 px-1 md:py-3 md:px-2 align-top';
     var selectMetodo = document.createElement('select');
     selectMetodo.className = 'table-select';
-    var optionsMetodo = '';
+    var optionsMetodo = '<option value="">Sel...</option>';
     for (var m = 0; m < metodos.length; m++) {
-      optionsMetodo += '<option value="' + metodos[m] + '">' + metodos[m] + '</option>';
+      optionsMetodo += '<option value="' + metodos[m].nombre + '">' + metodos[m].nombre + '</option>';
     }
     selectMetodo.innerHTML = optionsMetodo;
     tdMetodo.appendChild(selectMetodo);
@@ -399,12 +461,22 @@ import {
     tdDestino.className = 'py-2 px-1 md:py-3 md:px-2 align-top bg-emerald-50/10';
     var selectDestino = document.createElement('select');
     selectDestino.className = 'table-select border-emerald-100/60 bg-emerald-50/30 text-emerald-900';
-    var optionsDestino = '<option value="">Sel...</option>';
-    for (var j = 0; j < destinatarios.length; j++) {
-      optionsDestino += '<option value="' + destinatarios[j].id + '">' + destinatarios[j].nombre + '</option>';
-    }
-    selectDestino.innerHTML = optionsDestino;
+    selectDestino.innerHTML = '<option value="">Sel...</option>';
+    selectDestino.disabled = true;
     tdDestino.appendChild(selectDestino);
+    selectDestinoRef = selectDestino;
+
+    // Conectar cliente -> destinatarios
+    selectCliente.onchange = function() {
+      var cid = selectCliente.value;
+      if (cid) {
+        selectDestino.disabled = false;
+        cargarDestinatarios(cid, selectDestino);
+      } else {
+        selectDestino.disabled = true;
+        selectDestino.innerHTML = '<option value="">Sel...</option>';
+      }
+    };
     
     // DESTINATARIO DOC
     var tdCompDestino = document.createElement('td');
@@ -419,7 +491,7 @@ import {
     selectBanco.className = 'table-select';
     var optionsBanco = '<option value="">Sel</option>';
     for (var k = 0; k < bancos.length; k++) {
-      optionsBanco += '<option value="' + bancos[k] + '">' + bancos[k] + '</option>';
+      optionsBanco += '<option value="' + bancos[k].nombre + '">' + bancos[k].nombre + '</option>';
     }
     selectBanco.innerHTML = optionsBanco;
     tdBanco.appendChild(selectBanco);
