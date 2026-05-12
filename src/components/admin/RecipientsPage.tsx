@@ -30,39 +30,6 @@ interface Client {
 
 const RELACIONES = ['Familiar', 'Hermano/a', 'Prima/o', 'Tío/a', 'Amigo/a', 'Colega', 'Cliente', 'Otro'];
 
-const BANCOS = [
-  'Banesco',
-  'Mercantil',
-  'Banco Venezuela',
-  'Banco Provincial',
-  'BNC',
-  'BOD',
-  'Bancamiga',
-  'Banco del Tesoro',
-  'Banco Bicentenario',
-  'Banco Exterior',
-  'Banco Caroní',
-  'Banco Fondo Común',
-  'Banco Plaza',
-  'Banco Nacional de Crédito',
-  'Banco Venezolano de Crédito',
-  '100% Banco',
-  'Banco Activo',
-  'Banco Agrícola de Venezuela',
-  'Banco de Venezuela',
-  'Banco Soberano',
-  'Bangente',
-  'Banplus',
-  'Bicentenario del Pueblo',
-  'BNC',
-  'BOD',
-  'Citibank',
-  'Instituto Municipal de Crédito Popular',
-  'Mi Banco',
-  'N58 Banco Digital',
-  'Otro'
-];
-
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
@@ -90,9 +57,9 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBanco, setFilterBanco] = useState('');
   const [filterRelacion, setFilterRelacion] = useState('');
-
-  const [showModal, setShowModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [banks, setBanks] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const [showImportModal, setShowImportModal] = useState(false);
@@ -120,6 +87,9 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
 
   useEffect(() => {
     loadData();
+    apiFetch('/api/banks')
+      .then(data => setBanks(data.filter((b: any) => b.isActive !== false).map((b: any) => b.label)))
+      .catch(() => setBanks([]));
   }, [loadData]);
 
   const bancos = useMemo(() => [...new Set(recipients.map(r => r.bank))], [recipients]);
@@ -511,7 +481,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
                     <select required value={form.bank} onChange={e => setForm({ ...form, bank: e.target.value })}
                       className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 text-sm font-medium cursor-pointer">
                       <option value="">Seleccionar...</option>
-                      {BANCOS.map(b => <option key={b} value={b}>{b}</option>)}
+                      {banks.map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                   </div>
                   <div>

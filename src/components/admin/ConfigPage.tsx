@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Settings, DollarSign, Scale, Clock, BarChart3, ShieldCheck, Users,
   Building, Save, Eye, EyeOff, Plug, Mail, AlertTriangle, CheckCircle,
-  FileText, ArrowRight
+  FileText, ArrowRight, CreditCard, Landmark, Plus, Trash2, Pencil, GripVertical
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -20,6 +20,26 @@ interface ConfigMap {
   [key: string]: string;
 }
 
+interface PaymentMethodItem {
+  id: string;
+  name: string;
+  label: string;
+  letter: string;
+  classes: string;
+  subtitle: string | null;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+interface BankItem {
+  id: string;
+  name: string;
+  label: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export default function ConfigPage() {
   const [config, setConfig] = useState<ConfigMap>({});
   const [users, setUsers] = useState<SystemUser[]>([]);
@@ -27,6 +47,18 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [showApiSecret, setShowApiSecret] = useState(false);
+
+  // Payment methods state
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodItem[]>([]);
+  const [pmLoading, setPmLoading] = useState(false);
+  const [pmForm, setPmForm] = useState({ name: '', label: '', letter: '', color: 'bg-slate-100 text-slate-600', sortOrder: 0, isActive: true });
+  const [pmEditing, setPmEditing] = useState<string | null>(null);
+
+  // Banks state
+  const [banks, setBanks] = useState<BankItem[]>([]);
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankForm, setBankForm] = useState({ name: '', label: '', sortOrder: 0, isActive: true });
+  const [bankEditing, setBankEditing] = useState<string | null>(null);
 
   // Local form state for all fields
   const [form, setForm] = useState({
@@ -178,6 +210,111 @@ export default function ConfigPage() {
       setSaving(false);
     }
   };
+
+  // Payment Methods CRUD
+  const loadPaymentMethods = async () => {
+    setPmLoading(true);
+    try {
+      const data = await apiFetch('/api/payment-methods');
+      setPaymentMethods(data);
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    } finally {
+      setPmLoading(false);
+    }
+  };
+
+  const savePaymentMethod = async () => {
+    if (!pmForm.name || !pmForm.label) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'warning', message: 'Campos requeridos', description: 'Nombre y etiqueta son obligatorios.' } }));
+      return;
+    }
+    try {
+      if (pmEditing) {
+        await apiFetch(`/api/payment-methods/${pmEditing}`, { method: 'PATCH', body: JSON.stringify(pmForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Actualizado', description: 'Método de pago actualizado.' } }));
+      } else {
+        await apiFetch('/api/payment-methods', { method: 'POST', body: JSON.stringify(pmForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Creado', description: 'Método de pago creado.' } }));
+      }
+      setPmForm({ name: '', label: '', letter: '', color: 'bg-slate-100 text-slate-600', sortOrder: 0, isActive: true });
+      setPmEditing(null);
+      loadPaymentMethods();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
+  const editPaymentMethod = (pm: PaymentMethodItem) => {
+    setPmForm({ name: pm.name, label: pm.label, letter: pm.letter, color: pm.color, sortOrder: pm.sortOrder, isActive: pm.isActive });
+    setPmEditing(pm.id);
+  };
+
+  const deletePaymentMethod = async (id: string) => {
+    if (!confirm('¿Eliminar este método de pago?')) return;
+    try {
+      await apiFetch(`/api/payment-methods/${id}`, { method: 'DELETE' });
+      loadPaymentMethods();
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Eliminado', description: 'Método de pago eliminado.' } }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
+  // Banks CRUD
+  const loadBanks = async () => {
+    setBankLoading(true);
+    try {
+      const data = await apiFetch('/api/banks');
+      setBanks(data);
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    } finally {
+      setBankLoading(false);
+    }
+  };
+
+  const saveBank = async () => {
+    if (!bankForm.name || !bankForm.label) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'warning', message: 'Campos requeridos', description: 'Nombre y etiqueta son obligatorios.' } }));
+      return;
+    }
+    try {
+      if (bankEditing) {
+        await apiFetch(`/api/banks/${bankEditing}`, { method: 'PATCH', body: JSON.stringify(bankForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Actualizado', description: 'Banco actualizado.' } }));
+      } else {
+        await apiFetch('/api/banks', { method: 'POST', body: JSON.stringify(bankForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Creado', description: 'Banco creado.' } }));
+      }
+      setBankForm({ name: '', label: '', sortOrder: 0, isActive: true });
+      setBankEditing(null);
+      loadBanks();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
+  const editBank = (bank: BankItem) => {
+    setBankForm({ name: bank.name, label: bank.label, sortOrder: bank.sortOrder, isActive: bank.isActive });
+    setBankEditing(bank.id);
+  };
+
+  const deleteBank = async (id: string) => {
+    if (!confirm('¿Eliminar este banco?')) return;
+    try {
+      await apiFetch(`/api/banks/${id}`, { method: 'DELETE' });
+      loadBanks();
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Eliminado', description: 'Banco eliminado.' } }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
+  useEffect(() => {
+    loadPaymentMethods();
+    loadBanks();
+  }, []);
 
   const costoOperativo = Math.round(Number(form.volumen_mensual) * (Number(form.tasa_costo) / 100));
   const profitOperador = Math.round(Number(form.profit_global) * (Number(form.porcentaje_operador) / 100));
@@ -598,6 +735,174 @@ export default function ConfigPage() {
               className="text-indigo-600 hover:text-indigo-800 font-bold text-sm flex items-center gap-1 group/link transition-all">
               Ver logs completos <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-0.5 transition-transform" />
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Métodos de pago */}
+      <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><CreditCard className="w-5 h-5" /></div>
+            <div>
+              <h2 className="text-base md:text-lg font-extrabold text-slate-800 tracking-tight">Métodos de pago</h2>
+              <p className="text-xs text-slate-400 font-medium">Gestiona los métodos disponibles para transacciones</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Form */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Nombre (ID)</label>
+                <input type="text" value={pmForm.name} onChange={e => setPmForm({ ...pmForm, name: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="zelle" />
+              </div>
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Etiqueta</label>
+                <input type="text" value={pmForm.label} onChange={e => setPmForm({ ...pmForm, label: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="Zelle" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Letra</label>
+                <input type="text" value={pmForm.letter} onChange={e => setPmForm({ ...pmForm, letter: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="Z" />
+              </div>
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Color</label>
+                <select value={pmForm.color} onChange={e => setPmForm({ ...pmForm, color: e.target.value })}
+                  className="custom-select w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer">
+                  <option value="bg-slate-100 text-slate-600">Gris</option>
+                  <option value="bg-indigo-100 text-indigo-600">Indigo</option>
+                  <option value="bg-emerald-100 text-emerald-600">Verde</option>
+                  <option value="bg-amber-100 text-amber-600">Ámbar</option>
+                  <option value="bg-rose-100 text-rose-600">Rojo</option>
+                  <option value="bg-cyan-100 text-cyan-600">Cyan</option>
+                  <option value="bg-purple-100 text-purple-600">Púrpura</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={pmForm.isActive} onChange={e => setPmForm({ ...pmForm, isActive: e.target.checked })} className="rounded accent-indigo-600 w-4 h-4" />
+                <span className="text-sm font-semibold text-slate-700">Activo</span>
+              </label>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={savePaymentMethod} className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all btn-interactive flex items-center justify-center gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> {pmEditing ? 'Actualizar' : 'Agregar'}
+              </button>
+              {pmEditing && (
+                <button onClick={() => { setPmEditing(null); setPmForm({ name: '', label: '', letter: '', color: 'bg-slate-100 text-slate-600', sortOrder: 0, isActive: true }); }} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all">
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </div>
+          {/* List */}
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            {pmLoading ? (
+              <div className="text-center py-8 text-slate-400 text-sm">Cargando...</div>
+            ) : paymentMethods.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-sm font-medium">No hay métodos de pago</div>
+            ) : (
+              paymentMethods.map(pm => (
+                <div key={pm.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 transition-all group">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg ${pm.color} flex items-center justify-center text-xs font-bold`}>{pm.letter || pm.name.charAt(0).toUpperCase()}</div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{pm.label}</p>
+                      <p className="text-[0.65rem] text-slate-400 font-medium">{pm.name} · Orden {pm.sortOrder}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => editPaymentMethod(pm)} className="w-8 h-8 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all" title="Editar">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => deletePaymentMethod(pm.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-all" title="Eliminar">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bancos */}
+      <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><Landmark className="w-5 h-5" /></div>
+            <div>
+              <h2 className="text-base md:text-lg font-extrabold text-slate-800 tracking-tight">Bancos de destino</h2>
+              <p className="text-xs text-slate-400 font-medium">Gestiona los bancos disponibles para destinatarios</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Form */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Nombre (ID)</label>
+                <input type="text" value={bankForm.name} onChange={e => setBankForm({ ...bankForm, name: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="banesco" />
+              </div>
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Etiqueta</label>
+                <input type="text" value={bankForm.label} onChange={e => setBankForm({ ...bankForm, label: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="Banesco" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={bankForm.isActive} onChange={e => setBankForm({ ...bankForm, isActive: e.target.checked })} className="rounded accent-indigo-600 w-4 h-4" />
+                <span className="text-sm font-semibold text-slate-700">Activo</span>
+              </label>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveBank} className="flex-1 bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-700 transition-all btn-interactive flex items-center justify-center gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> {bankEditing ? 'Actualizar' : 'Agregar'}
+              </button>
+              {bankEditing && (
+                <button onClick={() => { setBankEditing(null); setBankForm({ name: '', label: '', sortOrder: 0, isActive: true }); }} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all">
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </div>
+          {/* List */}
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            {bankLoading ? (
+              <div className="text-center py-8 text-slate-400 text-sm">Cargando...</div>
+            ) : banks.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-sm font-medium">No hay bancos registrados</div>
+            ) : (
+              banks.map(bank => (
+                <div key={bank.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-emerald-200 transition-all group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">{bank.label.charAt(0)}</div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{bank.label}</p>
+                      <p className="text-[0.65rem] text-slate-400 font-medium">{bank.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => editBank(bank)} className="w-8 h-8 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 flex items-center justify-center transition-all" title="Editar">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => deleteBank(bank.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-all" title="Eliminar">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
