@@ -1,7 +1,7 @@
 ---
 // Página estática para verificación KYC
 // El token se lee del query string con JavaScript del lado del cliente
-// Esto permite funcionar en hosting estático (GitHub Pages)
+// Diseño premium alineado con la identidad visual de AD Global Pay
 ---
 
 <!DOCTYPE html>
@@ -9,195 +9,1184 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>Verificación KYC - AD Global Pay</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Verificación de Identidad — AD Global Pay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="/img/logo.webp" type="image/webp" />
   <style>
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    :root {
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --indigo: #6366f1;
+      --indigo-light: #818cf8;
+      --indigo-dark: #4f46e5;
+      --indigo-50: #eef2ff;
+      --indigo-100: #e0e7ff;
+      --indigo-200: #c7d2fe;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --emerald-50: #ecfdf5;
+      --emerald-100: #d1fae5;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
     }
-    .animate-fade-in-up {
-      animation: fadeInUp 0.5s ease-out forwards;
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(160deg, var(--slate-50) 0%, #f0f4ff 40%, #e8f4fd 100%);
+      min-height: 100vh;
+      color: var(--slate-800);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
     }
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes drawCheck {
+      0% { stroke-dashoffset: 24; }
+      100% { stroke-dashoffset: 0; }
+    }
+    @keyframes progressFill {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+    @keyframes badgePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .anim-fade-up {
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+    .anim-scale-in {
+      animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+    .anim-slide-left { animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+    .anim-slide-right { animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+
+    .delay-1 { animation-delay: 0.08s; }
+    .delay-2 { animation-delay: 0.16s; }
+    .delay-3 { animation-delay: 0.24s; }
+    .delay-4 { animation-delay: 0.32s; }
+    .delay-5 { animation-delay: 0.40s; }
+    .delay-6 { animation-delay: 0.48s; }
+
+    /* ===== BACKGROUND DECORATIONS ===== */
+    .bg-decoration {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .bg-decoration::before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .bg-decoration::after {
+      content: '';
+      position: absolute;
+      bottom: -10%;
+      left: -5%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    /* ===== HEADER ===== */
+    .kyc-header {
+      position: relative;
+      z-index: 10;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .kyc-header-inner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 1.25rem;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      border-radius: 9999px;
+      box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.06);
+    }
+    .kyc-header-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: var(--font-heading);
+      font-weight: 800;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .kyc-header-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: var(--slate-800);
+      letter-spacing: -0.01em;
+    }
+    .kyc-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      background: var(--emerald-50);
+      border: 1px solid var(--emerald-100);
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--emerald);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .kyc-container {
+      position: relative;
+      z-index: 10;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 1rem 3rem;
+    }
+
+    /* ===== CARD ===== */
+    .kyc-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(226, 232, 240, 0.7);
+      border-radius: 28px;
+      box-shadow: 0 20px 60px -16px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+      overflow: hidden;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+    }
+    .kyc-card:hover {
+      box-shadow: 0 24px 72px -16px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    }
+
+    /* ===== HERO SECTION ===== */
+    .kyc-hero {
+      position: relative;
+      padding: 2.5rem 1.75rem 2rem;
+      text-align: center;
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 50%, #4338ca 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 8s ease infinite;
+      overflow: hidden;
+    }
+    .kyc-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .kyc-hero-step {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 1rem;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 1.25rem;
+    }
+    .kyc-hero-step-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+    .kyc-hero-icon-wrap {
+      position: relative;
+      z-index: 2;
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 1.25rem;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: float 5s ease-in-out infinite;
+    }
+    .kyc-hero-icon-wrap svg {
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+    .kyc-hero h1 {
+      position: relative;
+      z-index: 2;
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .kyc-hero p {
+      position: relative;
+      z-index: 2;
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 500;
+    }
+
+    /* ===== PROGRESS STEPS ===== */
+    .kyc-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1.5rem 1.75rem 0.5rem;
+    }
+    .kyc-step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .kyc-step-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .kyc-step-circle.active {
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+      color: white;
+      box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.4);
+    }
+    .kyc-step-circle.pending {
+      background: var(--slate-100);
+      color: var(--slate-400);
+      border: 2px solid var(--slate-200);
+    }
+    .kyc-step-circle.done {
+      background: var(--emerald);
+      color: white;
+    }
+    .kyc-step-line {
+      width: 40px;
+      height: 2px;
+      background: var(--slate-200);
+      border-radius: 1px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kyc-step-line-fill {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, var(--indigo) 0%, var(--cyan) 100%);
+      border-radius: 1px;
+      width: 0%;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .kyc-step-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--slate-400);
+      margin-top: 0.25rem;
+      text-align: center;
+    }
+
+    /* ===== CONTENT ===== */
+    .kyc-content {
+      padding: 1.5rem 1.75rem 2rem;
+    }
+
+    /* ===== LOADING STATE ===== */
+    .kyc-loading {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .kyc-loading-ring {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1.25rem;
+      position: relative;
+    }
+    .kyc-loading-ring::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 3px solid var(--indigo-100);
+      border-top-color: var(--indigo);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .kyc-loading-ring::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 2px solid transparent;
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 1.2s linear infinite reverse;
+    }
+    .kyc-loading p {
+      font-size: 0.875rem;
+      color: var(--slate-500);
+      font-weight: 500;
+    }
+    .kyc-loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+      100% { content: ''; }
+    }
+
+    /* ===== CLIENT INFO CARD ===== */
+    .kyc-client-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, var(--indigo-50) 0%, rgba(6, 182, 212, 0.06) 100%);
+      border: 1px solid var(--indigo-100);
+      border-radius: 18px;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .kyc-client-card:hover {
+      border-color: var(--indigo-200);
+      box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.1);
+    }
+    .kyc-client-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .kyc-client-avatar svg {
+      width: 22px;
+      height: 22px;
+    }
+    .kyc-client-info p {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--slate-800);
+      line-height: 1.3;
+    }
+    .kyc-client-info span {
+      font-size: 0.75rem;
+      color: var(--slate-400);
+      font-weight: 500;
+    }
+
+    /* ===== SECTION TITLE ===== */
+    .kyc-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin-bottom: 1rem;
+    }
+    .kyc-section-title svg {
+      width: 20px;
+      height: 20px;
+      color: var(--indigo);
+    }
+
+    /* ===== DECLARACIÓN JURADA ===== */
+    .kyc-declaracion {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-left: 3px solid var(--indigo);
+      border-radius: 18px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .kyc-declaracion:hover {
+      border-color: var(--indigo-200);
+      box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.08);
+    }
+    .kyc-declaracion ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .kyc-declaracion li {
+      position: relative;
+      padding-left: 1.5rem;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: var(--slate-600);
+      margin-bottom: 0.625rem;
+    }
+    .kyc-declaracion li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.4rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
+    }
+    .kyc-declaracion li:last-child { margin-bottom: 0; }
+    .kyc-declaracion a {
+      color: var(--indigo);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px solid var(--indigo-200);
+      transition: all 0.2s ease;
+    }
+    .kyc-declaracion a:hover {
+      color: var(--indigo-dark);
+      border-bottom-color: var(--indigo);
+    }
+
+    /* ===== SIGNATURE ===== */
+    .kyc-signature-wrap {
+      margin-bottom: 1.5rem;
+    }
+    .kyc-signature-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      margin-bottom: 0.625rem;
+    }
+    .kyc-signature-label svg {
+      width: 16px;
+      height: 16px;
+      color: var(--indigo);
+    }
+    .kyc-signature-box {
+      position: relative;
+      border: 2px dashed var(--slate-300);
+      border-radius: 16px;
+      background: white;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .kyc-signature-box:hover {
+      border-color: var(--indigo-200);
+    }
+    .kyc-signature-box.drawing {
+      border-color: var(--indigo);
+      border-style: solid;
+      box-shadow: 0 0 0 4px var(--indigo-50);
+    }
+    .kyc-signature-canvas {
+      width: 100%;
+      height: auto;
+      max-width: 400px;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .kyc-signature-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      font-size: 0.75rem;
+      color: var(--slate-300);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .kyc-signature-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0.875rem;
+      background: var(--slate-50);
+      border-top: 1px solid var(--slate-200);
+    }
+    .kyc-signature-clear {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      background: transparent;
+      border: 1px solid var(--slate-200);
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--slate-500);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .kyc-signature-clear:hover {
+      background: var(--rose);
+      color: white;
+      border-color: var(--rose);
+    }
+    .kyc-signature-clear svg {
+      width: 14px;
+      height: 14px;
+    }
+    .kyc-signature-hint-text {
+      font-size: 0.7rem;
+      color: var(--slate-400);
+      font-weight: 500;
+    }
+
+    /* ===== CHECKBOX CUSTOM ===== */
+    .kyc-checkbox-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      background: white;
+      border: 2px solid var(--slate-200);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      margin-bottom: 1.25rem;
+    }
+    .kyc-checkbox-wrap:hover {
+      border-color: var(--indigo-200);
+      box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.08);
+    }
+    .kyc-checkbox-wrap.checked {
+      border-color: var(--indigo);
+      background: var(--indigo-50);
+      box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.12);
+    }
+    .kyc-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border: 2px solid var(--slate-300);
+      border-radius: 7px;
+      margin-top: 1px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      background: white;
+    }
+    .kyc-checkbox:checked {
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+      border-color: var(--indigo);
+    }
+    .kyc-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .kyc-checkbox-label {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--slate-700);
+      font-weight: 500;
+      user-select: none;
+    }
+    .kyc-checkbox-label strong {
+      color: var(--slate-900);
+      font-weight: 700;
+    }
+
+    /* ===== VERIFICATION AREA ===== */
+    .kyc-verify-area {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      background: linear-gradient(135deg, var(--indigo-50) 0%, rgba(6, 182, 212, 0.04) 100%);
+      border: 2px dashed var(--indigo-200);
+      border-radius: 20px;
+      margin-bottom: 1.25rem;
+      transition: all 0.3s ease;
+    }
+    .kyc-verify-area:hover {
+      border-color: var(--indigo);
+      background: linear-gradient(135deg, var(--indigo-50) 0%, rgba(6, 182, 212, 0.08) 100%);
+    }
+    .kyc-verify-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1rem;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.35);
+      animation: float 4s ease-in-out infinite;
+    }
+    .kyc-verify-icon svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+    .kyc-verify-area h3 {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin-bottom: 0.375rem;
+    }
+    .kyc-verify-area p {
+      font-size: 0.8rem;
+      color: var(--slate-500);
+      font-weight: 500;
+      margin-bottom: 1.25rem;
+      max-width: 280px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ===== BUTTONS ===== */
+    .kyc-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .kyc-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .kyc-btn:hover::after { opacity: 1; }
+    .kyc-btn-primary {
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+      color: white;
+      box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.4);
+    }
+    .kyc-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px -6px rgba(99, 102, 241, 0.5);
+    }
+    .kyc-btn-primary:active {
+      transform: translateY(0) scale(0.98);
+    }
+    .kyc-btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .kyc-btn-success {
+      background: linear-gradient(135deg, var(--emerald) 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 8px 24px -6px rgba(16, 185, 129, 0.4);
+    }
+    .kyc-btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px -6px rgba(16, 185, 129, 0.5);
+    }
+
+    /* ===== SECURITY BADGE ===== */
+    .kyc-security {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, var(--emerald-50) 0%, rgba(6, 182, 212, 0.04) 100%);
+      border: 1px solid var(--emerald-100);
+      border-radius: 16px;
+      margin-bottom: 1.25rem;
+      transition: all 0.3s ease;
+    }
+    .kyc-security:hover {
+      border-color: var(--emerald-200);
+      box-shadow: 0 4px 16px -4px rgba(16, 185, 129, 0.1);
+    }
+    .kyc-security-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--emerald) 0%, var(--cyan) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.3);
+    }
+    .kyc-security-icon svg {
+      width: 20px;
+      height: 20px;
+      color: white;
+    }
+    .kyc-security-text p {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--slate-800);
+      line-height: 1.3;
+    }
+    .kyc-security-text span {
+      font-size: 0.75rem;
+      color: var(--slate-400);
+      font-weight: 500;
+    }
+
+    /* ===== FOOTER ===== */
+    .kyc-footer {
+      text-align: center;
+      padding: 1.25rem 1.75rem;
+      background: var(--slate-50);
+      border-top: 1px solid var(--slate-100);
+    }
+    .kyc-footer p {
+      font-size: 0.75rem;
+      color: var(--slate-400);
+      font-weight: 500;
+    }
+    .kyc-footer a {
+      color: var(--indigo);
+      font-weight: 700;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    .kyc-footer a:hover { color: var(--indigo-dark); }
+    .kyc-footer-badges {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 0.875rem;
+    }
+    .kyc-footer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--slate-400);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .kyc-footer-badge svg {
+      width: 14px;
+      height: 14px;
+      color: var(--emerald);
+    }
+
+    /* ===== EXPIRY NOTE ===== */
+    .kyc-expiry {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .kyc-expiry p {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--slate-400);
+      padding: 0.375rem 0.875rem;
+      background: var(--slate-100);
+      border-radius: 9999px;
+    }
+    .kyc-expiry svg {
+      width: 14px;
+      height: 14px;
+      color: var(--amber);
+    }
+
+    /* ===== NO TOKEN STATE ===== */
+    .kyc-no-token {
+      text-align: center;
+      padding: 4rem 1.5rem;
+    }
+    .kyc-no-token-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      border-radius: 24px;
+      background: linear-gradient(135deg, var(--rose) 0%, #fb7185 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px -6px rgba(244, 63, 94, 0.35);
+      animation: float 4s ease-in-out infinite;
+    }
+    .kyc-no-token-icon svg {
+      width: 36px;
+      height: 36px;
+      color: white;
+    }
+    .kyc-no-token h2 {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--slate-800);
+      margin-bottom: 0.5rem;
+    }
+    .kyc-no-token p {
+      font-size: 0.85rem;
+      color: var(--slate-500);
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ===== SUCCESS STATE ===== */
+    .kyc-success-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 1.25rem;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--emerald) 0%, #059669 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px -6px rgba(16, 185, 129, 0.35);
+      animation: float 4s ease-in-out infinite;
+    }
+    .kyc-success-icon svg {
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+
+    /* ===== HIDDEN ===== */
+    .hidden { display: none !important; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      .kyc-container { padding: 0 0.75rem 2rem; }
+      .kyc-card { border-radius: 22px; }
+      .kyc-hero { padding: 2rem 1.25rem 1.5rem; }
+      .kyc-hero h1 { font-size: 1.25rem; }
+      .kyc-content { padding: 1.25rem 1.25rem 1.5rem; }
+      .kyc-steps { padding: 1.25rem 1rem 0.5rem; gap: 0.25rem; }
+      .kyc-step-line { width: 24px; }
+    }
+
+    /* Touch targets */
+    @media (pointer: coarse) {
+      .kyc-btn, .kyc-signature-clear, .kyc-checkbox-wrap {
+        min-height: 44px;
+      }
+    }
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
+<body>
+  <!-- Background Decorations -->
+  <div class="bg-decoration"></div>
 
-  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-8">
-    <div class="max-w-md w-full mx-auto animate-fade-in-up">
+  <!-- Header -->
+  <header class="kyc-header anim-fade-up">
+    <div class="kyc-header-inner">
+      <div class="kyc-header-logo">AD</div>
+      <span class="kyc-header-title">AD Global Pay</span>
+      <span class="kyc-header-badge">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Seguro
+      </span>
+    </div>
+  </header>
 
-      <!-- Estado: sin token -->
-      <div id="noTokenState" class="hidden">
-        <div class="bg-white rounded-3xl shadow-xl overflow-hidden text-center p-8">
-          <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span class="text-4xl">⚠️</span>
+  <!-- Main -->
+  <main class="kyc-container">
+
+    <!-- Estado: sin token -->
+    <div id="noTokenState" class="kyc-card hidden anim-scale-in">
+      <div class="kyc-no-token">
+        <div class="kyc-no-token-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h2>Link inválido</h2>
+        <p>El enlace de verificación no es válido o ha expirado.<br>Solicita uno nuevo desde tu cuenta.</p>
+        <a href="/" class="kyc-btn kyc-btn-primary" style="width:auto; padding-left:2rem; padding-right:2rem;">Volver al inicio</a>
+      </div>
+    </div>
+
+    <!-- Estado: con token -->
+    <div id="kycContent" class="kyc-card hidden anim-scale-in delay-1">
+
+      <!-- Hero -->
+      <div class="kyc-hero">
+        <div class="kyc-hero-step">
+          <span class="kyc-hero-step-dot"></span>
+          Paso 1 de 3
+        </div>
+        <div class="kyc-hero-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h1>Verifica tu identidad</h1>
+        <p>AD Global Pay · Proceso seguro y rápido</p>
+      </div>
+
+      <!-- Steps -->
+      <div class="kyc-steps">
+        <div class="kyc-step">
+          <div class="kyc-step-circle active" id="stepCircle1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <h1 class="text-xl font-bold text-gray-800 mb-2">Link inválido</h1>
-          <p class="text-gray-500 text-sm mb-6">El enlace de verificación no es válido o ha expirado.</p>
-          <a href="/" class="inline-block bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 transition-all">
-            Volver al inicio
-          </a>
+          <div>
+            <div class="kyc-step-label">Declaración</div>
+          </div>
+        </div>
+        <div class="kyc-step-line"><div class="kyc-step-line-fill" id="stepLine1"></div></div>
+        <div class="kyc-step">
+          <div class="kyc-step-circle pending" id="stepCircle2">2</div>
+          <div>
+            <div class="kyc-step-label">Verificación</div>
+          </div>
+        </div>
+        <div class="kyc-step-line"><div class="kyc-step-line-fill" id="stepLine2"></div></div>
+        <div class="kyc-step">
+          <div class="kyc-step-circle pending" id="stepCircle3">3</div>
+          <div>
+            <div class="kyc-step-label">Confirmación</div>
+          </div>
         </div>
       </div>
 
-      <!-- Estado: con token -->
-      <div id="kycContent" class="hidden">
-        <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <!-- Content -->
+      <div class="kyc-content">
 
-          <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-center relative">
-            <div class="absolute top-4 right-4">
-              <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">
-                Paso 1 de 3
-              </span>
+        <!-- Loading -->
+        <div id="loadingState" class="kyc-loading">
+          <div class="kyc-loading-ring"></div>
+          <p class="kyc-loading-dots">Cargando verificador</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+
+          <!-- Client Info -->
+          <div class="kyc-client-card anim-fade-up delay-1">
+            <div class="kyc-client-avatar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
-            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-              <span class="text-4xl">🪪</span>
-            </div>
-            <h1 class="text-2xl font-bold text-white">Verifica tu identidad</h1>
-            <p class="text-blue-100 text-sm mt-2">AD Global Pay</p>
-          </div>
-
-          <div class="p-6">
-
-            <div id="loadingState" class="text-center py-8">
-              <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p class="text-gray-500">Cargando verificador...</p>
-            </div>
-
-            <div id="mainContent" class="hidden">
-
-              <div class="bg-gray-50 rounded-2xl p-4 mb-6">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span class="text-lg">👤</span>
-                  </div>
-                  <div>
-                    <p class="text-xs text-gray-500">Cliente</p>
-                    <p class="font-medium text-gray-800">Luisa Ideas Creativas</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3 mt-3">
-                  <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span class="text-lg">📧</span>
-                  </div>
-                  <div>
-                    <p class="text-xs text-gray-500">Email</p>
-                    <p class="font-medium text-gray-800">luisa@email.com</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex justify-between mb-8">
-                <div class="flex-1 text-center">
-                  <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center mx-auto mb-2 text-sm font-bold">1</div>
-                  <p class="text-xs text-gray-500">Documento</p>
-                </div>
-                <div class="flex-1 text-center">
-                  <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mx-auto mb-2 text-sm font-bold">2</div>
-                  <p class="text-xs text-gray-500">Selfie</p>
-                </div>
-                <div class="flex-1 text-center">
-                  <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mx-auto mb-2 text-sm font-bold">3</div>
-                  <p class="text-xs text-gray-500">Confirmación</p>
-                </div>
-              </div>
-
-              <!-- ===== SECCIÓN DE DECLARACIÓN JURADA Y FIRMA ===== -->
-              <div id="declaracionSection" class="mb-6">
-                <div class="bg-gray-50 rounded-2xl p-5 border border-gray-200">
-                  <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    <span class="text-xl">📜</span> Declaración Jurada
-                  </h3>
-
-                  <div class="text-sm text-gray-600 space-y-3 mb-4">
-                    <p>Declaro bajo juramento que:</p>
-                    <ul class="list-disc pl-5 space-y-1">
-                      <li>Los fondos que enviaré a través de AD Global Pay provienen de <strong>actividades lícitas y verificables</strong>.</li>
-                      <li>No estoy involucrado en actividades de lavado de activos, financiamiento del terrorismo, ni operaciones con personas o entidades sancionadas por OFAC.</li>
-                      <li>Toda la información proporcionada es <strong>veraz, completa y actualizada</strong>.</li>
-                      <li>Acepto los <a href="/terminos" target="_blank" class="text-blue-600 underline">Términos y Condiciones</a> y la <a href="/privacidad" target="_blank" class="text-blue-600 underline">Política de Privacidad</a> de AD Global Services LLC.</li>
-                    </ul>
-                  </div>
-
-                  <div class="mt-4">
-                    <p class="text-sm font-medium text-gray-700 mb-2">✍️ Firma digital (toque o deslice para firmar)</p>
-                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-2 bg-white">
-                      <canvas id="signatureCanvas" width="400" height="150" style="width:100%; height:auto; max-width:400px; touch-action: none; cursor: crosshair;" class="border rounded-lg bg-white"></canvas>
-                      <div class="flex justify-between mt-2">
-                        <button type="button" id="clearSignature" class="text-xs text-red-600 hover:text-red-800">🗑️ Limpiar firma</button>
-                        <span class="text-xs text-gray-400">Firma con el dedo o mouse</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="mt-4 flex items-start gap-3">
-                    <input type="checkbox" id="aceptoTerminos" class="mt-1 w-5 h-5 accent-blue-600">
-                    <label for="aceptoTerminos" class="text-sm text-gray-700">
-                      He leído y acepto la <strong>Declaración Jurada</strong>, los <strong>Términos y Condiciones</strong> y la <strong>Política de Privacidad</strong> de AD Global Services LLC.
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div id="verificationArea" class="bg-gray-50 rounded-2xl p-6 text-center border-2 border-dashed border-gray-200">
-                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span class="text-4xl">📸</span>
-                </div>
-                <h3 class="font-semibold text-gray-800 mb-2">Verificación con Didit</h3>
-                <p class="text-sm text-gray-500 mb-4">Tendrás que tomar una foto de tu documento de identidad y una selfie</p>
-                <button id="startVerificationBtn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md">
-                  Iniciar verificación
-                </button>
-                <p class="text-xs text-gray-400 mt-3">⏱️ Tiempo estimado: 2 minutos</p>
-              </div>
-
-              <div class="mt-6 bg-blue-50 rounded-xl p-4">
-                <div class="flex gap-3">
-                  <span class="text-xl">🔒</span>
-                  <div>
-                    <p class="text-sm font-medium text-blue-800">Tu información está segura</p>
-                    <p class="text-xs text-blue-600 mt-1">Usamos tecnología Didit, verificada y cumpliendo con las regulaciones internacionales.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-4 text-center">
-                <p class="text-xs text-gray-400">Este enlace expira en 7 días</p>
-              </div>
+            <div class="kyc-client-info">
+              <p>Luisa Ideas Creativas</p>
+              <span>luisa@email.com</span>
             </div>
           </div>
 
-          <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
-            <p class="text-center text-xs text-gray-400">
-              ¿Problemas? <a href="mailto:soporte@adglobalpay.com" class="text-blue-600 font-medium">Contacta soporte</a>
+          <!-- Declaración Jurada -->
+          <div class="kyc-section-title anim-fade-up delay-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Declaración Jurada
+          </div>
+          <div class="kyc-declaracion anim-fade-up delay-3">
+            <ul>
+              <li>Los fondos que enviaré a través de AD Global Pay provienen de <strong>actividades lícitas y verificables</strong>.</li>
+              <li>No estoy involucrado en actividades de lavado de activos, financiamiento del terrorismo, ni operaciones con personas o entidades sancionadas por OFAC.</li>
+              <li>Toda la información proporcionada es <strong>veraz, completa y actualizada</strong>.</li>
+              <li>Acepto los <a href="/terminos" target="_blank">Términos y Condiciones</a> y la <a href="/privacidad" target="_blank">Política de Privacidad</a> de AD Global Services LLC.</li>
+            </ul>
+          </div>
+
+          <!-- Signature -->
+          <div class="kyc-signature-wrap anim-fade-up delay-4">
+            <div class="kyc-signature-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Firma digital
+            </div>
+            <div class="kyc-signature-box" id="signatureBox">
+              <canvas id="signatureCanvas" width="400" height="150" style="width:100%; height:auto; max-width:400px; touch-action: none; cursor: crosshair;" class="kyc-signature-canvas"></canvas>
+              <div class="kyc-signature-hint" id="signatureHint">Toque o deslice para firmar</div>
+            </div>
+            <div class="kyc-signature-actions">
+              <button type="button" id="clearSignature" class="kyc-signature-clear">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Limpiar
+              </button>
+              <span class="kyc-signature-hint-text">Dedo o mouse</span>
+            </div>
+          </div>
+
+          <!-- Checkbox -->
+          <label class="kyc-checkbox-wrap anim-fade-up delay-5" id="checkboxWrap">
+            <input type="checkbox" id="aceptoTerminos" class="kyc-checkbox">
+            <span class="kyc-checkbox-label">He leído y acepto la <strong>Declaración Jurada</strong>, los <strong>Términos y Condiciones</strong> y la <strong>Política de Privacidad</strong> de AD Global Services LLC.</span>
+          </label>
+
+          <!-- Verification Area -->
+          <div id="verificationArea" class="kyc-verify-area anim-fade-up delay-6">
+            <div class="kyc-verify-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <h3>Verificación con Didit</h3>
+            <p>Tendrás que tomar una foto de tu documento de identidad y una selfie para completar el proceso.</p>
+            <button id="startVerificationBtn" class="kyc-btn kyc-btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              Iniciar verificación
+            </button>
+            <div class="kyc-expiry" style="margin-top:0.875rem; margin-bottom:0;">
+              <p>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Tiempo estimado: 2 minutos
+              </p>
+            </div>
+          </div>
+
+          <!-- Security Badge -->
+          <div class="kyc-security anim-fade-up delay-6">
+            <div class="kyc-security-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="kyc-security-text">
+              <p>Tu información está segura</p>
+              <span>Tecnología Didit con cumplimiento KYC/AML internacional</span>
+            </div>
+          </div>
+
+          <!-- Expiry -->
+          <div class="kyc-expiry anim-fade-up delay-6">
+            <p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Este enlace expira en 7 días
             </p>
           </div>
         </div>
       </div>
 
-      <div class="text-center mt-6">
-        <div class="flex justify-center gap-4 text-xs text-gray-400">
-          <span>✅ Datos encriptados</span>
-          <span>✅ Cumple KYC/AML</span>
-          <span>✅ Proceso seguro</span>
+      <!-- Footer -->
+      <div class="kyc-footer">
+        <p>¿Problemas? <a href="mailto:soporte@adglobalpay.com">Contacta soporte</a></p>
+        <div class="kyc-footer-badges">
+          <span class="kyc-footer-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Datos encriptados
+          </span>
+          <span class="kyc-footer-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Cumple KYC/AML
+          </span>
+          <span class="kyc-footer-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Proceso seguro
+          </span>
         </div>
       </div>
     </div>
-  </div>
+
+  </main>
 
   <script is:inline>
     (function() {
-      // Leer token del query string
+      // Read token from query string
       var params = new URLSearchParams(window.location.search);
       var token = params.get('token');
 
@@ -215,20 +1204,22 @@
       var canvas = null;
       var ctx = null;
 
+      // Loading simulation
       setTimeout(function() {
         var loading = document.getElementById('loadingState');
         var main = document.getElementById('mainContent');
         if (loading) loading.classList.add('hidden');
         if (main) main.classList.remove('hidden');
-      }, 1000);
+      }, 1200);
 
+      // Signature canvas
       function initSignatureCanvas() {
         canvas = document.getElementById('signatureCanvas');
         if (!canvas) return;
 
         ctx = canvas.getContext('2d');
-        ctx.strokeStyle = '#1f2937';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 2.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -241,7 +1232,7 @@
           var scaleY = canvas.height / rect.height;
 
           var clientX, clientY;
-          if (e.touches) {
+          if (e.touches && e.touches.length > 0) {
             clientX = e.touches[0].clientX;
             clientY = e.touches[0].clientY;
           } else {
@@ -269,6 +1260,8 @@
           ctx.lineTo(lastX, lastY);
           ctx.stroke();
           signatureIsEmpty = false;
+          document.getElementById('signatureBox').classList.add('drawing');
+          document.getElementById('signatureHint').style.opacity = '0';
         }
 
         function draw(e) {
@@ -284,7 +1277,7 @@
         }
 
         function stopDrawing(e) {
-          e.preventDefault();
+          if (e) e.preventDefault();
           drawing = false;
         }
 
@@ -292,10 +1285,10 @@
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseleave', stopDrawing);
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
-        canvas.addEventListener('touchcancel', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+        canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
 
         var clearBtn = document.getElementById('clearSignature');
         if (clearBtn) {
@@ -303,16 +1296,28 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#1f2937';
+            ctx.strokeStyle = '#1e293b';
             signatureIsEmpty = true;
+            document.getElementById('signatureBox').classList.remove('drawing');
+            document.getElementById('signatureHint').style.opacity = '1';
           });
         }
 
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#1f2937';
+        ctx.strokeStyle = '#1e293b';
       }
 
+      // Checkbox styling
+      var checkbox = document.getElementById('aceptoTerminos');
+      var checkboxWrap = document.getElementById('checkboxWrap');
+      if (checkbox && checkboxWrap) {
+        checkbox.addEventListener('change', function() {
+          checkboxWrap.classList.toggle('checked', this.checked);
+        });
+      }
+
+      // Start verification
       var startBtn = document.getElementById('startVerificationBtn');
       if (startBtn) {
         startBtn.addEventListener('click', function() {
@@ -320,17 +1325,17 @@
           var canvasEl = document.getElementById('signatureCanvas');
 
           if (!acepta || !acepta.checked) {
-            alert('⚠️ Debes aceptar los términos y condiciones y la declaración jurada para continuar.');
+            alert('Debes aceptar los términos y condiciones y la declaración jurada para continuar.');
             return;
           }
 
           if (signatureIsEmpty) {
-            alert('⚠️ Debes firmar la declaración jurada para continuar.');
+            alert('Debes firmar la declaración jurada para continuar.');
             return;
           }
 
           var signatureData = canvasEl.toDataURL('image/png');
-          console.log('✅ Firma capturada (simulación)');
+          console.log('Firma capturada');
 
           var btn = this;
           var area = document.getElementById('verificationArea');
@@ -338,8 +1343,23 @@
           btn.disabled = true;
           btn.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>';
 
+          // Update step indicators
+          document.getElementById('stepCircle1').className = 'kyc-step-circle done';
+          document.getElementById('stepCircle1').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+          document.getElementById('stepLine1').style.width = '100%';
+          document.getElementById('stepCircle2').className = 'kyc-step-circle active';
+          document.getElementById('stepCircle2').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+          document.getElementById('stepLine2').style.width = '100%';
+          document.getElementById('stepCircle3').className = 'kyc-step-circle active';
+
           setTimeout(function() {
-            area.innerHTML = '<div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-4xl">✅</span></div><h3 class="font-semibold text-gray-800 mb-2">¡Verificación completada!</h3><p class="text-sm text-gray-500 mb-4">Tu identidad ha sido verificada correctamente.</p><button onclick="window.location.href=\'/kyc/completado\'" class="w-full bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-all">Continuar</button>';
+            area.innerHTML =
+              '<div class="kyc-success-icon">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+              '</div>' +
+              '<h3 style="font-family:var(--font-heading);font-size:1.1rem;font-weight:700;color:var(--slate-800);margin-bottom:0.375rem;">¡Verificación completada!</h3>' +
+              '<p style="font-size:0.8rem;color:var(--slate-500);font-weight:500;margin-bottom:1.25rem;">Tu identidad ha sido verificada correctamente.</p>' +
+              '<button onclick="window.location.href=\'/kyc/completado\'" class="kyc-btn kyc-btn-success">Continuar</button>';
           }, 2000);
         });
       }
