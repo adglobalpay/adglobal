@@ -54,6 +54,14 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+function formatMethod(method: string) {
+  return method
+    .toLowerCase()
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 function downloadCSV(filename: string, headers: string[], rows: (string | number)[][]) {
   const csv = ['\uFEFF' + headers.join(','), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -367,9 +375,10 @@ export default function TransactionsPage() {
                       </span>
                     </td>
                     <td className="py-3 md:py-4 px-3 align-top">
-                      <div className="font-semibold text-[0.8rem] text-slate-700">{tx.recipient?.bank || '—'}</div>
-                      <div className="inline-block px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[0.65rem] font-bold border border-indigo-100 uppercase tracking-widest mt-1 transition-all hover:bg-indigo-100">
-                        {tx.metodo}
+                      <div className="inline-flex items-center gap-1.5 rounded-md border border-indigo-100 bg-indigo-50 px-2 py-1 text-[0.72rem] font-bold text-slate-700 transition-all hover:bg-indigo-100">
+                        <span className="text-indigo-600">{formatMethod(tx.metodo || '')}</span>
+                        <ArrowRight className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                        <span className="uppercase tracking-wide text-slate-700">{tx.recipient?.bank || '—'}</span>
                       </div>
                     </td>
                     <td className="py-3 md:py-4 px-3 align-top">

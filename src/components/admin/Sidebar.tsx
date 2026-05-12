@@ -92,6 +92,7 @@ export default function Sidebar() {
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
     { name: 'Clientes', path: '/admin/clientes', icon: <Users size={20} />, badge: inactiveClients.length },
     { name: 'Transacciones', path: '/admin/transacciones', icon: <BadgeDollarSign size={20} /> },
+    { name: 'KYC', path: '/admin/kyc', icon: <Fingerprint size={20} /> },
     { name: 'Reportes', path: '/admin/reportes', icon: <FileText size={20} /> },
     { name: 'Configuración', path: '/admin/config', icon: <Settings size={20} /> },
   ];

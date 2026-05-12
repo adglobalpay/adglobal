@@ -158,19 +158,37 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const handleSendKyc = async () => {
     if (!client) return;
     try {
+      // 1. Crear solicitud KYC
       const kyc = await apiFetch('/api/kyc', {
         method: 'POST',
         body: JSON.stringify({ clientId: client.id })
       });
+
+      // 2. Generar link
+      const link = getKycLink(kyc.token);
+
+      // 3. Enviar email via Brevo
       if (client.email) {
-        window.dispatchEvent(new CustomEvent('show-toast', {
-          detail: { type: 'success', message: 'KYC enviado', description: `Solicitud enviada a ${client.email}` }
-        }));
+        try {
+          await apiFetch('/api/kyc/send-email', {
+            method: 'POST',
+            body: JSON.stringify({ clientId: client.id, token: kyc.token, link })
+          });
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { type: 'success', message: 'KYC enviado', description: `Solicitud enviada a ${client.email}` }
+          }));
+        } catch (emailErr: any) {
+          // El email falló pero el KYC se creó — mostrar warning
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { type: 'warning', message: 'Email no enviado', description: `${emailErr.message}. El link fue generado, copialo manualmente.` }
+          }));
+        }
       } else {
         window.dispatchEvent(new CustomEvent('show-toast', {
           detail: { type: 'info', message: 'Link generado', description: 'El cliente no tiene email. Copia y comparte el link manualmente.' }
         }));
       }
+
       loadClient();
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
@@ -447,7 +465,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             </div>
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
               <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1">Método</p>
-              <p className="text-sm font-bold text-slate-700">{latestKyc ? 'Didit' : '—'}</p>
+              <p className="text-sm font-bold text-slate-700">{latestKyc ? 'Manual' : '—'}</p>
             </div>
           </div>
         </div>

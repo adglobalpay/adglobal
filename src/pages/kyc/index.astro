@@ -2,6 +2,7 @@
 // Página estática para verificación KYC
 // El token se lee del query string con JavaScript del lado del cliente
 // Diseño premium alineado con la identidad visual de AD Global Pay
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
 ---
 
 <!DOCTYPE html>
@@ -14,6 +15,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="/img/logo.webp" type="image/webp" />
+  <script is:inline define:vars={{ API_URL }}>
+    window.__ADGLOBAL_API_URL__ = API_URL;
+  </script>
   <style>
     :root {
       --font-heading: 'Outfit', sans-serif;
@@ -802,6 +806,91 @@
       box-shadow: 0 12px 32px -6px rgba(16, 185, 129, 0.5);
     }
 
+    /* ===== FILE UPLOADS ===== */
+    .kyc-upload-grid {
+      display: grid;
+      gap: 0.875rem;
+      margin-bottom: 1.25rem;
+    }
+    .kyc-upload-card {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 0.875rem;
+      align-items: center;
+      padding: 1rem;
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .kyc-upload-card:hover {
+      border-color: var(--indigo-200);
+      box-shadow: 0 8px 24px -12px rgba(99, 102, 241, 0.28);
+    }
+    .kyc-upload-card.ready {
+      border-color: var(--emerald-100);
+      background: linear-gradient(135deg, white 0%, var(--emerald-50) 100%);
+    }
+    .kyc-upload-icon,
+    .kyc-upload-preview {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--indigo-50);
+      color: var(--indigo);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .kyc-upload-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+    .kyc-upload-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .kyc-upload-text strong {
+      display: block;
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      color: var(--slate-800);
+      margin-bottom: 0.15rem;
+    }
+    .kyc-upload-text span {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--slate-500);
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .kyc-upload-status {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--slate-400);
+    }
+    .kyc-upload-card.ready .kyc-upload-status {
+      color: var(--emerald);
+    }
+    .kyc-alert {
+      padding: 0.875rem 1rem;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #c2410c;
+      border-radius: 14px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 1rem;
+    }
+
     /* ===== SECURITY BADGE ===== */
     .kyc-security {
       display: flex;
@@ -1025,7 +1114,7 @@
       <div class="kyc-hero">
         <div class="kyc-hero-step">
           <span class="kyc-hero-step-dot"></span>
-          Paso 1 de 3
+          <span id="heroStepText">Paso 1 de 3</span>
         </div>
         <div class="kyc-hero-icon-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1078,8 +1167,8 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
             <div class="kyc-client-info">
-              <p>Luisa Ideas Creativas</p>
-              <span>luisa@email.com</span>
+              <p id="clientName">Cliente AD Global Pay</p>
+              <span id="clientEmail">Solicitud de verificación</span>
             </div>
           </div>
 
@@ -1127,11 +1216,11 @@
             <div class="kyc-verify-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
-            <h3>Verificación con Didit</h3>
-            <p>Tendrás que tomar una foto de tu documento de identidad y una selfie para completar el proceso.</p>
+            <h3>Luego sube tus fotos</h3>
+            <p>Primero firma y acepta la declaración. Después tomarás una foto de tu cara y una de tu cédula.</p>
             <button id="startVerificationBtn" class="kyc-btn kyc-btn-primary">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-              Iniciar verificación
+              Continuar a fotos
             </button>
             <div class="kyc-expiry" style="margin-top:0.875rem; margin-bottom:0;">
               <p>
@@ -1148,7 +1237,7 @@
             </div>
             <div class="kyc-security-text">
               <p>Tu información está segura</p>
-              <span>Tecnología Didit con cumplimiento KYC/AML internacional</span>
+              <span>La revisión la realiza manualmente el equipo de AD Global Pay</span>
             </div>
           </div>
 
@@ -1186,12 +1275,14 @@
 
   <script is:inline>
     (function() {
-      // Read token from query string
       var params = new URLSearchParams(window.location.search);
       var token = params.get('token');
+      var API_URL = window.__ADGLOBAL_API_URL__ || 'https://backend-global-production.up.railway.app';
 
       var noTokenEl = document.getElementById('noTokenState');
       var kycContentEl = document.getElementById('kycContent');
+      var loadingEl = document.getElementById('loadingState');
+      var mainEl = document.getElementById('mainContent');
 
       if (!token) {
         if (noTokenEl) noTokenEl.classList.remove('hidden');
@@ -1201,18 +1292,87 @@
       if (kycContentEl) kycContentEl.classList.remove('hidden');
 
       var signatureIsEmpty = true;
+      var signatureData = '';
+      var selfieData = '';
+      var idFrontData = '';
       var canvas = null;
       var ctx = null;
 
-      // Loading simulation
-      setTimeout(function() {
-        var loading = document.getElementById('loadingState');
-        var main = document.getElementById('mainContent');
-        if (loading) loading.classList.add('hidden');
-        if (main) main.classList.remove('hidden');
-      }, 1200);
+      function setInvalidState(message) {
+        if (kycContentEl) kycContentEl.classList.add('hidden');
+        if (noTokenEl) {
+          var paragraph = noTokenEl.querySelector('p');
+          if (paragraph) paragraph.textContent = message || 'El enlace de verificación no es válido o ha expirado. Solicita uno nuevo desde tu cuenta.';
+          noTokenEl.classList.remove('hidden');
+        }
+      }
 
-      // Signature canvas
+      function setStep(step) {
+        var heroText = document.getElementById('heroStepText');
+        if (heroText) heroText.textContent = 'Paso ' + step + ' de 3';
+
+        var circle1 = document.getElementById('stepCircle1');
+        var circle2 = document.getElementById('stepCircle2');
+        var circle3 = document.getElementById('stepCircle3');
+        var line1 = document.getElementById('stepLine1');
+        var line2 = document.getElementById('stepLine2');
+        var check = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+        if (circle1) {
+          circle1.className = step > 1 ? 'kyc-step-circle done' : 'kyc-step-circle active';
+          circle1.innerHTML = step > 1 ? check : check;
+        }
+        if (circle2) {
+          circle2.className = step > 2 ? 'kyc-step-circle done' : step === 2 ? 'kyc-step-circle active' : 'kyc-step-circle pending';
+          circle2.innerHTML = step > 2 ? check : '2';
+        }
+        if (circle3) {
+          circle3.className = step === 3 ? 'kyc-step-circle active' : 'kyc-step-circle pending';
+          circle3.innerHTML = '3';
+        }
+        if (line1) line1.style.width = step > 1 ? '100%' : '0%';
+        if (line2) line2.style.width = step > 2 ? '100%' : '0%';
+      }
+
+      function showExistingStatus(status) {
+        setStep(3);
+        var area = document.getElementById('verificationArea');
+        if (!area) return;
+        var approved = status === 'VERIFIED';
+        area.innerHTML =
+          '<div class="kyc-success-icon">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '</div>' +
+          '<h3>' + (approved ? 'Identidad verificada' : 'Verificación enviada') + '</h3>' +
+          '<p>' + (approved ? 'Tu identidad ya fue aprobada por AD Global Pay.' : 'Recibimos tus datos. El equipo revisará tu firma, selfie y cédula manualmente.') + '</p>' +
+          '<a href="/kyc/completado" class="kyc-btn kyc-btn-success">Continuar</a>';
+      }
+
+      function loadKyc() {
+        fetch(API_URL + '/api/kyc/public/' + encodeURIComponent(token))
+          .then(function(res) {
+            return res.json().then(function(data) {
+              if (!res.ok) throw new Error(data && data.error ? data.error : 'No se pudo cargar la solicitud KYC');
+              return data;
+            });
+          })
+          .then(function(data) {
+            var fullName = [data.client && data.client.firstName, data.client && data.client.lastName].filter(Boolean).join(' ');
+            var clientName = document.getElementById('clientName');
+            var clientEmail = document.getElementById('clientEmail');
+            if (clientName) clientName.textContent = fullName || 'Cliente AD Global Pay';
+            if (clientEmail) clientEmail.textContent = (data.client && data.client.email) || 'Solicitud de verificación';
+            if (loadingEl) loadingEl.classList.add('hidden');
+            if (mainEl) mainEl.classList.remove('hidden');
+            if (data.status === 'PROCESSING' || data.status === 'VERIFIED') {
+              showExistingStatus(data.status);
+            }
+          })
+          .catch(function(err) {
+            setInvalidState(err.message);
+          });
+      }
+
       function initSignatureCanvas() {
         canvas = document.getElementById('signatureCanvas');
         if (!canvas) return;
@@ -1308,7 +1468,6 @@
         ctx.strokeStyle = '#1e293b';
       }
 
-      // Checkbox styling
       var checkbox = document.getElementById('aceptoTerminos');
       var checkboxWrap = document.getElementById('checkboxWrap');
       if (checkbox && checkboxWrap) {
@@ -1317,7 +1476,155 @@
         });
       }
 
-      // Start verification
+      function compressImage(file) {
+        return new Promise(function(resolve, reject) {
+          if (!file || !file.type || !file.type.startsWith('image/')) {
+            reject(new Error('Solo se aceptan imagenes'));
+            return;
+          }
+          var reader = new FileReader();
+          reader.onload = function() {
+            var img = new Image();
+            img.onload = function() {
+              var maxSize = 1280;
+              var width = img.width;
+              var height = img.height;
+              if (width > height && width > maxSize) {
+                height = Math.round((height * maxSize) / width);
+                width = maxSize;
+              } else if (height > maxSize) {
+                width = Math.round((width * maxSize) / height);
+                height = maxSize;
+              }
+              var out = document.createElement('canvas');
+              out.width = width;
+              out.height = height;
+              var outCtx = out.getContext('2d');
+              outCtx.fillStyle = '#fff';
+              outCtx.fillRect(0, 0, width, height);
+              outCtx.drawImage(img, 0, 0, width, height);
+              resolve(out.toDataURL('image/jpeg', 0.84));
+            };
+            img.onerror = function() { reject(new Error('No se pudo leer la imagen')); };
+            img.src = reader.result;
+          };
+          reader.onerror = function() { reject(new Error('No se pudo leer el archivo')); };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function updateUploadCard(cardId, previewId, dataUrl) {
+        var card = document.getElementById(cardId);
+        var preview = document.getElementById(previewId);
+        if (card) card.classList.add('ready');
+        if (preview) preview.innerHTML = '<img src="' + dataUrl + '" alt="">';
+        var status = card ? card.querySelector('.kyc-upload-status') : null;
+        if (status) status.textContent = 'Listo';
+      }
+
+      function renderUploadStep() {
+        setStep(2);
+        var area = document.getElementById('verificationArea');
+        if (!area) return;
+
+        area.innerHTML =
+          '<div class="kyc-verify-icon">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+          '</div>' +
+          '<h3>Sube tus fotos</h3>' +
+          '<p>Usa buena luz. La cédula debe verse completa y legible.</p>' +
+          '<div class="kyc-upload-grid">' +
+            '<label class="kyc-upload-card" id="selfieCard">' +
+              '<input id="selfieInput" type="file" accept="image/*" capture="user" class="hidden">' +
+              '<span class="kyc-upload-preview" id="selfiePreview"><span class="kyc-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></span>' +
+              '<span class="kyc-upload-text"><strong>Foto de tu cara</strong><span>Selfie frontal, sin lentes oscuros ni filtros.</span></span>' +
+              '<span class="kyc-upload-status">Pendiente</span>' +
+            '</label>' +
+            '<label class="kyc-upload-card" id="idCard">' +
+              '<input id="idFrontInput" type="file" accept="image/*" capture="environment" class="hidden">' +
+              '<span class="kyc-upload-preview" id="idPreview"><span class="kyc-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg></span></span>' +
+              '<span class="kyc-upload-text"><strong>Foto de tu cédula</strong><span>Documento completo, enfocado y sin reflejos.</span></span>' +
+              '<span class="kyc-upload-status">Pendiente</span>' +
+            '</label>' +
+          '</div>' +
+          '<div id="uploadError" class="kyc-alert hidden"></div>' +
+          '<button id="submitKycBtn" class="kyc-btn kyc-btn-primary">Enviar para revisión</button>';
+
+        var selfieInput = document.getElementById('selfieInput');
+        var idInput = document.getElementById('idFrontInput');
+        var submitBtn = document.getElementById('submitKycBtn');
+        var uploadError = document.getElementById('uploadError');
+
+        function setUploadError(message) {
+          if (!uploadError) return;
+          uploadError.textContent = message;
+          uploadError.classList.toggle('hidden', !message);
+        }
+
+        selfieInput.addEventListener('change', function(e) {
+          setUploadError('');
+          compressImage(e.target.files[0])
+            .then(function(dataUrl) {
+              selfieData = dataUrl;
+              updateUploadCard('selfieCard', 'selfiePreview', dataUrl);
+            })
+            .catch(function(err) { setUploadError(err.message); });
+        });
+
+        idInput.addEventListener('change', function(e) {
+          setUploadError('');
+          compressImage(e.target.files[0])
+            .then(function(dataUrl) {
+              idFrontData = dataUrl;
+              updateUploadCard('idCard', 'idPreview', dataUrl);
+            })
+            .catch(function(err) { setUploadError(err.message); });
+        });
+
+        submitBtn.addEventListener('click', function() {
+          if (!selfieData || !idFrontData) {
+            setUploadError('Debes subir la foto de tu cara y la foto de tu cédula.');
+            return;
+          }
+
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>';
+          setUploadError('');
+
+          fetch(API_URL + '/api/kyc/public/' + encodeURIComponent(token) + '/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              acceptedTerms: true,
+              signature: signatureData,
+              selfie: selfieData,
+              idFront: idFrontData
+            })
+          })
+            .then(function(res) {
+              return res.json().then(function(data) {
+                if (!res.ok) throw new Error(data && data.error ? data.error : 'No se pudo enviar la verificacion');
+                return data;
+              });
+            })
+            .then(function() {
+              setStep(3);
+              area.innerHTML =
+                '<div class="kyc-success-icon">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+                '</div>' +
+                '<h3>¡Verificación enviada!</h3>' +
+                '<p>Recibimos tu firma, selfie y cédula. El equipo de AD Global Pay revisará tus datos manualmente.</p>' +
+                '<a href="/kyc/completado" class="kyc-btn kyc-btn-success">Continuar</a>';
+            })
+            .catch(function(err) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Enviar para revisión';
+              setUploadError(err.message);
+            });
+        });
+      }
+
       var startBtn = document.getElementById('startVerificationBtn');
       if (startBtn) {
         startBtn.addEventListener('click', function() {
@@ -1334,33 +1641,8 @@
             return;
           }
 
-          var signatureData = canvasEl.toDataURL('image/png');
-          console.log('Firma capturada');
-
-          var btn = this;
-          var area = document.getElementById('verificationArea');
-
-          btn.disabled = true;
-          btn.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>';
-
-          // Update step indicators
-          document.getElementById('stepCircle1').className = 'kyc-step-circle done';
-          document.getElementById('stepCircle1').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-          document.getElementById('stepLine1').style.width = '100%';
-          document.getElementById('stepCircle2').className = 'kyc-step-circle active';
-          document.getElementById('stepCircle2').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-          document.getElementById('stepLine2').style.width = '100%';
-          document.getElementById('stepCircle3').className = 'kyc-step-circle active';
-
-          setTimeout(function() {
-            area.innerHTML =
-              '<div class="kyc-success-icon">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
-              '</div>' +
-              '<h3 style="font-family:var(--font-heading);font-size:1.1rem;font-weight:700;color:var(--slate-800);margin-bottom:0.375rem;">¡Verificación completada!</h3>' +
-              '<p style="font-size:0.8rem;color:var(--slate-500);font-weight:500;margin-bottom:1.25rem;">Tu identidad ha sido verificada correctamente.</p>' +
-              '<button onclick="window.location.href=\'/kyc/completado\'" class="kyc-btn kyc-btn-success">Continuar</button>';
-          }, 2000);
+          signatureData = canvasEl.toDataURL('image/png');
+          renderUploadStep();
         });
       }
 
@@ -1369,6 +1651,8 @@
       } else {
         initSignatureCanvas();
       }
+
+      loadKyc();
     })();
   </script>
 </body>
