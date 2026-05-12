@@ -211,7 +211,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 relative pb-24">
+    <div className="space-y-6 md:space-y-8 relative">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-200 pb-6 anim-fade-in">
         <div>
@@ -224,6 +224,12 @@ export default function TransactionsPage() {
           <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Monitorea y gestiona el flujo de envíos, tasas y estados en tiempo real.</p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <a
+            href="/admin/transacciones/nueva"
+            className="flex-1 md:flex-none bg-emerald-600 text-white px-4 md:px-5 py-2.5 rounded-xl hover:bg-emerald-700 transition-all duration-300 font-bold text-sm flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(16,185,129,0.2)] btn-interactive"
+          >
+            <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva transacción</span>
+          </a>
           <button
             onClick={handleExport}
             className="flex-1 md:flex-none bg-white border border-slate-200 text-slate-700 px-4 md:px-5 py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 font-bold text-sm flex items-center justify-center gap-2 shadow-sm btn-interactive"
@@ -463,14 +469,6 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Botón flotante */}
-      <a
-        href="/admin/transacciones/nueva"
-        className="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-indigo-600 text-white w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shadow-[0_8px_30px_rgba(79,70,229,0.4)] hover:bg-indigo-700 hover:scale-110 hover:-translate-y-1 transition-all duration-300 z-40 group btn-interactive"
-        title="Nueva Transacción"
-      >
-        <Plus className="w-5 h-5 md:w-7 md:h-7 group-hover:rotate-90 transition-transform duration-300" />
-      </a>
     </div>
   );
 }
