@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowRight, Phone, Mail, MapPin, CheckCircle2, Clock, ExternalLink,
   UserPlus, Wallet, FileText, ShieldCheck, Eye, Copy, Send, Upload,
-  AlertTriangle
+  AlertTriangle, Trash2
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -190,6 +190,24 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
     }
   };
 
+  const handleDeleteClient = async () => {
+    if (!client) return;
+    if (!confirm('¿Está seguro de querer eliminar este cliente? Esta acción no se puede deshacer.')) return;
+    try {
+      await apiFetch(`/api/clients/${client.id}`, {
+        method: 'DELETE'
+      });
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Cliente eliminado', description: 'El cliente ha sido eliminado exitosamente.' }
+      }));
+      window.location.href = '/admin/clientes';
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
@@ -279,6 +297,9 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
+            <button onClick={handleDeleteClient} className="btn-interactive inline-flex items-center justify-center w-[42px] h-[42px] bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-xl transition-colors shrink-0" title="Eliminar cliente">
+              <Trash2 className="w-5 h-5" />
+            </button>
             <a href={`/admin/transacciones/nueva?clienteId=${client.id}`} className="btn-interactive inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/25">
               <Wallet className="w-4 h-4" /> Nueva transacción
             </a>

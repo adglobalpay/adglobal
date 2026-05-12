@@ -264,15 +264,121 @@ import {
     { color: 'bg-cyan-100 text-cyan-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'BNC' },
     { color: 'bg-purple-100 text-purple-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'BOD' },
   ];
-  var metodos = [
-    { color: 'bg-green-100 text-green-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 0v20M7 7h10M7 17h10"/></svg>', nombre: 'Zelle' },
-    { color: 'bg-red-100 text-red-700', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'BOFA' },
-    { color: 'bg-blue-100 text-blue-700', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'Chase' },
-    { color: 'bg-orange-100 text-orange-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M9 10v11M15 10v11"/></svg>', nombre: 'PNC' },
-    { color: 'bg-slate-100 text-slate-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>', nombre: 'Debit Card' },
-    { color: 'bg-emerald-100 text-emerald-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>', nombre: 'Efectivo' },
-    { color: 'bg-yellow-100 text-yellow-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>', nombre: 'USDT' },
-  ];
+  var metodos = [];
+
+  // === API DE METODOS DE PAGO ===
+  async function cargarMetodosAPI() {
+    try {
+      var token = localStorage.getItem('adglobal_token');
+      var res = await fetch(API_URL + '/api/payment-methods', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('Error cargando metodos');
+      var data = await res.json();
+      metodos = data.map(function(pm) {
+        return {
+          _id: pm.id,
+          nombre: pm.name,
+          letra: pm.letter,
+          clases: pm.classes,
+          subtitulo: pm.subtitle || '',
+          color: pm.color,
+          icon: pm.iconSvg || '',
+          sortOrder: pm.sortOrder
+        };
+      });
+    } catch (e) {
+      console.error('Error cargando metodos:', e);
+      showToast('error', 'Error', 'No se pudieron cargar los metodos de pago');
+    }
+  }
+
+  async function crearMetodoAPI(nombre, letra, clases, subtitulo, color, icon) {
+    try {
+      var token = localStorage.getItem('adglobal_token');
+      var res = await fetch(API_URL + '/api/payment-methods', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          name: nombre,
+          label: nombre,
+          letter: letra || nombre.charAt(0).toUpperCase(),
+          classes: clases || 'bg-slate-100 text-slate-600',
+          subtitle: subtitulo || nombre,
+          color: color || 'bg-slate-100 text-slate-600',
+          iconSvg: icon || ''
+        })
+      });
+      if (!res.ok) throw new Error('Error creando metodo');
+      var pm = await res.json();
+      metodos.push({
+        _id: pm.id,
+        nombre: pm.name,
+        letra: pm.letter,
+        clases: pm.classes,
+        subtitulo: pm.subtitle || '',
+        color: pm.color,
+        icon: pm.iconSvg || '',
+        sortOrder: pm.sortOrder
+      });
+      return pm;
+    } catch (e) {
+      console.error('Error creando metodo:', e);
+      showToast('error', 'Error', 'No se pudo crear el metodo de pago');
+      throw e;
+    }
+  }
+
+  async function actualizarMetodoAPI(idx, nuevoNombre) {
+    try {
+      var token = localStorage.getItem('adglobal_token');
+      var m = metodos[idx];
+      if (!m || !m._id) return;
+      var res = await fetch(API_URL + '/api/payment-methods/' + m._id, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          name: nuevoNombre,
+          label: nuevoNombre,
+          subtitle: nuevoNombre
+        })
+      });
+      if (!res.ok) throw new Error('Error actualizando metodo');
+      var pm = await res.json();
+      metodos[idx].nombre = pm.name;
+      metodos[idx].subtitulo = pm.subtitle || '';
+      return pm;
+    } catch (e) {
+      console.error('Error actualizando metodo:', e);
+      showToast('error', 'Error', 'No se pudo actualizar el metodo de pago');
+      throw e;
+    }
+  }
+
+  async function eliminarMetodoAPI(idx) {
+    try {
+      var token = localStorage.getItem('adglobal_token');
+      var m = metodos[idx];
+      if (!m || !m._id) return;
+      var res = await fetch(API_URL + '/api/payment-methods/' + m._id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('Error eliminando metodo');
+      metodos.splice(idx, 1);
+      return true;
+    } catch (e) {
+      console.error('Error eliminando metodo:', e);
+      showToast('error', 'Error', 'No se pudo eliminar el metodo de pago');
+      throw e;
+    }
+  }
 
   window.comprobantes = window.comprobantes || {};
 
@@ -384,6 +490,7 @@ import {
 
   document.addEventListener('DOMContentLoaded', async function() {
     await cargarClientes();
+    await cargarMetodosAPI();
     agregarFila();
 
     var btnAgregar = document.getElementById('btnAgregar');
@@ -708,21 +815,25 @@ import {
     input.focus();
   }
 
-  function confirmarEditMetodo(idx) {
+  async function confirmarEditMetodo(idx) {
     var input = document.querySelector('.metodo-edit[data-idx="' + idx + '"]');
     if (!input || !input.value.trim()) return;
-    metodos[idx] = { color: metodos[idx].color, icon: metodos[idx].icon, nombre: input.value.trim() };
-    renderListaMetodos();
-    actualizarSelectoresMetodo();
-    showToast('success', 'Método actualizado', metodos[idx].nombre + ' fue guardado.');
+    try {
+      await actualizarMetodoAPI(idx, input.value.trim());
+      renderListaMetodos();
+      actualizarSelectoresMetodo();
+      showToast('success', 'Método actualizado', metodos[idx].nombre + ' fue guardado.');
+    } catch (e) {}
   }
 
-  function eliminarMetodo(idx) {
+  async function eliminarMetodo(idx) {
     var nombre = metodos[idx].nombre;
-    metodos.splice(idx, 1);
-    renderListaMetodos();
-    actualizarSelectoresMetodo();
-    showToast('info', 'Método eliminado', nombre + ' fue removido.');
+    try {
+      await eliminarMetodoAPI(idx);
+      renderListaMetodos();
+      actualizarSelectoresMetodo();
+      showToast('info', 'Método eliminado', nombre + ' fue removido.');
+    } catch (e) {}
   }
 
   function actualizarSelectoresMetodo() {
@@ -765,16 +876,18 @@ import {
     showToast('success', 'Banco agregado', nuevoBanco + ' fue agregado a la lista.');
   }
 
-  function guardarMetodo(e) {
+  async function guardarMetodo(e) {
     e.preventDefault();
     var nuevoMetodo = document.getElementById('metodoNombre').value.trim();
     if (!nuevoMetodo) return;
-    var emojiMetodo = document.getElementById('metodoEmoji') ? document.getElementById('metodoEmoji').value.trim() || '💳' : '💳';
-    metodos.push({ color: 'bg-slate-100 text-slate-600', icon: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>', nombre: nuevoMetodo });
-    e.target.reset();
-    renderListaMetodos();
-    actualizarSelectoresMetodo();
-    showToast('success', 'Método agregado', nuevoMetodo + ' fue agregado a la lista.');
+    var primeraLetra = nuevoMetodo.charAt(0).toUpperCase();
+    try {
+      await crearMetodoAPI(nuevoMetodo, primeraLetra, 'bg-slate-100 text-slate-600', nuevoMetodo, 'bg-slate-100 text-slate-600', '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>');
+      e.target.reset();
+      renderListaMetodos();
+      actualizarSelectoresMetodo();
+      showToast('success', 'Método agregado', nuevoMetodo + ' fue agregado a la lista.');
+    } catch (e) {}
   }
 
   async function guardarTodo() {
