@@ -150,27 +150,59 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
     });
   };
 
+  const getKycLink = (token: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://adglobalpay.com';
+    return `${origin}/kyc/${token}`;
+  };
+
   const handleSendKyc = async () => {
-    if (!client?.email) {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'warning', message: 'Sin email', description: 'El cliente no tiene email registrado.' }
-      }));
-      return;
-    }
+    if (!client) return;
     try {
-      await apiFetch('/api/kyc', {
+      const kyc = await apiFetch('/api/kyc', {
         method: 'POST',
         body: JSON.stringify({ clientId: client.id })
       });
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'success', message: 'KYC enviado', description: `Solicitud enviada a ${client.email}` }
-      }));
+      if (client.email) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'success', message: 'KYC enviado', description: `Solicitud enviada a ${client.email}` }
+        }));
+      } else {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'info', message: 'Link generado', description: 'El cliente no tiene email. Copia y comparte el link manualmente.' }
+        }));
+      }
       loadClient();
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'error', message: 'Error', description: err.message }
       }));
     }
+  };
+
+  const handleCopyKycLink = async () => {
+    if (!client) return;
+    let token = latestKyc?.token;
+    if (!token) {
+      try {
+        const kyc = await apiFetch('/api/kyc', {
+          method: 'POST',
+          body: JSON.stringify({ clientId: client.id })
+        });
+        token = kyc.token;
+        loadClient();
+      } catch (err: any) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'error', message: 'Error', description: err.message }
+        }));
+        return;
+      }
+    }
+    const link = getKycLink(token);
+    navigator.clipboard.writeText(link).then(() => {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Link copiado', description: 'El link KYC fue copiado al portapapeles.' }
+      }));
+    });
   };
 
   const handleMarkOfacOk = async () => {
@@ -365,6 +397,9 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               <button onClick={handleSendKyc} className="btn-interactive px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5" /> Enviar link
               </button>
+              <button onClick={handleCopyKycLink} className="btn-interactive px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5">
+                <Copy className="w-3.5 h-3.5" /> Copiar link
+              </button>
               <button onClick={() => {
                 const input = document.createElement('input');
                 input.type = 'file'; input.accept = 'image/*,application/pdf'; input.multiple = true;
@@ -381,6 +416,22 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               </button>
             </div>
           </div>
+
+          {/* Link KYC visible */}
+          {latestKyc && (
+            <div className="mb-5 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-indigo-400 mb-2">Link de verificación KYC</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-indigo-200 text-sm font-mono text-slate-700 truncate">
+                  {getKycLink(latestKyc.token)}
+                </code>
+                <button onClick={handleCopyKycLink} className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all flex items-center gap-1.5 shrink-0">
+                  <Copy className="w-3.5 h-3.5" /> Copiar
+                </button>
+              </div>
+              <p className="text-[0.65rem] text-indigo-400 font-medium mt-2">Comparte este link con el cliente para que complete su verificación.</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
