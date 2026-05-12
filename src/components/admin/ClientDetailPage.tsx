@@ -208,6 +208,24 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    if (!client) return;
+    try {
+      await apiFetch(`/api/clients/${client.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Estado actualizado', description: 'El estado del cliente ha sido actualizado.' }
+      }));
+      loadClient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
@@ -265,9 +283,17 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${levelInfo.color}`}>
                   <span>{levelInfo.icon}</span> {levelInfo.name}
                 </span>
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.65rem] font-bold border uppercase tracking-wider ${statusCfg.className}`}>
-                  {statusCfg.label}
-                </span>
+                  <select
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[0.65rem] font-bold border uppercase tracking-wider appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${statusCfg.className}`}
+                    value={client.status}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                  >
+                    {Object.entries(ESTADO_MAP).map(([key, cfg]) => (
+                      <option key={key} value={key} className="text-slate-700 bg-white">
+                        {cfg.label}
+                      </option>
+                    ))}
+                  </select>
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500 font-medium">
                 {client.email && (
