@@ -152,7 +152,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
 
   const getKycLink = (token: string) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://adglobalpay.com';
-    return `${origin}/kyc/${token}`;
+    return `${origin}/kyc/?token=${token}`;
   };
 
   const handleSendKyc = async () => {

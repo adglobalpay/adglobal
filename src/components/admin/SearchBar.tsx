@@ -33,7 +33,7 @@ export default function SearchBar() {
   return (
     <div className="space-y-3">
       <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-stretch md:items-center w-full">
-        <form onSubmit={handleSearch} className="flex-1 w-full max-w-full md:max-w-xl relative group">
+        <form onSubmit={handleSearch} className="flex-1 w-full max-w-full md:max-w-xl relative group flex items-center">
           <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${isFocused ? 'text-indigo-500' : 'text-slate-400'}`}>
             <Search className="h-5 w-5 transition-transform duration-300 group-focus-within:scale-110" />
           </div>
@@ -44,20 +44,20 @@ export default function SearchBar() {
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder="Buscar por nombre, email, país o nivel..."
-            className="w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 font-medium placeholder:text-slate-400 shadow-sm hover:bg-white hover:shadow-md"
+            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 font-medium placeholder:text-slate-400 shadow-sm hover:bg-white hover:shadow-md"
           />
           {query && (
             <button
               type="button"
               onClick={clearSearch}
-              className="absolute inset-y-0 right-[4.5rem] flex items-center text-slate-400 hover:text-slate-600 transition-colors z-10 px-1"
+              className="mr-2 flex items-center text-slate-400 hover:text-slate-600 transition-colors z-10 px-1 shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
           )}
           <button
             type="submit"
-            className="absolute inset-y-1.5 right-1.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+            className="mr-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 shrink-0"
           >
             Buscar
           </button>

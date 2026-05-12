@@ -98,6 +98,17 @@ export default function TransactionsPage() {
     loadData();
   }, [loadData]);
 
+  // Recargar datos cuando la pestaña vuelve a ser visible (evita cache al usar Atrás)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [loadData]);
+
   const filtered = useMemo(() => {
     let result = [...transactions];
 
