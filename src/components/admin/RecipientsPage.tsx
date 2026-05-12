@@ -30,6 +30,39 @@ interface Client {
 
 const RELACIONES = ['Familiar', 'Hermano/a', 'Prima/o', 'Tío/a', 'Amigo/a', 'Colega', 'Cliente', 'Otro'];
 
+const BANCOS = [
+  'Banesco',
+  'Mercantil',
+  'Banco Venezuela',
+  'Banco Provincial',
+  'BNC',
+  'BOD',
+  'Bancamiga',
+  'Banco del Tesoro',
+  'Banco Bicentenario',
+  'Banco Exterior',
+  'Banco Caroní',
+  'Banco Fondo Común',
+  'Banco Plaza',
+  'Banco Nacional de Crédito',
+  'Banco Venezolano de Crédito',
+  '100% Banco',
+  'Banco Activo',
+  'Banco Agrícola de Venezuela',
+  'Banco de Venezuela',
+  'Banco Soberano',
+  'Bangente',
+  'Banplus',
+  'Bicentenario del Pueblo',
+  'BNC',
+  'BOD',
+  'Citibank',
+  'Instituto Municipal de Crédito Popular',
+  'Mi Banco',
+  'N58 Banco Digital',
+  'Otro'
+];
+
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
@@ -475,8 +508,11 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Banco *</label>
-                    <input type="text" required value={form.bank} onChange={e => setForm({ ...form, bank: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium" />
+                    <select required value={form.bank} onChange={e => setForm({ ...form, bank: e.target.value })}
+                      className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 text-sm font-medium cursor-pointer">
+                      <option value="">Seleccionar...</option>
+                      {BANCOS.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Tipo cuenta</label>

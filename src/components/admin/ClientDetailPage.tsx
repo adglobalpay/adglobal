@@ -563,7 +563,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                       </span>
                     </td>
                     <td className="py-3 pr-4 md:pr-6 pl-3 text-right">
-                      <a href={`/admin/transacciones/${tx.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-all">
+                      <a href={`/admin/transacciones/detalle?id=${encodeURIComponent(tx.id)}`} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-all">
                         Ver <ArrowRight className="w-3 h-3" />
                       </a>
                     </td>

@@ -381,7 +381,7 @@ export default function TransactionsPage() {
                     </td>
                     <td className="py-3 md:py-4 pr-4 md:pr-6 pl-3 align-top text-right">
                       <a
-                        href={`/admin/transacciones/${tx.id}`}
+                        href={`/admin/transacciones/detalle?id=${encodeURIComponent(tx.id)}`}
                         className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 hover:scale-110"
                         title="Ver detalles completos"
                       >

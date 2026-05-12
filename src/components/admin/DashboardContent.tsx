@@ -343,7 +343,7 @@ export default function DashboardContent() {
                         </span>
                       </td>
                       <td className="py-4 text-right pr-3">
-                        <a href={`/admin/transacciones/${tx.id}`} className="w-8 h-8 inline-flex items-center justify-center rounded-xl text-slate-400 border border-transparent hover:border-indigo-100 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 group-hover:scale-110">
+                        <a href={`/admin/transacciones/detalle?id=${encodeURIComponent(tx.id)}`} className="w-8 h-8 inline-flex items-center justify-center rounded-xl text-slate-400 border border-transparent hover:border-indigo-100 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 group-hover:scale-110">
                           <ArrowRight className="w-4 h-4 pointer-events-none" />
                         </a>
                       </td>

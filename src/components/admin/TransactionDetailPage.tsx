@@ -81,9 +81,18 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   const [notas, setNotas] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const txId = txIdProp;
+  const txId = (txIdProp && txIdProp !== 'placeholder')
+    ? txIdProp
+    : (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
 
   const loadTx = useCallback(async () => {
+    if (!txId) {
+      setTx(null);
+      setError('ID de transacción no encontrado en la URL.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
