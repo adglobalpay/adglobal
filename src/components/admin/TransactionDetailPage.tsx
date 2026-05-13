@@ -349,8 +349,8 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
                   </div>
                 </div>
                 {tx[doc.key] ? (
-                  <button onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Comprobante', description: 'Visualización próximamente.' } }))}
-                    className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100 shrink-0">Ver</button>
+                  <a href={tx[doc.key]!} target="_blank" rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100 shrink-0">Ver</a>
                 ) : (
                   <span className="text-xs text-slate-300 font-bold shrink-0">—</span>
                 )}

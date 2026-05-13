@@ -464,13 +464,15 @@ export default function TransactionsPage() {
                     </td>
                     <td className="py-3 md:py-4 px-3 align-top">
                       {hasDoc ? (
-                        <button
-                          onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Comprobante', description: 'Visualización de comprobantes próximamente.' } }))}
+                        <a
+                          href={tx.comprobantePago || tx.comprobanteAdmin || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-500 hover:text-indigo-600 flex flex-col items-center justify-center transition-all duration-300 group-hover:scale-110"
                           title="Ver comprobante"
                         >
                           <Paperclip className="w-4 h-4 pointer-events-none group-hover:-rotate-12 transition-transform" />
-                        </button>
+                        </a>
                       ) : (
                         <span className="text-slate-300 text-sm font-black">—</span>
                       )}

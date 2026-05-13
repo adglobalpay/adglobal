@@ -905,6 +905,28 @@ import {
     drop.classList.add('border-emerald-400', 'bg-emerald-50');
   }
 
+  // ===================== UPLOAD S3 =====================
+  async function subirComprobanteAS3(file, tipo) {
+    var token = localStorage.getItem('adglobal_token');
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', 'transactions/' + (estado.cliente ? estado.cliente.id : 'unknown'));
+
+    var res = await fetch(API_URL + '/api/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    });
+
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return {}; });
+      throw new Error(err.error || 'Error subiendo comprobante ' + tipo);
+    }
+
+    var data = await res.json();
+    return data.url;
+  }
+
   // ===================== GUARDAR =====================
   async function guardarTransaccion() {
     var btn = document.getElementById('btnGuardarFinal');
@@ -918,19 +940,33 @@ import {
     };
     var metodo = metodoMap[estado.metodo] || 'TRANSFERENCIA';
 
-    var payload = {
-      clientId: estado.cliente.id,
-      recipientId: estado.destinatario.id,
-      ingresoUSD: estado.ingreso,
-      salidaUSDT: estado.salida,
-      tasa: estado.tasa,
-      montoVES: estado.salida * estado.tasa,
-      metodo: metodo,
-      profitUSD: estado.ingreso - estado.salida,
-      estado: 'PENDING'
-    };
-
     try {
+      // Subir comprobantes a S3 primero
+      var comprobantePagoUrl = null;
+      var comprobanteAdminUrl = null;
+
+      if (estado.comprobantes.pago && estado.comprobantes.pago.archivo) {
+        comprobantePagoUrl = await subirComprobanteAS3(estado.comprobantes.pago.archivo, 'pago');
+      }
+      if (estado.comprobantes.admin && estado.comprobantes.admin.archivo) {
+        comprobanteAdminUrl = await subirComprobanteAS3(estado.comprobantes.admin.archivo, 'admin');
+      }
+
+      var payload = {
+        clientId: estado.cliente.id,
+        recipientId: estado.destinatario.id,
+        ingresoUSD: estado.ingreso,
+        salidaUSDT: estado.salida,
+        tasa: estado.tasa,
+        montoVES: estado.salida * estado.tasa,
+        metodo: metodo,
+        profitUSD: estado.ingreso - estado.salida,
+        estado: 'PENDING'
+      };
+
+      if (comprobantePagoUrl) payload.comprobantePago = comprobantePagoUrl;
+      if (comprobanteAdminUrl) payload.comprobanteAdmin = comprobanteAdminUrl;
+
       var token = localStorage.getItem('adglobal_token');
       var res = await fetch(API_URL + '/api/transactions', {
         method: 'POST',
