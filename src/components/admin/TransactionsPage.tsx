@@ -87,11 +87,16 @@ export default function TransactionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const clienteFilter = urlParams.get('cliente') || '';
+
   const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await apiFetch('/api/transactions?limit=500');
+      let url = '/api/transactions?limit=500';
+      if (clienteFilter) url += '&cliente=' + encodeURIComponent(clienteFilter);
+      const data = await apiFetch(url);
       setTransactions(data.data || []);
       setTotalCount(data.total || 0);
       setCurrentPage(1);
@@ -100,7 +105,7 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [clienteFilter]);
 
   useEffect(() => {
     loadData();
@@ -286,6 +291,21 @@ export default function TransactionsPage() {
           <p className="text-amber-600 text-xs font-bold mt-2">Por procesar o aprobar</p>
         </div>
       </div>
+
+      {/* Indicador de filtro por cliente */}
+      {clienteFilter && transactions.length > 0 && (
+        <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3 anim-fade-in">
+          <span className="text-sm font-bold text-indigo-700">
+            Transacciones de: {transactions[0].client ? `${transactions[0].client.firstName} ${transactions[0].client.lastName || ''}`.trim() : 'Cliente seleccionado'}
+          </span>
+          <a
+            href="/admin/transacciones"
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-white hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200 transition-all"
+          >
+            Ver todas
+          </a>
+        </div>
+      )}
 
       {/* Barra de búsqueda y filtros */}
       <div className="bg-white rounded-2xl md:rounded-3xl p-3 md:p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 flex flex-col lg:flex-row gap-3 md:gap-4 items-stretch lg:items-center justify-between card-hover anim-fade-in stagger-5">

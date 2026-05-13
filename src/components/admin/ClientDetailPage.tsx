@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowRight, Phone, Mail, MapPin, CheckCircle2, Clock, ExternalLink,
   UserPlus, Wallet, FileText, ShieldCheck, Eye, Copy, Send, Upload,
-  AlertTriangle, Trash2
+  AlertTriangle, Trash2, Pencil, Save, LoaderCircle, X
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -72,6 +72,17 @@ interface ClientDetail {
   _count?: { transactions: number; recipients: number; referrals: number };
 }
 
+interface EditClientForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+  preferredMethod: string;
+  notes: string;
+  status: string;
+}
+
 const ESTADO_MAP: Record<string, { label: string; className: string }> = {
   ACTIVE: { label: 'Activo', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   INACTIVE: { label: 'Inactivo', className: 'bg-slate-100 text-slate-600 border-slate-200' },
@@ -102,6 +113,44 @@ const TX_ESTADO_MAP: Record<string, { label: string; className: string }> = {
   CANCELLED: { label: 'Cancelado', className: 'bg-slate-100 text-slate-600 border-slate-200' }
 };
 
+const COUNTRY_OPTIONS = [
+  { value: 'us', label: 'Estados Unidos' },
+  { value: 've', label: 'Venezuela' },
+  { value: 'co', label: 'Colombia' },
+  { value: 'pa', label: 'Panamá' },
+  { value: 'pe', label: 'Perú' },
+  { value: 'ec', label: 'Ecuador' },
+  { value: 'cl', label: 'Chile' },
+  { value: 'ar', label: 'Argentina' },
+  { value: 'es', label: 'España' },
+  { value: 'mx', label: 'México' }
+];
+
+const PAYMENT_METHOD_OPTIONS = [
+  'ZELLE',
+  'USDT',
+  'WIRE',
+  'PAYPAL',
+  'VENMO',
+  'CASHAPP',
+  'TRANSFERENCIA',
+  'EFECTIVO',
+  'PAGO_MOVIL'
+];
+
+function createEditForm(client: ClientDetail): EditClientForm {
+  return {
+    firstName: client.firstName || '',
+    lastName: client.lastName || '',
+    email: client.email || '',
+    phone: client.phone || '',
+    country: client.country || 'us',
+    preferredMethod: client.preferredMethod || '',
+    notes: client.notes || '',
+    status: client.status || 'ACTIVE'
+  };
+}
+
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
@@ -122,6 +171,18 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState<EditClientForm>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    country: 'us',
+    preferredMethod: '',
+    notes: '',
+    status: 'ACTIVE'
+  });
 
   const clientId = clientIdProp || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
 
@@ -141,6 +202,25 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   useEffect(() => {
     loadClient();
   }, [loadClient]);
+
+  useEffect(() => {
+    if (!isEditOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSavingEdit) {
+        setIsEditOpen(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isEditOpen, isSavingEdit]);
 
   const handleCopy = (texto: string) => {
     navigator.clipboard.writeText(texto).then(() => {
@@ -276,6 +356,24 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
     }
   };
 
+  const openEditModal = () => {
+    if (!client) return;
+    setEditForm(createEditForm(client));
+    setIsEditOpen(true);
+  };
+
+  const closeEditModal = () => {
+    if (isSavingEdit) return;
+    setIsEditOpen(false);
+  };
+
+  const handleEditFieldChange = (
+    field: keyof EditClientForm,
+    value: string
+  ) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
@@ -310,97 +408,155 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const statusCfg = ESTADO_MAP[client.status] || ESTADO_MAP.ACTIVE;
   const latestKyc = client.kycRequests[0];
   const latestOfac = client.ofacChecks[0];
+  const countryOptions = COUNTRY_OPTIONS.some(option => option.value === client.country)
+    ? COUNTRY_OPTIONS
+    : [{ value: client.country, label: client.country.toUpperCase() }, ...COUNTRY_OPTIONS];
+  const paymentMethodOptions = client.preferredMethod && !PAYMENT_METHOD_OPTIONS.includes(client.preferredMethod)
+    ? [client.preferredMethod, ...PAYMENT_METHOD_OPTIONS]
+    : PAYMENT_METHOD_OPTIONS;
+
+  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!client) return;
+
+    if (!editForm.firstName.trim()) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'warning', message: 'Nombre requerido', description: 'El nombre del cliente no puede quedar vacío.' }
+      }));
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      await apiFetch(`/api/clients/${client.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          firstName: editForm.firstName,
+          lastName: editForm.lastName,
+          email: editForm.email,
+          phone: editForm.phone,
+          country: editForm.country,
+          preferredMethod: editForm.preferredMethod,
+          notes: editForm.notes,
+          status: editForm.status
+        })
+      });
+
+      setIsEditOpen(false);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Cliente actualizado', description: 'La ficha fue editada y sincronizada correctamente.' }
+      }));
+      await loadClient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-xs md:text-sm text-slate-400 font-medium anim-fade-in-up stagger-1">
-        <a href="/admin/clientes" className="hover:text-indigo-600 transition-colors">Clientes</a>
-        <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
-        <span className="text-slate-700 font-semibold">{fullName}</span>
-      </nav>
+    <>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-xs md:text-sm text-slate-400 font-medium anim-fade-in-up stagger-1">
+          <a href="/admin/clientes" className="hover:text-indigo-600 transition-colors">Clientes</a>
+          <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+          <span className="text-slate-700 font-semibold">{fullName}</span>
+        </nav>
 
-      {/* Header Card */}
-      <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-8 anim-fade-in-up stagger-2 card-hover">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white text-xl md:text-2xl font-bold shadow-lg shadow-indigo-500/20 shrink-0 float-anim">
-              {fullName.charAt(0)}
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">{fullName}</h1>
-                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${levelInfo.color}`}>
-                  <span>{levelInfo.icon}</span> {levelInfo.name}
-                </span>
-                  <select
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[0.65rem] font-bold border uppercase tracking-wider appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${statusCfg.className}`}
-                    value={client.status}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                  >
-                    {Object.entries(ESTADO_MAP).map(([key, cfg]) => (
-                      <option key={key} value={key} className="text-slate-700 bg-white">
-                        {cfg.label}
-                      </option>
-                    ))}
-                  </select>
+        {/* Header Card */}
+        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-8 anim-fade-in-up stagger-2 card-hover">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white text-xl md:text-2xl font-bold shadow-lg shadow-indigo-500/20 shrink-0 float-anim">
+                {fullName.charAt(0)}
               </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500 font-medium">
-                {client.email && (
-                  <span className="flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5" />{client.email}
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">{fullName}</h1>
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${levelInfo.color}`}>
+                    <span>{levelInfo.icon}</span> {levelInfo.name}
                   </span>
-                )}
-                {client.phone && (
-                  <span className="flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5" />{client.phone}
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">
-                  <MapPin className="w-3 h-3" />{client.country.toUpperCase()}
-                </span>
-                {client.preferredMethod && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-indigo-100">
-                    {client.preferredMethod}
-                  </span>
-                )}
-              </div>
-              {client.notes && (
-                <div className="mt-3 p-3 bg-slate-50 rounded-xl text-sm text-slate-600 font-medium border border-slate-100">
-                  📝 {client.notes}
+                    <select
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[0.65rem] font-bold border uppercase tracking-wider appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${statusCfg.className}`}
+                      value={client.status}
+                      onChange={(e) => handleStatusChange(e.target.value)}
+                    >
+                      {Object.entries(ESTADO_MAP).map(([key, cfg]) => (
+                        <option key={key} value={key} className="text-slate-700 bg-white">
+                          {cfg.label}
+                        </option>
+                      ))}
+                    </select>
                 </div>
-              )}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500 font-medium">
+                  {client.email && (
+                    <span className="flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5" />{client.email}
+                    </span>
+                  )}
+                  {client.phone && (
+                    <span className="flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5" />{client.phone}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">
+                    <MapPin className="w-3 h-3" />{client.country.toUpperCase()}
+                  </span>
+                  {client.preferredMethod && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-indigo-100">
+                      {client.preferredMethod}
+                    </span>
+                  )}
+                </div>
+                {client.notes && (
+                  <div className="mt-3 p-3 bg-slate-50 rounded-xl text-sm text-slate-600 font-medium border border-slate-100">
+                    📝 {client.notes}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <button onClick={handleDeleteClient} className="btn-interactive inline-flex items-center justify-center w-[42px] h-[42px] bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-xl transition-colors shrink-0" title="Eliminar cliente">
-              <Trash2 className="w-5 h-5" />
-            </button>
-            <a href={`/admin/transacciones/nueva?clienteId=${client.id}`} className="btn-interactive inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/25">
-              <Wallet className="w-4 h-4" /> Nueva transacción
-            </a>
+            <div className="flex flex-wrap gap-2 shrink-0">
+              <button
+                onClick={openEditModal}
+                className="btn-interactive inline-flex items-center gap-2 px-4 py-2.5 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_48%,#eff6ff_100%)] text-slate-800 rounded-xl font-bold text-sm border border-slate-200 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.35)] hover:border-indigo-200"
+                title="Editar cliente"
+              >
+                <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-900 text-white shadow-sm">
+                  <Pencil className="w-3.5 h-3.5" />
+                </span>
+                Editar
+              </button>
+              <button onClick={handleDeleteClient} className="btn-interactive inline-flex items-center justify-center w-[42px] h-[42px] bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-xl transition-colors shrink-0" title="Eliminar cliente">
+                <Trash2 className="w-5 h-5" />
+              </button>
+              <a href={`/admin/transacciones/nueva?clienteId=${client.id}`} className="btn-interactive inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/25">
+                <Wallet className="w-4 h-4" /> Nueva transacción
+              </a>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 anim-fade-in-up stagger-3">
-        {[
-          { label: 'Transacciones', value: totalTx.toString(), icon: <FileText className="w-5 h-5" />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: 'Total enviado', value: `$${totalUsd.toLocaleString()}`, icon: <Wallet className="w-5 h-5" />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Destinatarios', value: client.recipients.length.toString(), icon: <UserPlus className="w-5 h-5" />, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-          { label: 'Referidos', value: (client._count?.referrals || client.referrals.length).toString(), icon: <ArrowRight className="w-5 h-5" />, color: 'text-amber-600', bg: 'bg-amber-50' }
-        ].map((stat, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: `${0.3 + i * 0.05}s` }}>
-            <div className={`w-9 h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>{stat.icon}</div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{stat.label}</p>
-            <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1 tracking-tight">{stat.value}</p>
-          </div>
-        ))}
-      </div>
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 anim-fade-in-up stagger-3">
+          {[
+            { label: 'Transacciones', value: totalTx.toString(), icon: <FileText className="w-5 h-5" />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+            { label: 'Total enviado', value: `$${totalUsd.toLocaleString()}`, icon: <Wallet className="w-5 h-5" />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'Destinatarios', value: client.recipients.length.toString(), icon: <UserPlus className="w-5 h-5" />, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+            { label: 'Referidos', value: (client._count?.referrals || client.referrals.length).toString(), icon: <ArrowRight className="w-5 h-5" />, color: 'text-amber-600', bg: 'bg-amber-50' }
+          ].map((stat, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: `${0.3 + i * 0.05}s` }}>
+              <div className={`w-9 h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>{stat.icon}</div>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{stat.label}</p>
+              <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1 tracking-tight">{stat.value}</p>
+            </div>
+          ))}
+        </div>
 
-      {/* KYC + OFAC Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 anim-fade-in-up stagger-4">
+        {/* KYC + OFAC Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 anim-fade-in-up stagger-4">
         {/* KYC */}
         <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
           <div className="flex items-center justify-between mb-5">
@@ -518,10 +674,10 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             </div>
           )}
         </div>
-      </div>
+        </div>
 
-      {/* Destinatarios */}
-      <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-5 card-hover">
+        {/* Destinatarios */}
+        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-5 card-hover">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center"><UserPlus className="w-5 h-5" /></div>
@@ -568,29 +724,29 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Badges / Referrals */}
-      {(client.referrals.length > 0 || client.referredBy) && (
-        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-6 card-hover">
-          <h2 className="text-base md:text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">🏆 Logros</h2>
-          <div className="flex flex-wrap gap-2">
-            {client.referrals.length > 0 && (
-              <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200 text-sm font-bold">
-                <ArrowRight className="w-4 h-4" /> Referidor · {client.referrals.length} clientes
-              </div>
-            )}
-            {client.referredBy && (
-              <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 text-sm font-bold">
-                <UserPlus className="w-4 h-4" /> Cliente referido por {client.referredBy.firstName} {client.referredBy.lastName || ''}
-              </div>
-            )}
-          </div>
         </div>
-      )}
 
-      {/* Historial de transacciones */}
-      <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-7 card-hover">
+        {/* Badges / Referrals */}
+        {(client.referrals.length > 0 || client.referredBy) && (
+          <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-6 card-hover">
+            <h2 className="text-base md:text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">🏆 Logros</h2>
+            <div className="flex flex-wrap gap-2">
+              {client.referrals.length > 0 && (
+                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200 text-sm font-bold">
+                  <ArrowRight className="w-4 h-4" /> Referidor · {client.referrals.length} clientes
+                </div>
+              )}
+              {client.referredBy && (
+                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 text-sm font-bold">
+                  <UserPlus className="w-4 h-4" /> Cliente referido por {client.referredBy.firstName} {client.referredBy.lastName || ''}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Historial de transacciones */}
+        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-7 card-hover">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><FileText className="w-5 h-5" /></div>
@@ -642,7 +798,218 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             </tbody>
           </table>
         </div>
+        </div>
       </div>
-    </div>
+
+      {isEditOpen && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center px-4 py-6"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            aria-label="Cerrar modal"
+            className="absolute inset-0 bg-slate-950/50 backdrop-blur-md"
+            onClick={closeEditModal}
+          />
+
+          <div className="relative w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.98)_42%,rgba(238,242,255,0.98)_100%)] shadow-[0_30px_120px_-35px_rgba(15,23,42,0.45)]">
+            <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.18),transparent_46%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.14),transparent_34%)] pointer-events-none" />
+
+            <div className="relative border-b border-slate-200/70 px-6 py-5 md:px-8">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,#0f172a_0%,#4f46e5_55%,#22d3ee_100%)] text-xl font-black text-white shadow-[0_16px_40px_-18px_rgba(79,70,229,0.6)]">
+                    {fullName.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-[0.65rem] font-black uppercase tracking-[0.28em] text-indigo-500">Edición conectada</p>
+                    <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Actualizar ficha del cliente</h2>
+                    <p className="mt-1 max-w-2xl text-sm font-medium text-slate-500">
+                      Ajusta datos de contacto, país, método preferido y estado desde una sola vista. Los cambios se guardan directo en el backend.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white/80 text-slate-500 transition-all hover:border-slate-300 hover:text-slate-800"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="relative grid gap-6 px-6 py-6 md:grid-cols-[minmax(0,1.25fr)_320px] md:px-8 md:py-8">
+              <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Nombre</span>
+                    <input
+                      value={editForm.firstName}
+                      onChange={(e) => handleEditFieldChange('firstName', e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                      placeholder="Ej. Anyel"
+                      required
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Apellido</span>
+                    <input
+                      value={editForm.lastName}
+                      onChange={(e) => handleEditFieldChange('lastName', e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                      placeholder="Ej. Garcia Gomez"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Email</span>
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => handleEditFieldChange('email', e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                      placeholder="cliente@email.com"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Teléfono</span>
+                    <input
+                      value={editForm.phone}
+                      onChange={(e) => handleEditFieldChange('phone', e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                      placeholder="+58 412 000 0000"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">País</span>
+                    <select
+                      value={editForm.country}
+                      onChange={(e) => handleEditFieldChange('country', e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                    >
+                      {countryOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Método preferido</span>
+                    <select
+                      value={editForm.preferredMethod}
+                      onChange={(e) => handleEditFieldChange('preferredMethod', e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                    >
+                      <option value="">Sin preferencia</option>
+                      {paymentMethodOptions.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block md:col-span-2">
+                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Notas internas</span>
+                    <textarea
+                      rows={4}
+                      value={editForm.notes}
+                      onChange={(e) => handleEditFieldChange('notes', e.target.value)}
+                      className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                      placeholder="Información útil para el equipo comercial u operativo"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_20px_50px_-30px_rgba(15,23,42,0.4)]">
+                  <div className="border-b border-slate-100 bg-[linear-gradient(135deg,rgba(15,23,42,0.96)_0%,rgba(30,41,59,0.96)_100%)] px-5 py-4 text-white">
+                    <p className="text-[0.65rem] font-black uppercase tracking-[0.24em] text-cyan-200/80">Resumen en vivo</p>
+                    <p className="mt-2 text-lg font-bold tracking-tight">
+                      {[editForm.firstName.trim(), editForm.lastName.trim()].filter(Boolean).join(' ') || 'Nombre pendiente'}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/90">
+                        {(editForm.country || 'us').toUpperCase()}
+                      </span>
+                      {editForm.preferredMethod && (
+                        <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-cyan-100">
+                          {editForm.preferredMethod}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-4 px-5 py-5">
+                    <label className="block">
+                      <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Estado del cliente</span>
+                      <select
+                        value={editForm.status}
+                        onChange={(e) => handleEditFieldChange('status', e.target.value)}
+                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                      >
+                        {Object.entries(ESTADO_MAP).map(([key, cfg]) => (
+                          <option key={key} value={key}>{cfg.label}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4">
+                      <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-slate-400">Checklist</p>
+                      <ul className="mt-3 space-y-2 text-sm font-medium text-slate-600">
+                        <li className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                          El nombre no puede quedar vacío
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-indigo-400" />
+                          Los opcionales vacíos se limpian en backend
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-amber-400" />
+                          Al guardar, el expediente se refresca solo
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="rounded-2xl bg-[linear-gradient(135deg,rgba(238,242,255,0.95)_0%,rgba(236,253,245,0.9)_100%)] p-4">
+                      <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-slate-500">Sincronización</p>
+                      <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
+                        Este modal actualiza la ficha con `PATCH /api/clients/:id` y vuelve a consultar el perfil para reflejar cambios en badges, contacto y estado.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={closeEditModal}
+                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:border-slate-300 hover:text-slate-900"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingEdit}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f172a_0%,#4338ca_58%,#06b6d4_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_18px_40px_-18px_rgba(67,56,202,0.65)] transition-all hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSavingEdit ? (
+                      <>
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                        Guardando cambios
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Guardar cliente
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -465,7 +465,48 @@ import {
         document.getElementById('resultadosClientes').classList.add('hidden');
       }
     });
+
+    // Setup drag & drop para comprobantes
+    setupDropZone('dropPago', 'filePago', 'pago');
+    setupDropZone('dropAdmin', 'fileAdmin', 'admin');
   });
+
+  function setupDropZone(dropId, inputId, tipo) {
+    var dropZone = document.getElementById(dropId);
+    var input = document.getElementById(inputId);
+    if (!dropZone || !input) return;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+      dropZone.addEventListener(eventName, function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(function(eventName) {
+      dropZone.addEventListener(eventName, function() {
+        dropZone.classList.add('border-indigo-400', 'bg-indigo-50');
+        dropZone.classList.remove('border-slate-300', 'bg-slate-50');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(function(eventName) {
+      dropZone.addEventListener(eventName, function() {
+        if (!estado.comprobantes[tipo]) {
+          dropZone.classList.remove('border-indigo-400', 'bg-indigo-50');
+          dropZone.classList.add('border-slate-300', 'bg-slate-50');
+        }
+      }, false);
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+      var files = e.dataTransfer.files;
+      if (files.length > 0) {
+        input.files = files;
+        procesarComprobante(input, tipo);
+      }
+    }, false);
+  }
 
   async function cargarClientes() {
     try {
