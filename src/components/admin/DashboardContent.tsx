@@ -14,6 +14,15 @@ interface DashboardStats {
   reviewOfac: number;
   totalVolume: number;
   pendingTransactions: number;
+  todayVolume: number;
+  monthlyVolume: number;
+  monthlyProfit: number;
+  operatorPercentage: number;
+  globalCommission: number;
+  costRate: number;
+  operatorTarget: number;
+  operatingCost: number;
+  operatorProfit: number;
 }
 
 interface Transaction {
@@ -26,15 +35,6 @@ interface Transaction {
   metodo: string;
   client: { firstName: string; lastName: string | null; email: string } | null;
   recipient: { bank: string } | null;
-}
-
-interface ConfigData {
-  porcentaje_operador?: string;
-  comision_global?: string;
-  tasa_costo?: string;
-  meta_operador?: string;
-  volumen_mensual?: string;
-  profit_global?: string;
 }
 
 const ESTADOS_MAP: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
@@ -52,7 +52,6 @@ function formatDateShort(d: string) {
 export default function DashboardContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
-  const [config, setConfig] = useState<ConfigData>({});
   const [activity, setActivity] = useState<{ dia: string; cantidad: number; volumen: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Admin');
@@ -69,15 +68,13 @@ export default function DashboardContent() {
     async function loadAll() {
       setLoading(true);
       try {
-        const [statsData, txData, configData] = await Promise.all([
+        const [statsData, txData] = await Promise.all([
           apiFetch('/api/stats/dashboard').catch(() => null),
-          apiFetch('/api/transactions?limit=5').catch(() => ({ data: [] })),
-          apiFetch('/api/config').catch(() => ({}))
+          apiFetch('/api/transactions?limit=5').catch(() => ({ data: [] }))
         ]);
 
         if (statsData) setStats(statsData);
         setRecentTx(txData.data || []);
-        setConfig(configData || {});
 
         // Build weekly activity from transactions
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -112,16 +109,18 @@ export default function DashboardContent() {
   }, []);
 
   const profit = useMemo(() => {
-    const porcentaje = Number(config.porcentaje_operador || 36);
-    const comision = Number(config.comision_global || 8.5);
-    const tasaCosto = Number(config.tasa_costo || 2.9);
-    const meta = Number(config.meta_operador || 5000);
-    const volumen = stats?.totalVolume || Number(config.volumen_mensual || 0);
-    const profitGlobal = Number(config.profit_global || stats?.totalVolume ? stats.totalVolume * 0.15 : 0);
-    const costoOperativo = volumen * (tasaCosto / 100);
-    const profitOperador = Math.round(profitGlobal * (porcentaje / 100));
-    return { porcentaje, comision, tasaCosto, meta, volumen, profitGlobal, costoOperativo, profitOperador };
-  }, [config, stats]);
+    const porcentaje = Number(stats?.operatorPercentage || 0);
+    const comision = Number(stats?.globalCommission || 0);
+    const tasaCosto = Number(stats?.costRate || 0);
+    const meta = Number(stats?.operatorTarget || 0);
+    const volumen = Number(stats?.monthlyVolume || 0);
+    const profitGlobal = Number(stats?.monthlyProfit || 0);
+    const costoOperativo = Number(stats?.operatingCost || 0);
+    const profitOperador = Number(stats?.operatorProfit || 0);
+    const restantePorcentaje = Math.max(0, 100 - porcentaje);
+    const restanteGlobal = Math.max(0, profitGlobal - profitOperador);
+    return { porcentaje, comision, tasaCosto, meta, volumen, profitGlobal, costoOperativo, profitOperador, restantePorcentaje, restanteGlobal };
+  }, [stats]);
 
   const alertas = useMemo(() => {
     const list: { tipo: string; mensaje: string; link: string }[] = [];
@@ -178,14 +177,20 @@ export default function DashboardContent() {
           <p className="text-5xl font-extrabold font-mono tracking-tighter relative z-10 flex items-baseline">
             <span className="text-3xl text-indigo-400 mr-1">$</span>{profit.profitGlobal.toLocaleString()}
           </p>
-          <div className="flex justify-between items-center mt-8 pt-4 border-t border-white/10 relative z-10">
+          <div className="grid grid-cols-3 gap-3 mt-8 pt-4 border-t border-white/10 relative z-10">
             <div className="transition-transform duration-300 hover:scale-105">
-              <p className="text-[0.65rem] text-indigo-400 uppercase tracking-wider mb-1 font-semibold">Comisión Global</p>
-              <p className="font-bold text-lg">{profit.comision}%</p>
+              <p className="text-[0.6rem] text-indigo-400 uppercase tracking-wider mb-1 font-semibold">Comisión Global</p>
+              <p className="font-bold text-base md:text-lg">{profit.comision}%</p>
+            </div>
+            <div className="text-center transition-transform duration-300 hover:scale-105">
+              <p className="text-[0.6rem] text-amber-300 uppercase tracking-wider mb-1 font-semibold">{profit.restantePorcentaje}% restante</p>
+              <p className="font-bold text-base md:text-lg flex items-center justify-center gap-1">
+                <span className="text-amber-400 text-sm">$</span>{Math.round(profit.restanteGlobal).toLocaleString()}
+              </p>
             </div>
             <div className="text-right transition-transform duration-300 hover:scale-105">
-              <p className="text-[0.65rem] text-indigo-400 uppercase tracking-wider mb-1 font-semibold">Costo Total</p>
-              <p className="font-bold text-lg flex items-center justify-end gap-1">
+              <p className="text-[0.6rem] text-indigo-400 uppercase tracking-wider mb-1 font-semibold">Costo Total</p>
+              <p className="font-bold text-base md:text-lg flex items-center justify-end gap-1">
                 <span className="text-indigo-400 text-sm">$</span>{Math.round(profit.costoOperativo).toLocaleString()} <span className="text-sm font-normal text-indigo-400/80">({profit.tasaCosto}%)</span>
               </p>
             </div>
@@ -212,7 +217,7 @@ export default function DashboardContent() {
               </div>
             </div>
             <div className="bg-slate-800/80 rounded-full h-2.5 overflow-hidden border border-slate-700/50 mt-1.5">
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full progress-anim" style={{ width: `${Math.min((profit.profitOperador / profit.meta) * 100, 100)}%` }}></div>
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full progress-anim" style={{ width: `${profit.meta > 0 ? Math.min((profit.profitOperador / profit.meta) * 100, 100) : 0}%` }}></div>
             </div>
           </div>
         </div>
@@ -285,7 +290,7 @@ export default function DashboardContent() {
           <div className="bg-gradient-to-br from-indigo-50 to-white rounded-3xl p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-indigo-100 flex-1 relative overflow-hidden card-hover anim-fade-in stagger-6 group">
             <div className="absolute -right-4 -bottom-4 opacity-[0.03] text-indigo-900 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6"><TrendingUp className="w-32 h-32" /></div>
             <p className="text-[0.65rem] uppercase tracking-widest text-indigo-600 font-bold mb-2">Volumen hoy</p>
-            <p className="text-4xl font-extrabold text-slate-900 font-mono tracking-tight">${(stats?.todayTransactions ? stats.todayTransactions * 200 : 0).toLocaleString()}</p>
+            <p className="text-4xl font-extrabold text-slate-900 font-mono tracking-tight">${Number(stats?.todayVolume || 0).toLocaleString()}</p>
             <p className="text-sm font-semibold text-slate-500 mt-3 flex items-center gap-2">
               <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md text-xs font-black">{stats?.todayTransactions || 0}</span> transacciones
             </p>

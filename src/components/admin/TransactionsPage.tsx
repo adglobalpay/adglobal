@@ -16,11 +16,15 @@ interface Transaction {
   montoVES: number;
   metodo: string;
   estado: string;
+  verificadorId?: string | null;
+  fechaVerificacion?: string | null;
   comprobantePago: string | null;
   comprobanteAdmin: string | null;
   client?: { firstName: string; lastName: string | null; email: string };
   recipient?: { name: string; bank: string };
 }
+
+const ADMIN_PENDING_FILTER = 'ADMIN_PENDING';
 
 const ESTADOS_MAP: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
   COMPLETED: {
@@ -114,17 +118,6 @@ export default function TransactionsPage() {
     loadData();
   }, [loadData]);
 
-  // Recargar datos cuando la pestaña vuelve a ser visible (evita cache al usar Atrás)
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        loadData();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [loadData]);
-
   const filtered = useMemo(() => {
     let result = [...transactions];
 
@@ -138,7 +131,11 @@ export default function TransactionsPage() {
 
     // Filtro de estado
     if (estadoFilter) {
-      result = result.filter(t => t.estado === estadoFilter);
+      if (estadoFilter === ADMIN_PENDING_FILTER) {
+        result = result.filter(t => t.estado === 'PENDING' || t.estado === 'PROCESSING');
+      } else {
+        result = result.filter(t => t.estado === estadoFilter);
+      }
     }
 
     // Búsqueda
@@ -165,9 +162,13 @@ export default function TransactionsPage() {
     const totalIngreso = filtered.reduce((s, t) => s + Number(t.ingresoUSD || 0), 0);
     const totalSalida = filtered.reduce((s, t) => s + Number(t.salidaUSDT || 0), 0);
     const tasaSum = filtered.reduce((s, t) => s + Number(t.tasa || 0), 0);
-    const tasaPromedio = filtered.length > 0 ? (tasaSum / filtered.length).toFixed(1) : '0';
+    const promedioTasa = filtered.length > 0 ? (tasaSum / filtered.length) : 0;
+    const promedioMonto = filtered.length > 0 ? (totalIngreso / filtered.length) : 0;
     const pendientes = filtered.filter(t => t.estado === 'PENDING' || t.estado === 'PROCESSING').length;
-    return { totalIngreso, totalSalida, tasaPromedio, pendientes };
+    const validadoAdmin = filtered.reduce((s, t) => {
+      return s + (t.verificadorId ? Number(t.ingresoUSD || 0) : 0);
+    }, 0);
+    return { totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, validadoAdmin };
   }, [filtered]);
 
   const handleExport = () => {
@@ -264,6 +265,16 @@ export default function TransactionsPage() {
             <span className="text-indigo-400 text-lg md:text-xl mr-1">$</span>{kpis.totalIngreso.toLocaleString()}
           </p>
           <p className="text-indigo-300 text-xs font-semibold mt-2 relative z-10">Capital recibido en USD</p>
+          <div className="relative z-10 mt-4 grid grid-cols-2 gap-2">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-sm">
+              <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-indigo-200/80">Tasa promedio</p>
+              <p className="mt-1 text-sm font-extrabold text-white">{kpis.promedioTasa.toFixed(1)}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-sm">
+              <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-indigo-200/80">Monto promedio</p>
+              <p className="mt-1 text-sm font-extrabold text-white">${kpis.promedioMonto.toLocaleString(undefined, { maximumFractionDigits: 1 })}</p>
+            </div>
+          </div>
         </div>
 
         <div className="bg-gradient-to-br from-emerald-900 via-slate-900 to-emerald-950 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-emerald-900/50 text-white relative overflow-hidden group card-hover anim-fade-in stagger-2">
@@ -277,21 +288,35 @@ export default function TransactionsPage() {
           <p className="text-emerald-300 text-xs font-semibold mt-2 relative z-10">USDT entregados</p>
         </div>
 
-        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden card-hover anim-fade-in stagger-3">
-          <p className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest mb-1">Tasa Promedio</p>
-          <p className="text-2xl md:text-3xl font-extrabold font-mono text-slate-800 tracking-tight">{kpis.tasaPromedio}</p>
-          <p className="text-slate-500 text-xs font-bold mt-2 bg-slate-50 inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-100 uppercase tracking-widest">
-            USD <ArrowRight className="w-3 h-3" /> VES
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-4">
+        <button
+          type="button"
+          onClick={() => {
+            setEstadoFilter(estadoFilter === ADMIN_PENDING_FILTER ? '' : ADMIN_PENDING_FILTER);
+            setCurrentPage(1);
+          }}
+          className={`text-left bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border relative overflow-hidden group card-hover anim-fade-in stagger-3 transition-all ${
+            estadoFilter === ADMIN_PENDING_FILTER
+              ? 'border-amber-300 ring-2 ring-amber-100'
+              : 'border-slate-200/60 hover:border-amber-200'
+          }`}
+        >
           <div className="flex justify-between items-start mb-1">
             <p className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest">Pendientes</p>
             <div className={kpis.pendientes > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-300'}><AlertCircle className="w-5 h-5" /></div>
           </div>
           <p className="text-2xl md:text-3xl font-extrabold font-mono text-slate-800 tracking-tight">{kpis.pendientes}</p>
-          <p className="text-amber-600 text-xs font-bold mt-2">Por procesar o aprobar</p>
+          <p className="text-amber-600 text-xs font-bold mt-2">Toca para ver lo pendiente por revisar</p>
+        </button>
+
+        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-4">
+          <div className="flex justify-between items-start mb-1">
+            <p className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest">Admin</p>
+            <div className="text-emerald-500"><CheckCircle2 className="w-5 h-5" /></div>
+          </div>
+          <p className="text-2xl md:text-3xl font-extrabold font-mono text-slate-800 tracking-tight">
+            <span className="text-emerald-500 text-lg md:text-xl mr-1">$</span>{kpis.validadoAdmin.toLocaleString()}
+          </p>
+          <p className="text-emerald-600 text-xs font-bold mt-2">Total validado por admin</p>
         </div>
       </div>
 
@@ -354,7 +379,9 @@ export default function TransactionsPage() {
             <div className="flex gap-1.5 flex-wrap">
               {[
                 { key: '', label: 'Todos', dot: 'bg-slate-400' },
+                { key: ADMIN_PENDING_FILTER, label: 'Por revisar', dot: 'bg-amber-400' },
                 { key: 'PENDING', label: 'Pendiente', dot: 'bg-blue-400' },
+                { key: 'PROCESSING', label: 'Procesando', dot: 'bg-amber-500' },
                 { key: 'COMPLETED', label: 'Completado', dot: 'bg-emerald-400' }
               ].map((s) => (
                 <button

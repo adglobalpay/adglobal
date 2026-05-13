@@ -3,7 +3,7 @@ import {
   ArrowLeft, Printer, Download, Phone, Mail, MapPin, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload
 } from 'lucide-react';
-import { apiFetch } from '../../lib/auth';
+import { apiFetch, getUser } from '../../lib/auth';
 
 interface TransactionDetail {
   id: string;
@@ -84,6 +84,8 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   const txId = (txIdProp && txIdProp !== 'placeholder')
     ? txIdProp
     : (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
+  const currentUser = getUser();
+  const isAdminReviewer = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
 
   const loadTx = useCallback(async () => {
     if (!txId) {
@@ -112,6 +114,13 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   }, [loadTx]);
 
   const handleSave = async () => {
+    if (!isAdminReviewer) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'warning', message: 'Acceso restringido', description: 'Solo admin puede validar o cambiar el estado de esta operación.' }
+      }));
+      return;
+    }
+
     setSaving(true);
     try {
       await apiFetch(`/api/transactions/${txId}`, {
@@ -367,8 +376,8 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
             <div>
               <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Cambiar estado</label>
-              <select value={estado} onChange={e => setEstado(e.target.value)}
-                className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm">
+              <select value={estado} onChange={e => setEstado(e.target.value)} disabled={!isAdminReviewer}
+                className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm disabled:cursor-not-allowed disabled:opacity-60">
                 <option value="PENDING">Pendiente revisión</option>
                 <option value="PROCESSING">En verificación</option>
                 <option value="COMPLETED">Completado</option>
@@ -380,10 +389,16 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
             <div>
               <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Notas de verificación</label>
-              <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium resize-none"
+              <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3} disabled={!isAdminReviewer}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium resize-none disabled:cursor-not-allowed disabled:opacity-60"
                 placeholder="Agregar notas sobre la verificación..." />
             </div>
+
+            {!isAdminReviewer && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                <p className="text-xs font-bold text-amber-700">Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar esta operación.</p>
+              </div>
+            )}
 
             {tx.fechaVerificacion && tx.verificador && (
               <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
@@ -396,7 +411,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
             )}
 
             <div className="flex gap-2 pt-1">
-              <button onClick={handleSave} disabled={saving}
+              <button onClick={handleSave} disabled={saving || !isAdminReviewer}
                 className="btn-interactive flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-1.5 disabled:opacity-60">
                 <Save className="w-3.5 h-3.5" /> {saving ? 'Guardando...' : 'Guardar verificación'}
               </button>
