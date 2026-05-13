@@ -295,6 +295,29 @@ export default function TransactionsPage() {
         </div>
       </div>
 
+      {/* Tabs de período */}
+      <div className="flex items-center justify-between anim-fade-in stagger-5">
+        <div className="inline-flex items-center gap-1 rounded-xl bg-white border border-slate-200 p-1 shadow-sm">
+          {[
+            { key: 'all', label: 'Todos' },
+            { key: '1', label: 'Hoy' },
+            { key: '7', label: 'Semana' }
+          ].map((p) => (
+            <button
+              key={p.key}
+              onClick={() => { setPeriodoFilter(p.key); setCurrentPage(1); }}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                periodoFilter === p.key
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Indicador de filtro por cliente */}
       {clienteFilter && transactions.length > 0 && (
         <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3 anim-fade-in">
@@ -310,70 +333,43 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Barra de búsqueda y filtros */}
-      <div className="rounded-2xl border border-slate-200/60 bg-slate-50/50 p-4 md:p-5 anim-fade-in stagger-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      {/* Barra de búsqueda y filtros de estado */}
+      <div className="rounded-2xl border border-slate-200/60 bg-white p-4 md:p-5 anim-fade-in stagger-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Búsqueda */}
-          <div className="relative w-full lg:max-w-xs group">
+          <div className="relative w-full sm:max-w-sm group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Buscar por cliente, ID o banco..."
-              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-[3px] focus:ring-slate-200 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300"
+              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:ring-[3px] focus:ring-slate-200 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 hover:bg-white"
             />
           </div>
 
-          {/* Grupos de filtros */}
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-            {/* Período */}
-            <div className="flex items-center gap-2">
-              <span className="text-[0.6rem] font-black uppercase tracking-[0.15em] text-slate-400 shrink-0">Período</span>
-              <div className="flex gap-1.5">
-                {[
-                  { key: 'all', label: 'Todos' },
-                  { key: '1', label: 'Hoy' },
-                  { key: '7', label: 'Semana' }
-                ].map((p) => (
-                  <button
-                    key={p.key}
-                    onClick={() => { setPeriodoFilter(p.key); setCurrentPage(1); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      periodoFilter === p.key
-                        ? 'bg-slate-800 text-white shadow-sm'
-                        : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Estado */}
-            <div className="flex items-center gap-2">
-              <span className="text-[0.6rem] font-black uppercase tracking-[0.15em] text-slate-400 shrink-0">Estado</span>
-              <div className="flex gap-1.5 flex-wrap">
-                {[
-                  { key: '', label: 'Todos', dot: 'bg-slate-400' },
-                  { key: 'PENDING', label: 'Pendiente', dot: 'bg-blue-400' },
-                  { key: 'COMPLETED', label: 'Completado', dot: 'bg-emerald-400' }
-                ].map((s) => (
-                  <button
-                    key={s.key}
-                    onClick={() => { setEstadoFilter(s.key); setCurrentPage(1); }}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      estadoFilter === s.key
-                        ? 'bg-slate-800 text-white shadow-sm'
-                        : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+          {/* Estado */}
+          <div className="flex items-center gap-2">
+            <span className="text-[0.6rem] font-black uppercase tracking-[0.15em] text-slate-400 shrink-0">Estado</span>
+            <div className="flex gap-1.5 flex-wrap">
+              {[
+                { key: '', label: 'Todos', dot: 'bg-slate-400' },
+                { key: 'PENDING', label: 'Pendiente', dot: 'bg-blue-400' },
+                { key: 'COMPLETED', label: 'Completado', dot: 'bg-emerald-400' }
+              ].map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => { setEstadoFilter(s.key); setCurrentPage(1); }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    estadoFilter === s.key
+                      ? 'bg-slate-800 text-white shadow-sm'
+                      : 'bg-slate-50 border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-white'
+                  }`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+                  {s.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
