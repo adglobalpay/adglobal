@@ -87,7 +87,10 @@ export default function TransactionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const urlParams = useMemo(
+    () => new URLSearchParams(typeof window !== 'undefined' ? window.location.search : ''),
+    []
+  );
   const clienteFilter = urlParams.get('cliente') || '';
 
   const loadData = useCallback(async () => {
