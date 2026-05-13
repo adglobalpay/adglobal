@@ -283,8 +283,8 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
         {[
           { label: 'Ingreso USD', value: `$${Number(tx.ingresoUSD).toFixed(2)}`, color: 'text-indigo-600', bg: 'bg-indigo-50' },
           { label: 'Salida USDT', value: `$${Number(tx.salidaUSDT).toFixed(2)}`, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Monto VES', value: `Bs. ${Number(tx.montoVES).toLocaleString()}`, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Tasa', value: `Bs. ${Number(tx.tasa).toFixed(2)}`, sub: tx.metodo, color: 'text-cyan-600', bg: 'bg-cyan-50' }
+          { label: 'Monto enviado (Bs)', value: `Bs. ${Number(tx.montoVES || (tx.salidaUSDT * tx.tasa)).toLocaleString()}`, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Tasa de cambio', value: `Bs. ${Number(tx.tasa).toFixed(2)}`, sub: tx.metodo, color: 'text-cyan-600', bg: 'bg-cyan-50' }
         ].map((stat, i) => (
           <div key={i} className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: `${0.35 + i * 0.05}s` }}>
             <div className={`w-9 h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>

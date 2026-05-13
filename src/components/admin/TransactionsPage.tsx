@@ -265,14 +265,14 @@ export default function TransactionsPage() {
             <span className="text-indigo-400 text-lg md:text-xl mr-1">$</span>{kpis.totalIngreso.toLocaleString()}
           </p>
           <p className="text-indigo-300 text-xs font-semibold mt-2 relative z-10">Capital recibido en USD</p>
-          <div className="relative z-10 mt-4 grid grid-cols-2 gap-2">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-sm">
-              <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-indigo-200/80">Tasa promedio</p>
-              <p className="mt-1 text-sm font-extrabold text-white">{kpis.promedioTasa.toFixed(1)}</p>
+          <div className="relative z-10 mt-4 flex flex-wrap items-end gap-5">
+            <div>
+              <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-indigo-200/75">Tasa promedio</p>
+              <p className="mt-1 text-base font-extrabold text-white">{kpis.promedioTasa.toFixed(1)}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-sm">
-              <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-indigo-200/80">Monto promedio</p>
-              <p className="mt-1 text-sm font-extrabold text-white">${kpis.promedioMonto.toLocaleString(undefined, { maximumFractionDigits: 1 })}</p>
+            <div>
+              <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-indigo-200/75">Monto promedio</p>
+              <p className="mt-1 text-base font-extrabold text-white">${kpis.promedioMonto.toLocaleString(undefined, { maximumFractionDigits: 1 })}</p>
             </div>
           </div>
         </div>
