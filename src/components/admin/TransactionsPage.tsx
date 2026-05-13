@@ -311,47 +311,71 @@ export default function TransactionsPage() {
       )}
 
       {/* Barra de búsqueda y filtros */}
-      <div className="bg-white rounded-2xl md:rounded-3xl p-3 md:p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 flex flex-col lg:flex-row gap-3 md:gap-4 items-stretch lg:items-center justify-between card-hover anim-fade-in stagger-5">
-        <div className="relative w-full lg:max-w-md group">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-            placeholder="Buscar por cliente, ID o banco..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-300 placeholder:text-slate-400 hover:bg-white hover:shadow-sm"
-          />
-        </div>
-        <div className="flex gap-2 w-full lg:w-auto flex-wrap">
-          <button
-            onClick={() => { setPeriodoFilter('all'); setCurrentPage(1); }}
-            className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors ${periodoFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
-          >
-            Todos
-          </button>
-          <button
-            onClick={() => { setPeriodoFilter('1'); setCurrentPage(1); }}
-            className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors ${periodoFilter === '1' ? 'bg-indigo-600 text-white' : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
-          >
-            Hoy
-          </button>
-          <button
-            onClick={() => { setPeriodoFilter('7'); setCurrentPage(1); }}
-            className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors ${periodoFilter === '7' ? 'bg-indigo-600 text-white' : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
-          >
-            Semana
-          </button>
-          <select
-            value={estadoFilter}
-            onChange={e => { setEstadoFilter(e.target.value); setCurrentPage(1); }}
-            className="custom-select px-4 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer hover:bg-white"
-          >
-            <option value="">Todos los estados</option>
-            <option value="COMPLETED">Completado</option>
-            <option value="PROCESSING">Procesando</option>
-            <option value="PENDING">Pendiente</option>
-            <option value="FAILED">Fallido</option>
-          </select>
+      <div className="rounded-2xl border border-slate-200/60 bg-slate-50/50 p-4 md:p-5 anim-fade-in stagger-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          {/* Búsqueda */}
+          <div className="relative w-full lg:max-w-xs group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              placeholder="Buscar por cliente, ID o banco..."
+              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-[3px] focus:ring-slate-200 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300"
+            />
+          </div>
+
+          {/* Grupos de filtros */}
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+            {/* Período */}
+            <div className="flex items-center gap-2">
+              <span className="text-[0.6rem] font-black uppercase tracking-[0.15em] text-slate-400 shrink-0">Período</span>
+              <div className="flex gap-1.5">
+                {[
+                  { key: 'all', label: 'Todos' },
+                  { key: '1', label: 'Hoy' },
+                  { key: '7', label: 'Semana' }
+                ].map((p) => (
+                  <button
+                    key={p.key}
+                    onClick={() => { setPeriodoFilter(p.key); setCurrentPage(1); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      periodoFilter === p.key
+                        ? 'bg-slate-800 text-white shadow-sm'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Estado */}
+            <div className="flex items-center gap-2">
+              <span className="text-[0.6rem] font-black uppercase tracking-[0.15em] text-slate-400 shrink-0">Estado</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {[
+                  { key: '', label: 'Todos', dot: 'bg-slate-400' },
+                  { key: 'PENDING', label: 'Pendiente', dot: 'bg-blue-400' },
+                  { key: 'COMPLETED', label: 'Completado', dot: 'bg-emerald-400' }
+                ].map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => { setEstadoFilter(s.key); setCurrentPage(1); }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      estadoFilter === s.key
+                        ? 'bg-slate-800 text-white shadow-sm'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

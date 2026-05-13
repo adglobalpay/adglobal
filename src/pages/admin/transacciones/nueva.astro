@@ -234,6 +234,28 @@ import {
           <p class="text-sm text-slate-400 font-medium mt-1">Revisa los detalles antes de guardar</p>
         </div>
 
+        <div id="kycRequiredAlert" class="hidden max-w-lg mx-auto rounded-2xl border border-amber-200 bg-[linear-gradient(135deg,rgba(255,247,237,1)_0%,rgba(255,255,255,1)_100%)] p-4 md:p-5 shadow-[0_10px_30px_-18px_rgba(217,119,6,0.35)]">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+              <FileUp class="w-5 h-5" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-[0.65rem] font-black uppercase tracking-[0.22em] text-amber-500">KYC obligatorio</p>
+              <h3 class="mt-1 text-base font-extrabold text-slate-800" id="kycRequiredTitle">No se puede guardar este giro</h3>
+              <p class="mt-2 text-sm font-medium leading-6 text-slate-600" id="kycRequiredMessage"></p>
+              <ul id="kycRequiredReasons" class="mt-3 space-y-2 text-sm text-slate-600"></ul>
+              <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                <a id="kycRequiredProfileLink" href="/admin/clientes" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all">
+                  Ver perfil del cliente
+                </a>
+                <button type="button" onclick="ocultarAlertaKyc()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-amber-200 bg-white text-amber-700 text-sm font-bold hover:bg-amber-50 transition-all">
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="bg-slate-50 rounded-2xl p-5 md:p-6 border border-slate-200 space-y-4 max-w-lg mx-auto">
           <div class="flex items-start gap-3 pb-4 border-b border-slate-200">
             <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"><Users class="w-5 h-5"/></div>
@@ -424,6 +446,35 @@ import {
     comprobantes: {}
   };
 
+  function ocultarAlertaKyc() {
+    var box = document.getElementById('kycRequiredAlert');
+    var reasons = document.getElementById('kycRequiredReasons');
+    var message = document.getElementById('kycRequiredMessage');
+    if (box) box.classList.add('hidden');
+    if (reasons) reasons.innerHTML = '';
+    if (message) message.textContent = '';
+  }
+
+  function mostrarAlertaKyc(errorData) {
+    var box = document.getElementById('kycRequiredAlert');
+    var title = document.getElementById('kycRequiredTitle');
+    var message = document.getElementById('kycRequiredMessage');
+    var reasons = document.getElementById('kycRequiredReasons');
+    var profileLink = document.getElementById('kycRequiredProfileLink');
+
+    if (!box || !title || !message || !reasons || !profileLink || !estado.cliente) return;
+
+    title.textContent = errorData.kycRequestCreated
+      ? 'Se generó una solicitud KYC para este cliente'
+      : 'El cliente ya tiene KYC pendiente o en proceso';
+    message.textContent = errorData.error || 'El cliente debe completar KYC antes de registrar este giro.';
+    reasons.innerHTML = (errorData.reasons || []).map(function(reason) {
+      return '<li class="flex items-start gap-2"><span class="mt-1 h-2 w-2 rounded-full bg-amber-400 shrink-0"></span><span>' + reason + '</span></li>';
+    }).join('');
+    profileLink.href = '/admin/clientes/perfil?id=' + encodeURIComponent(estado.cliente.id);
+    box.classList.remove('hidden');
+  }
+
   function showToast(type, message, description) {
     window.dispatchEvent(new CustomEvent('show-toast', {
       detail: { type: type, message: message, description: description }
@@ -582,6 +633,7 @@ import {
   function seleccionarCliente(id) {
     var c = clientes.find(function(x) { return x.id === id; });
     if (!c) return;
+    ocultarAlertaKyc();
     estado.cliente = c;
     document.getElementById('buscarCliente').value = c.nombre;
     document.getElementById('clearBusqueda').classList.remove('hidden');
@@ -595,6 +647,7 @@ import {
   }
 
   function limpiarBusqueda() {
+    ocultarAlertaKyc();
     document.getElementById('buscarCliente').value = '';
     document.getElementById('clearBusqueda').classList.add('hidden');
     document.getElementById('clienteSeleccionado').classList.add('hidden');
@@ -609,6 +662,7 @@ import {
 
   // ===================== PASOS / WIZARD =====================
   function mostrarPaso(n) {
+    if (n !== 4) ocultarAlertaKyc();
     for (var i = 1; i <= 4; i++) {
       document.getElementById('step' + i).classList.add('hidden');
     }
@@ -863,6 +917,14 @@ import {
       });
       if (!res.ok) {
         var err = await res.json().catch(function() { return {}; });
+        if (err.code === 'KYC_REQUIRED') {
+          mostrarAlertaKyc(err);
+          showToast('warning', 'KYC obligatorio', err.error || 'El cliente debe completar KYC antes de registrar este giro.');
+          throw new Error('KYC obligatorio');
+        }
+        if (err.code === 'MIN_TRANSACTION_REQUIRED') {
+          throw new Error(err.error || 'La transacción no cumple el monto mínimo.');
+        }
         throw new Error(err.error || 'Error al guardar');
       }
 
@@ -893,6 +955,7 @@ import {
     estado.salida = 0;
     estado.tasa = 0;
     estado.comprobantes = {};
+    ocultarAlertaKyc();
 
     limpiarBusqueda();
     document.getElementById('txMetodo').value = '';

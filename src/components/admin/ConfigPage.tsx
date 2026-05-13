@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Settings, DollarSign, Scale, Clock, BarChart3, ShieldCheck, Users,
-  Building, Save, Eye, EyeOff, Plug, Mail, AlertTriangle, CheckCircle,
-  FileText, ArrowRight, CreditCard, Landmark, Plus, Trash2, Pencil, GripVertical
+  Settings, Scale, Clock, BarChart3, ShieldCheck, Users,
+  Building, Save, Eye, EyeOff, Plug, Mail, AlertTriangle,
+  FileText, ArrowRight, CreditCard, Landmark, Plus, Trash2, Pencil
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -62,9 +62,6 @@ export default function ConfigPage() {
 
   // Local form state for all fields
   const [form, setForm] = useState({
-    usd_ves_compra: '49.50',
-    usd_ves_venta: '50.30',
-    margen: '0.8',
     max_por_transaccion: '1000',
     min_por_transaccion: '10',
     max_diario_por_cliente: '3000',
@@ -116,9 +113,6 @@ export default function ConfigPage() {
 
           return {
             ...prev,
-            usd_ves_compra: cfgData['rates.usd_ves_compra'] || prev.usd_ves_compra,
-            usd_ves_venta: cfgData['rates.usd_ves_venta'] || prev.usd_ves_venta,
-            margen: cfgData['rates.margen'] || prev.margen,
             max_por_transaccion: cfgData['limits.max_por_transaccion'] || prev.max_por_transaccion,
             min_por_transaccion: cfgData['limits.min_por_transaccion'] || prev.min_por_transaccion,
             max_diario_por_cliente: cfgData['limits.max_diario_por_cliente'] || prev.max_diario_por_cliente,
@@ -169,9 +163,6 @@ export default function ConfigPage() {
     setSaving(true);
     try {
       const payload: Record<string, string> = {
-        'rates.usd_ves_compra': form.usd_ves_compra,
-        'rates.usd_ves_venta': form.usd_ves_venta,
-        'rates.margen': form.margen,
         'limits.max_por_transaccion': form.max_por_transaccion,
         'limits.min_por_transaccion': form.min_por_transaccion,
         'limits.max_diario_por_cliente': form.max_diario_por_cliente,
@@ -342,7 +333,7 @@ export default function ConfigPage() {
             </div>
             Configuraciones
           </h1>
-          <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Gestiona tasas, límites, usuarios e integraciones del sistema.</p>
+          <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Gestiona límites, horarios, profit, usuarios e integraciones del sistema.</p>
         </div>
         <button
           onClick={handleSave}
@@ -355,53 +346,13 @@ export default function ConfigPage() {
 
       {/* Grid principal */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Tasas */}
-        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-1">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><DollarSign className="w-5 h-5" /></div>
-            <div>
-              <h2 className="text-base md:text-lg font-extrabold text-slate-800 tracking-tight">Tasas de cambio</h2>
-              <p className="text-xs text-slate-400 font-medium">Configuración actual del mercado</p>
-            </div>
-          </div>
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">USD → VES (Compra)</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Bs.</span>
-                  <input type="number" step="0.01" value={form.usd_ves_compra} onChange={e => updateField('usd_ves_compra', e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">USD → VES (Venta)</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Bs.</span>
-                  <input type="number" step="0.01" value={form.usd_ves_venta} onChange={e => updateField('usd_ves_venta', e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm" />
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Margen (%)</label>
-              <input type="number" step="0.1" value={form.margen} onChange={e => updateField('margen', e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm" />
-            </div>
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <p className="text-xs text-slate-400 font-medium">Última actualización: <span className="text-slate-600 font-semibold">{new Date().toLocaleString('es-ES')}</span></p>
-            </div>
-          </div>
-        </div>
-
         {/* Límites */}
-        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-2">
+        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-1">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><Scale className="w-5 h-5" /></div>
             <div>
               <h2 className="text-base md:text-lg font-extrabold text-slate-800 tracking-tight">Límites operativos</h2>
-              <p className="text-xs text-slate-400 font-medium">Restricciones por transacción y cliente</p>
+              <p className="text-xs text-slate-400 font-medium">Umbrales que disparan KYC obligatorio y validaciones por transacción</p>
             </div>
           </div>
           <div className="space-y-5">
@@ -422,11 +373,17 @@ export default function ConfigPage() {
                 </div>
               ))}
             </div>
+            <div className="rounded-2xl border border-amber-200 bg-[linear-gradient(135deg,rgba(255,247,237,0.95)_0%,rgba(255,255,255,1)_100%)] p-4">
+              <p className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-amber-500">Compliance automático</p>
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
+                Si una transacción alcanza el máximo por operación, o si el acumulado diario o mensual del cliente llega a esos topes, el sistema exige KYC antes de permitir guardar el giro.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Horarios */}
-        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-3">
+        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-2">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center"><Clock className="w-5 h-5" /></div>
             <div>
@@ -473,7 +430,7 @@ export default function ConfigPage() {
         </div>
 
         {/* Profit */}
-        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-4">
+        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in stagger-3">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><BarChart3 className="w-5 h-5" /></div>
             <div>
