@@ -803,207 +803,207 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
 
       {isEditOpen && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center px-4 py-6"
+          className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:items-center"
           role="dialog"
           aria-modal="true"
         >
           <button
             type="button"
             aria-label="Cerrar modal"
-            className="absolute inset-0 bg-slate-950/50 backdrop-blur-md"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-lg"
             onClick={closeEditModal}
           />
 
-          <div className="relative w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.98)_42%,rgba(238,242,255,0.98)_100%)] shadow-[0_30px_120px_-35px_rgba(15,23,42,0.45)]">
-            <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.18),transparent_46%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.14),transparent_34%)] pointer-events-none" />
-
-            <div className="relative border-b border-slate-200/70 px-6 py-5 md:px-8">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,#0f172a_0%,#4f46e5_55%,#22d3ee_100%)] text-xl font-black text-white shadow-[0_16px_40px_-18px_rgba(79,70,229,0.6)]">
+          <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_24px_80px_-20px_rgba(2,6,23,0.35)] transition-all duration-200">
+            {/* Header oscuro con acento ámbar */}
+            <div className="relative bg-slate-900 px-5 py-6 sm:px-8 sm:py-7">
+              <div className="absolute inset-0 opacity-40">
+                <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-amber-500/20 blur-3xl" />
+                <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-cyan-500/10 blur-3xl" />
+              </div>
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-800 text-xl font-black text-amber-400 shadow-inner ring-1 ring-white/10">
                     {fullName.charAt(0)}
                   </div>
-                  <div>
-                    <p className="text-[0.65rem] font-black uppercase tracking-[0.28em] text-indigo-500">Edición conectada</p>
-                    <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Actualizar ficha del cliente</h2>
-                    <p className="mt-1 max-w-2xl text-sm font-medium text-slate-500">
-                      Ajusta datos de contacto, país, método preferido y estado desde una sola vista. Los cambios se guardan directo en el backend.
+                  <div className="min-w-0">
+                    <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-amber-400/80">Editar cliente</p>
+                    <h2 className="mt-0.5 text-lg sm:text-2xl font-bold tracking-tight text-white">{fullName}</h2>
+                    <p className="mt-1 max-w-lg text-xs sm:text-sm font-medium text-slate-400 leading-relaxed">
+                      Modifica los datos de contacto, ubicación y preferencias. Los cambios se aplican inmediatamente.
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={closeEditModal}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white/80 text-slate-500 transition-all hover:border-slate-300 hover:text-slate-800"
+                  className="inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-400 transition-all hover:bg-slate-700 hover:text-white ring-1 ring-white/10"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="relative grid gap-6 px-6 py-6 md:grid-cols-[minmax(0,1.25fr)_320px] md:px-8 md:py-8">
-              <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Nombre</span>
-                    <input
-                      value={editForm.firstName}
-                      onChange={(e) => handleEditFieldChange('firstName', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                      placeholder="Ej. Anyel"
-                      required
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Apellido</span>
-                    <input
-                      value={editForm.lastName}
-                      onChange={(e) => handleEditFieldChange('lastName', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                      placeholder="Ej. Garcia Gomez"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Email</span>
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => handleEditFieldChange('email', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                      placeholder="cliente@email.com"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Teléfono</span>
-                    <input
-                      value={editForm.phone}
-                      onChange={(e) => handleEditFieldChange('phone', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                      placeholder="+58 412 000 0000"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">País</span>
-                    <select
-                      value={editForm.country}
-                      onChange={(e) => handleEditFieldChange('country', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                    >
-                      {countryOptions.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Método preferido</span>
-                    <select
-                      value={editForm.preferredMethod}
-                      onChange={(e) => handleEditFieldChange('preferredMethod', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                    >
-                      <option value="">Sin preferencia</option>
-                      {paymentMethodOptions.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block md:col-span-2">
-                    <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Notas internas</span>
-                    <textarea
-                      rows={4}
-                      value={editForm.notes}
-                      onChange={(e) => handleEditFieldChange('notes', e.target.value)}
-                      className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                      placeholder="Información útil para el equipo comercial u operativo"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_20px_50px_-30px_rgba(15,23,42,0.4)]">
-                  <div className="border-b border-slate-100 bg-[linear-gradient(135deg,rgba(15,23,42,0.96)_0%,rgba(30,41,59,0.96)_100%)] px-5 py-4 text-white">
-                    <p className="text-[0.65rem] font-black uppercase tracking-[0.24em] text-cyan-200/80">Resumen en vivo</p>
-                    <p className="mt-2 text-lg font-bold tracking-tight">
-                      {[editForm.firstName.trim(), editForm.lastName.trim()].filter(Boolean).join(' ') || 'Nombre pendiente'}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/90">
-                        {(editForm.country || 'us').toUpperCase()}
-                      </span>
-                      {editForm.preferredMethod && (
-                        <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-cyan-100">
-                          {editForm.preferredMethod}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-4 px-5 py-5">
-                    <label className="block">
-                      <span className="mb-2 block text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-400">Estado del cliente</span>
+            <form onSubmit={handleEditSubmit} className="relative">
+              <div className="grid gap-0 md:grid-cols-[1fr_280px]">
+                {/* Formulario principal */}
+                <div className="space-y-5 p-5 sm:p-8">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Nombre</span>
+                      <input
+                        value={editForm.firstName}
+                        onChange={(e) => handleEditFieldChange('firstName', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                        placeholder="Ej. Alexander"
+                        required
+                      />
+                    </label>
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Apellido</span>
+                      <input
+                        value={editForm.lastName}
+                        onChange={(e) => handleEditFieldChange('lastName', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                        placeholder="Ej. Jimenez"
+                      />
+                    </label>
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Email</span>
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => handleEditFieldChange('email', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                        placeholder="cliente@email.com"
+                      />
+                    </label>
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Teléfono</span>
+                      <input
+                        value={editForm.phone}
+                        onChange={(e) => handleEditFieldChange('phone', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                        placeholder="+1 305 000 0000"
+                      />
+                    </label>
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">País</span>
                       <select
-                        value={editForm.status}
-                        onChange={(e) => handleEditFieldChange('status', e.target.value)}
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                        value={editForm.country}
+                        onChange={(e) => handleEditFieldChange('country', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
                       >
-                        {Object.entries(ESTADO_MAP).map(([key, cfg]) => (
-                          <option key={key} value={key}>{cfg.label}</option>
+                        {countryOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </select>
                     </label>
-
-                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4">
-                      <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-slate-400">Checklist</p>
-                      <ul className="mt-3 space-y-2 text-sm font-medium text-slate-600">
-                        <li className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                          El nombre no puede quedar vacío
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-indigo-400" />
-                          Los opcionales vacíos se limpian en backend
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-amber-400" />
-                          Al guardar, el expediente se refresca solo
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div className="rounded-2xl bg-[linear-gradient(135deg,rgba(238,242,255,0.95)_0%,rgba(236,253,245,0.9)_100%)] p-4">
-                      <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-slate-500">Sincronización</p>
-                      <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
-                        Este modal actualiza la ficha con `PATCH /api/clients/:id` y vuelve a consultar el perfil para reflejar cambios en badges, contacto y estado.
-                      </p>
-                    </div>
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Método preferido</span>
+                      <select
+                        value={editForm.preferredMethod}
+                        onChange={(e) => handleEditFieldChange('preferredMethod', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                      >
+                        <option value="">Sin preferencia</option>
+                        {paymentMethodOptions.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block sm:col-span-2 group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Notas internas</span>
+                      <textarea
+                        rows={3}
+                        value={editForm.notes}
+                        onChange={(e) => handleEditFieldChange('notes', e.target.value)}
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                        placeholder="Información útil para el equipo operativo..."
+                      />
+                    </label>
                   </div>
                 </div>
 
-                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                  <button
-                    type="button"
-                    onClick={closeEditModal}
-                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:border-slate-300 hover:text-slate-900"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSavingEdit}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f172a_0%,#4338ca_58%,#06b6d4_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_18px_40px_-18px_rgba(67,56,202,0.65)] transition-all hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {isSavingEdit ? (
-                      <>
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                        Guardando cambios
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        Guardar cliente
-                      </>
-                    )}
-                  </button>
+                {/* Sidebar */}
+                <div className="border-t md:border-t-0 md:border-l border-slate-100 bg-slate-50/40 p-5 sm:p-6">
+                  <div className="space-y-5">
+                    {/* Tarjeta de resumen */}
+                    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                      <div className="bg-slate-900 px-4 py-3">
+                        <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-amber-400/80">Vista previa</p>
+                        <p className="mt-1 text-base font-bold text-white truncate">
+                          {[editForm.firstName.trim(), editForm.lastName.trim()].filter(Boolean).join(' ') || 'Sin nombre'}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <span className="inline-flex items-center rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-wider text-white/70">
+                            {(editForm.country || 'us').toUpperCase()}
+                          </span>
+                          {editForm.preferredMethod && (
+                            <span className="inline-flex items-center rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-wider text-amber-300">
+                              {editForm.preferredMethod}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <label className="block">
+                          <span className="mb-1.5 block text-[0.6rem] font-black uppercase tracking-[0.18em] text-slate-500">Estado del cliente</span>
+                          <select
+                            value={editForm.status}
+                            onChange={(e) => handleEditFieldChange('status', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 outline-none transition-all focus:border-amber-400 focus:ring-[3px] focus:ring-amber-500/10"
+                          >
+                            {Object.entries(ESTADO_MAP).map(([key, cfg]) => (
+                              <option key={key} value={key}>{cfg.label}</option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-3">
+                          <p className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-slate-400">Validaciones</p>
+                          <ul className="mt-2 space-y-1.5">
+                            <li className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                              Nombre obligatorio
+                            </li>
+                            <li className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+                              Se sincroniza al guardar
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botones */}
+                    <div className="flex flex-col gap-2.5">
+                      <button
+                        type="submit"
+                        disabled={isSavingEdit}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-900/20 transition-all hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-900/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isSavingEdit ? (
+                          <>
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                            Guardando...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            Guardar cambios
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={closeEditModal}
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </form>
