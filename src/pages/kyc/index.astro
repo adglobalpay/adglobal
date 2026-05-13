@@ -737,11 +737,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       justify-content: center;
       box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.35);
       animation: float 4s ease-in-out infinite;
+      overflow: hidden;
+      flex-shrink: 0;
     }
     .kyc-verify-icon svg {
       width: 28px;
       height: 28px;
       color: white;
+      max-width: 100%;
+      max-height: 100%;
     }
     .kyc-verify-area h3 {
       font-family: var(--font-heading);
@@ -864,6 +868,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     .kyc-upload-icon svg {
       width: 20px;
       height: 20px;
+      max-width: 100%;
+      max-height: 100%;
     }
     .kyc-upload-preview img {
       width: 100%;
@@ -1584,20 +1590,20 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
 
         area.innerHTML =
           '<div class="kyc-verify-icon">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
           '</div>' +
           '<h3>Sube tus fotos</h3>' +
           '<p>Usa buena luz. La cédula debe verse completa y legible.</p>' +
           '<div class="kyc-upload-grid">' +
             '<label class="kyc-upload-card" id="selfieCard">' +
               '<input id="selfieInput" type="file" accept="image/*" capture="user" class="hidden">' +
-              '<span class="kyc-upload-preview" id="selfiePreview"><span class="kyc-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></span>' +
+              '<span class="kyc-upload-preview" id="selfiePreview"><span class="kyc-upload-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></span>' +
               '<span class="kyc-upload-text" style="display:flex;flex-direction:column;gap:0.15rem;"><strong style="display:block;line-height:1.25;">Foto de tu cara</strong><span style="display:block;line-height:1.35;">Selfie frontal, sin lentes oscuros ni filtros.</span><span class="kyc-upload-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Toca para subir</span></span>' +
               '<span class="kyc-upload-action"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>' +
             '</label>' +
             '<label class="kyc-upload-card" id="idCard">' +
               '<input id="idFrontInput" type="file" accept="image/*" capture="environment" class="hidden">' +
-              '<span class="kyc-upload-preview" id="idPreview"><span class="kyc-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg></span></span>' +
+              '<span class="kyc-upload-preview" id="idPreview"><span class="kyc-upload-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg></span></span>' +
               '<span class="kyc-upload-text" style="display:flex;flex-direction:column;gap:0.15rem;"><strong style="display:block;line-height:1.25;">Foto de tu cédula</strong><span style="display:block;line-height:1.35;">Documento completo, enfocado y sin reflejos.</span><span class="kyc-upload-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Toca para subir</span></span>' +
               '<span class="kyc-upload-action"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>' +
             '</label>' +
