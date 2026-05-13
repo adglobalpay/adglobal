@@ -122,7 +122,7 @@ import {
             <p class="text-sm text-slate-400 font-medium mt-1">Selecciona un destinatario o crea uno nuevo</p>
           </div>
           <button onclick="abrirModalDestinatario()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 rounded-xl font-bold text-xs border border-emerald-200 transition-all">
-            <UserPlus class="w-4 h-4" /> Nuevo destinatario
+            <UserPlus class="w-4 h-4 shrink-0" /> Nuevo destinatario
           </button>
         </div>
 
@@ -330,69 +330,91 @@ import {
   </div>
 
   <!-- Modal Nuevo Destinatario -->
-  <div id="modalDestinatario" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-end md:items-center justify-center hidden z-50 transition-opacity p-0 md:p-4">
-    <div class="bg-white rounded-t-3xl md:rounded-3xl p-5 md:p-8 max-w-lg w-full shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-200 scale-95 transition-transform" id="modalContentDestinatario">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5">
-           <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><Users class="w-5 h-5"/></div>
-           Nuevo Destinatario
-        </h2>
-        <button onclick="cerrarModalDestinatario()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all hover:rotate-90">
-          <X class="w-5 h-5" />
-        </button>
+  <div id="modalDestinatario" class="fixed inset-0 z-[90] flex items-end md:items-center justify-center hidden">
+    <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-lg" onclick="cerrarModalDestinatario()"></div>
+    <div class="relative w-full max-w-lg overflow-hidden rounded-t-3xl md:rounded-3xl bg-white shadow-[0_24px_80px_-20px_rgba(2,6,23,0.35)] transition-all duration-200" id="modalContentDestinatario">
+      <!-- Header oscuro con acento esmeralda -->
+      <div class="relative bg-slate-900 px-5 py-6 sm:px-8 sm:py-7">
+        <div class="absolute inset-0 opacity-40">
+          <div class="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl"></div>
+          <div class="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-teal-500/10 blur-3xl"></div>
+        </div>
+        <div class="relative flex items-start justify-between gap-4">
+          <div class="flex items-start gap-3 sm:gap-4">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-800 text-xl font-black text-emerald-400 shadow-inner ring-1 ring-white/10">
+              <Users class="w-5 h-5"/>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[0.6rem] font-black uppercase tracking-[0.2em] text-emerald-400/80">Nuevo registro</p>
+              <h2 class="mt-0.5 text-lg sm:text-2xl font-bold tracking-tight text-white">Nuevo Destinatario</h2>
+              <p class="mt-1 max-w-md text-xs sm:text-sm font-medium text-slate-400 leading-relaxed">
+                Completa los datos bancarios y de contacto de la persona que recibirá los fondos.
+              </p>
+            </div>
+          </div>
+          <button onclick="cerrarModalDestinatario()" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-400 transition-all hover:bg-slate-700 hover:text-white ring-1 ring-white/10">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
       </div>
-      <form id="formDestinatario" class="space-y-3" onsubmit="guardarDestinatario(event)">
-        <input type="hidden" id="destClienteId" />
-        <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1">Nombre completo *</label>
-            <input type="text" id="destName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="Nombre completo">
-          </div>
-          <div>
-            <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1">Relación</label>
-            <select id="destRel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
-              <option value="Familiar">Familiar</option>
-              <option value="Hermano/a">Hermano/a</option>
-              <option value="Prima/o">Prima/o</option>
-              <option value="Tío/a">Tío/a</option>
-              <option value="Amigo/a">Amigo/a</option>
-              <option value="Colega">Colega</option>
-              <option value="Cliente">Cliente</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1">Teléfono</label>
-            <input type="text" id="destPhone" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="+58 412...">
-          </div>
-          <div>
-            <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1">Banco *</label>
-            <select id="destBank" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
-              <option value="">Seleccionar...</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo de Cuenta</label>
-            <select id="destAccountType" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
-              <option value="Pago Móvil">Pago Móvil</option>
-              <option value="Corriente">Corriente</option>
-              <option value="Ahorro">Ahorro</option>
-              <option value="Zelle">Zelle</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1">Cuenta/Pago Móvil *</label>
-            <input type="text" id="destAccount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="0134...">
-          </div>
-          <div>
-            <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1">Doc. Identidad</label>
-            <input type="text" id="destId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="V-...">
+
+      <form id="formDestinatario" class="relative" onsubmit="guardarDestinatario(event)">
+        <div class="p-5 sm:p-8">
+          <input type="hidden" id="destClienteId" />
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Nombre completo *</label>
+              <input type="text" id="destName" required class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-[3px] focus:ring-emerald-500/10" placeholder="Ej. Amparo Gomez">
+            </div>
+            <div>
+              <label class="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Relación</label>
+              <select id="destRel" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-[3px] focus:ring-emerald-500/10">
+                <option value="Familiar">Familiar</option>
+                <option value="Hermano/a">Hermano/a</option>
+                <option value="Prima/o">Prima/o</option>
+                <option value="Tío/a">Tío/a</option>
+                <option value="Amigo/a">Amigo/a</option>
+                <option value="Colega">Colega</option>
+                <option value="Cliente">Cliente</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Teléfono</label>
+              <input type="text" id="destPhone" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-[3px] focus:ring-emerald-500/10" placeholder="+58 412...">
+            </div>
+            <div>
+              <label class="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Banco *</label>
+              <select id="destBank" required class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-[3px] focus:ring-emerald-500/10">
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Tipo de Cuenta</label>
+              <select id="destAccountType" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-[3px] focus:ring-emerald-500/10">
+                <option value="Pago Móvil">Pago Móvil</option>
+                <option value="Corriente">Corriente</option>
+                <option value="Ahorro">Ahorro</option>
+                <option value="Zelle">Zelle</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Cuenta / Pago Móvil *</label>
+              <input type="text" id="destAccount" required class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-[3px] focus:ring-emerald-500/10" placeholder="0134...">
+            </div>
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Documento de Identidad</label>
+              <input type="text" id="destId" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-[3px] focus:ring-emerald-500/10" placeholder="V-...">
+            </div>
           </div>
         </div>
-        <div class="flex justify-end gap-2 pt-4">
-          <button type="button" onclick="cerrarModalDestinatario()" class="px-4 py-2.5 font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-sm">Cancelar</button>
-          <button type="submit" id="btnGuardarDestinatario" class="px-6 py-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-bold shadow-sm transition-all btn-interactive text-sm flex items-center gap-2">
-            Guardar
+
+        <div class="border-t border-slate-100 bg-slate-50/40 px-5 py-4 sm:px-8 sm:py-5 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+          <button type="button" onclick="cerrarModalDestinatario()" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+            Cancelar
+          </button>
+          <button type="submit" id="btnGuardarDestinatario" class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-600/25 active:scale-[0.98]">
+            Guardar destinatario
           </button>
         </div>
       </form>
