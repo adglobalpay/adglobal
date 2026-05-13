@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CapitalOperador from './CapitalOperador';
+import { apiFetch } from '../../lib/auth';
 import { 
   LayoutDashboard, 
   Users, 
@@ -23,11 +24,11 @@ interface NavItem {
 }
 
 interface InactiveClient {
-  id: number;
+  id: string;
   name: string;
   lastTx: string;
   days: number;
-  phone?: string;
+  phone?: string | null;
 }
 
 interface User {
@@ -38,17 +39,18 @@ interface User {
   role: string;
 }
 
-const getClientesInactivos = (): InactiveClient[] => {
-  return [
-    { id: 1, name: 'María Josefina', lastTx: '01/03/2026', days: 18, phone: '584247776543' },
-    { id: 2, name: 'Carlos Rodríguez', lastTx: '05/03/2026', days: 14, phone: '584129876543' },
-    { id: 3, name: 'Ana Martínez', lastTx: '28/02/2026', days: 19, phone: '584249876543' }
-  ].filter(c => c.days > 15);
+const getWhatsAppLink = (phone: string, name: string) => {
+  const normalizedPhone = phone.replace(/\D/g, '');
+  const message = encodeURIComponent(`Hola ${name}, ¿cómo estás? Te escribimos porque notamos que hace varios días no realizas envíos. ¿Necesitas ayuda con algo?`);
+  return `https://wa.me/${normalizedPhone}?text=${message}`;
 };
 
-const getWhatsAppLink = (phone: string, name: string) => {
-  const message = encodeURIComponent(`Hola ${name}, ¿cómo estás? Te escribimos porque notamos que hace varios días no realizas envíos. ¿Necesitas ayuda con algo?`);
-  return `https://wa.me/${phone}?text=${message}`;
+const formatLastTransactionDate = (value: string) => {
+  return new Date(value).toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 };
 
 export default function Sidebar() {
@@ -62,8 +64,19 @@ export default function Sidebar() {
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
-    setInactiveClients(getClientesInactivos());
-    
+
+    const loadInactiveClients = async () => {
+      try {
+        const data = await apiFetch('/api/clients/inactive-reminders');
+        setInactiveClients(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error('Error loading inactive clients:', e);
+        setInactiveClients([]);
+      }
+    };
+
+    void loadInactiveClients();
+
     // Load user from localStorage
     try {
       const raw = localStorage.getItem('adglobal_user');
@@ -141,7 +154,7 @@ export default function Sidebar() {
           border-r border-slate-900/50 shadow-2xl z-40
           transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${isLoaded ? 'opacity-100' : 'opacity-0'}
-          overflow-hidden
+          overflow-visible
         `}
       >
         {/* Logo Area */}
@@ -184,6 +197,7 @@ export default function Sidebar() {
                   <button 
                     onClick={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
                       setShowNotifications(!showNotifications);
                     }}
                     className="relative focus:outline-none ml-2"
@@ -238,7 +252,7 @@ export default function Sidebar() {
                         <p className="font-semibold text-slate-800 text-sm">{client.name}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[0.65rem] uppercase tracking-wider text-slate-400 font-medium">Último giro</span>
-                          <span className="text-xs text-slate-600 font-medium">{client.lastTx}</span>
+                          <span className="text-xs text-slate-600 font-medium">{formatLastTransactionDate(client.lastTx)}</span>
                         </div>
                       </div>
                       <span className="bg-amber-100/50 text-amber-600 border border-amber-200/50 text-[0.65rem] font-bold uppercase tracking-wider px-2 py-1 rounded-md">

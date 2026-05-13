@@ -191,6 +191,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       font-weight: 800;
       font-size: 14px;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+    .kyc-header-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .kyc-header-title {
       font-family: var(--font-heading);
@@ -383,6 +390,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       margin-top: 0.25rem;
       text-align: center;
     }
+    .step-label-short { display: none; }
 
     /* ===== CONTENT ===== */
     .kyc-content {
@@ -814,30 +822,37 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     }
     .kyc-upload-card {
       display: grid;
-      grid-template-columns: 52px 1fr auto;
-      gap: 0.875rem;
+      grid-template-columns: 44px 1fr auto;
+      gap: 0.75rem;
       align-items: center;
-      padding: 1rem;
+      padding: 0.875rem 1rem;
       background: white;
-      border: 1px solid var(--slate-200);
+      border: 1.5px dashed var(--slate-300);
       border-radius: 16px;
       text-align: left;
       cursor: pointer;
       transition: all 0.25s ease;
+      position: relative;
     }
     .kyc-upload-card:hover {
-      border-color: var(--indigo-200);
-      box-shadow: 0 8px 24px -12px rgba(99, 102, 241, 0.28);
+      border-color: var(--indigo);
+      background: var(--indigo-50);
+      box-shadow: 0 8px 24px -12px rgba(99, 102, 241, 0.2);
+      transform: translateY(-1px);
+    }
+    .kyc-upload-card:active {
+      transform: scale(0.99);
     }
     .kyc-upload-card.ready {
-      border-color: var(--emerald-100);
+      border-style: solid;
+      border-color: var(--emerald-200);
       background: linear-gradient(135deg, white 0%, var(--emerald-50) 100%);
     }
     .kyc-upload-icon,
     .kyc-upload-preview {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -847,37 +862,63 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       flex-shrink: 0;
     }
     .kyc-upload-icon svg {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
     }
     .kyc-upload-preview img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+    .kyc-upload-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
     .kyc-upload-text strong {
-      display: block;
       font-family: var(--font-heading);
       font-size: 0.9rem;
       color: var(--slate-800);
-      margin-bottom: 0.15rem;
+      line-height: 1.25;
     }
     .kyc-upload-text span {
-      display: block;
       font-size: 0.72rem;
       color: var(--slate-500);
       font-weight: 600;
       line-height: 1.35;
     }
-    .kyc-upload-status {
+    .kyc-upload-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
       font-size: 0.65rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--slate-400);
+      font-weight: 700;
+      color: var(--indigo);
+      margin-top: 0.2rem;
     }
-    .kyc-upload-card.ready .kyc-upload-status {
-      color: var(--emerald);
+    .kyc-upload-action {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--indigo-50);
+      color: var(--indigo);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .kyc-upload-card:hover .kyc-upload-action {
+      background: var(--indigo);
+      color: white;
+    }
+    .kyc-upload-action svg {
+      width: 16px;
+      height: 16px;
+    }
+    .kyc-upload-card.ready .kyc-upload-action {
+      background: var(--emerald);
+      color: white;
     }
     .kyc-alert {
       padding: 0.875rem 1rem;
@@ -1064,8 +1105,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       .kyc-hero { padding: 2rem 1.25rem 1.5rem; }
       .kyc-hero h1 { font-size: 1.25rem; }
       .kyc-content { padding: 1.25rem 1.25rem 1.5rem; }
-      .kyc-steps { padding: 1.25rem 1rem 0.5rem; gap: 0.25rem; }
-      .kyc-step-line { width: 24px; }
+      .kyc-steps { padding: 1.25rem 0.5rem 0.5rem; gap: 0.2rem; justify-content: space-between; }
+      .kyc-step { gap: 0.3rem; }
+      .kyc-step-circle { width: 26px; height: 26px; border-radius: 8px; font-size: 0.7rem; }
+      .kyc-step-line { width: 14px; }
+      .kyc-step-label { font-size: 0.55rem; letter-spacing: 0.02em; }
+      .step-label-full { display: none; }
+      .step-label-short { display: inline; }
     }
 
     /* Touch targets */
@@ -1083,7 +1129,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
   <!-- Header -->
   <header class="kyc-header anim-fade-up">
     <div class="kyc-header-inner">
-      <div class="kyc-header-logo">AD</div>
+      <div class="kyc-header-logo"><img src="/img/logo.webp" alt="AD Global Pay" /></div>
       <span class="kyc-header-title">AD Global Pay</span>
       <span class="kyc-header-badge">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1130,21 +1176,30 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div>
-            <div class="kyc-step-label">Declaración</div>
+            <div class="kyc-step-label">
+              <span class="step-label-full">Declaración</span>
+              <span class="step-label-short">Declara</span>
+            </div>
           </div>
         </div>
         <div class="kyc-step-line"><div class="kyc-step-line-fill" id="stepLine1"></div></div>
         <div class="kyc-step">
           <div class="kyc-step-circle pending" id="stepCircle2">2</div>
           <div>
-            <div class="kyc-step-label">Verificación</div>
+            <div class="kyc-step-label">
+              <span class="step-label-full">Verificación</span>
+              <span class="step-label-short">Verifica</span>
+            </div>
           </div>
         </div>
         <div class="kyc-step-line"><div class="kyc-step-line-fill" id="stepLine2"></div></div>
         <div class="kyc-step">
           <div class="kyc-step-circle pending" id="stepCircle3">3</div>
           <div>
-            <div class="kyc-step-label">Confirmación</div>
+            <div class="kyc-step-label">
+              <span class="step-label-full">Confirmación</span>
+              <span class="step-label-short">Confirma</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1518,8 +1573,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         var preview = document.getElementById(previewId);
         if (card) card.classList.add('ready');
         if (preview) preview.innerHTML = '<img src="' + dataUrl + '" alt="">';
-        var status = card ? card.querySelector('.kyc-upload-status') : null;
-        if (status) status.textContent = 'Listo';
+        var action = card ? card.querySelector('.kyc-upload-action') : null;
+        if (action) action.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
       }
 
       function renderUploadStep() {
@@ -1537,14 +1592,14 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             '<label class="kyc-upload-card" id="selfieCard">' +
               '<input id="selfieInput" type="file" accept="image/*" capture="user" class="hidden">' +
               '<span class="kyc-upload-preview" id="selfiePreview"><span class="kyc-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></span>' +
-              '<span class="kyc-upload-text"><strong>Foto de tu cara</strong><span>Selfie frontal, sin lentes oscuros ni filtros.</span></span>' +
-              '<span class="kyc-upload-status">Pendiente</span>' +
+              '<span class="kyc-upload-text" style="display:flex;flex-direction:column;gap:0.15rem;"><strong style="display:block;line-height:1.25;">Foto de tu cara</strong><span style="display:block;line-height:1.35;">Selfie frontal, sin lentes oscuros ni filtros.</span><span class="kyc-upload-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Toca para subir</span></span>' +
+              '<span class="kyc-upload-action"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>' +
             '</label>' +
             '<label class="kyc-upload-card" id="idCard">' +
               '<input id="idFrontInput" type="file" accept="image/*" capture="environment" class="hidden">' +
               '<span class="kyc-upload-preview" id="idPreview"><span class="kyc-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg></span></span>' +
-              '<span class="kyc-upload-text"><strong>Foto de tu cédula</strong><span>Documento completo, enfocado y sin reflejos.</span></span>' +
-              '<span class="kyc-upload-status">Pendiente</span>' +
+              '<span class="kyc-upload-text" style="display:flex;flex-direction:column;gap:0.15rem;"><strong style="display:block;line-height:1.25;">Foto de tu cédula</strong><span style="display:block;line-height:1.35;">Documento completo, enfocado y sin reflejos.</span><span class="kyc-upload-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Toca para subir</span></span>' +
+              '<span class="kyc-upload-action"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>' +
             '</label>' +
           '</div>' +
           '<div id="uploadError" class="kyc-alert hidden"></div>' +
