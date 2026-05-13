@@ -1,6 +1,6 @@
 ---
 // Página estática para verificación KYC - Wizard por pasos
-// Diseño premium luxury-dark, paso a paso
+// Colores originales AD Global Pay: blanco, indigo, cyan
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
 ---
 
@@ -12,96 +12,77 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
   <title>Verificación de Identidad — AD Global Pay</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="/img/logo.webp" type="image/webp" />
   <script is:inline define:vars={{ API_URL }}>
     window.__ADGLOBAL_API_URL__ = API_URL;
   </script>
   <style>
     :root {
-      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-heading: 'Outfit', sans-serif;
       --font-body: 'DM Sans', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
-      --bg-deep: #070b14;
-      --bg-panel: #0f1623;
-      --bg-elevated: #151d2e;
-      --border-subtle: rgba(201, 169, 110, 0.12);
-      --border-focus: rgba(201, 169, 110, 0.35);
-      --gold: #c9a96e;
-      --gold-light: #e0c999;
-      --gold-dim: rgba(201, 169, 110, 0.15);
-      --text-primary: #f0ece4;
-      --text-secondary: #8b92a8;
-      --text-muted: #4a5268;
-      --success: #4ade80;
-      --success-bg: rgba(74, 222, 128, 0.08);
-      --error: #f87171;
-      --error-bg: rgba(248, 113, 113, 0.08);
+      --indigo: #6366f1;
+      --indigo-light: #818cf8;
+      --indigo-dark: #4f46e5;
+      --indigo-50: #eef2ff;
+      --indigo-100: #e0e7ff;
+      --indigo-200: #c7d2fe;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --emerald-50: #ecfdf5;
+      --emerald-100: #d1fae5;
+      --rose: #f43f5e;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
       font-family: var(--font-body);
-      background: var(--bg-deep);
-      color: var(--text-primary);
+      background: linear-gradient(160deg, var(--slate-50) 0%, #f0f4ff 40%, #e8f4fd 100%);
       min-height: 100vh;
+      color: var(--slate-800);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       overflow-x: hidden;
     }
 
     /* ===== ANIMATIONS ===== */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
     @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
+      from { opacity: 0; transform: translateY(24px); }
       to { opacity: 1; transform: translateY(0); }
     }
     @keyframes fadeInScale {
-      from { opacity: 0; transform: scale(0.95); }
+      from { opacity: 0; transform: scale(0.96); }
       to { opacity: 1; transform: scale(1); }
-    }
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(40px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideOutLeft {
-      from { opacity: 1; transform: translateX(0); }
-      to { opacity: 0; transform: translateX(-40px); }
     }
     @keyframes float {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-6px); }
+      50% { transform: translateY(-8px); }
     }
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.8); opacity: 1; }
-      100% { transform: scale(1.5); opacity: 0; }
-    }
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-    @keyframes drawCheck {
-      0% { stroke-dashoffset: 24; }
-      100% { stroke-dashoffset: 0; }
-    }
-    @keyframes lineGrow {
-      from { width: 0; }
-      to { width: 100%; }
-    }
 
-    .anim-fade-in { animation: fadeIn 0.5s ease forwards; }
-    .anim-fade-up { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-    .anim-scale-in { animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-    .anim-slide-right { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-
+    .anim-fade-up {
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+    .anim-scale-in {
+      animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
     .delay-1 { animation-delay: 0.08s; }
     .delay-2 { animation-delay: 0.16s; }
     .delay-3 { animation-delay: 0.24s; }
@@ -119,34 +100,22 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     .bg-decoration::before {
       content: '';
       position: absolute;
-      top: -30%;
-      right: -20%;
-      width: 700px;
-      height: 700px;
-      background: radial-gradient(circle, rgba(201, 169, 110, 0.04) 0%, transparent 60%);
+      top: -20%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
       border-radius: 50%;
     }
     .bg-decoration::after {
       content: '';
       position: absolute;
-      bottom: -20%;
-      left: -10%;
+      bottom: -10%;
+      left: -5%;
       width: 500px;
       height: 500px;
-      background: radial-gradient(circle, rgba(100, 120, 180, 0.03) 0%, transparent 60%);
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
       border-radius: 50%;
-    }
-    .bg-grid {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background-image:
-        linear-gradient(rgba(201, 169, 110, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(201, 169, 110, 0.02) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
     }
 
     /* ===== HEADER ===== */
@@ -161,25 +130,26 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     .kyc-header-inner {
       display: flex;
       align-items: center;
-      gap: 0.875rem;
+      gap: 0.75rem;
       padding: 0.625rem 1.25rem;
-      background: rgba(15, 22, 35, 0.8);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.6);
       border-radius: 9999px;
+      box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.06);
     }
     .kyc-header-logo {
       width: 32px;
       height: 32px;
       border-radius: 10px;
-      background: linear-gradient(135deg, var(--gold) 0%, #a08050 100%);
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--bg-deep);
-      font-family: var(--font-display);
-      font-weight: 700;
+      color: white;
+      font-family: var(--font-heading);
+      font-weight: 800;
       font-size: 14px;
       flex-shrink: 0;
       overflow: hidden;
@@ -191,47 +161,47 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       display: block;
     }
     .kyc-header-title {
-      font-family: var(--font-body);
-      font-weight: 600;
+      font-family: var(--font-heading);
+      font-weight: 700;
       font-size: 0.875rem;
-      color: var(--text-primary);
+      color: var(--slate-800);
       letter-spacing: -0.01em;
     }
     .kyc-header-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.375rem;
-      padding: 0.25rem 0.75rem;
-      background: var(--gold-dim);
-      border: 1px solid rgba(201, 169, 110, 0.2);
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      background: var(--emerald-50);
+      border: 1px solid var(--emerald-100);
       border-radius: 9999px;
       font-size: 0.7rem;
       font-weight: 700;
-      color: var(--gold);
+      color: var(--emerald);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
     }
 
-    /* ===== MAIN CONTAINER ===== */
+    /* ===== MAIN ===== */
     .kyc-container {
       position: relative;
       z-index: 10;
-      max-width: 560px;
+      max-width: 520px;
       margin: 0 auto;
-      padding: 0 1.25rem 4rem;
+      padding: 0 1rem 3rem;
       min-height: calc(100vh - 80px);
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
 
-    /* ===== PROGRESS STEPS ===== */
+    /* ===== PROGRESS ===== */
     .kyc-progress {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.75rem;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
     .kyc-progress-step {
       display: flex;
@@ -241,82 +211,82 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     .kyc-progress-circle {
       width: 36px;
       height: 36px;
-      border-radius: 50%;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: var(--font-display);
-      font-size: 0.85rem;
+      font-family: var(--font-heading);
+      font-size: 0.8rem;
       font-weight: 700;
       flex-shrink: 0;
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      border: 1.5px solid transparent;
     }
     .kyc-progress-circle.active {
-      background: var(--gold);
-      color: var(--bg-deep);
-      border-color: var(--gold);
-      box-shadow: 0 0 20px rgba(201, 169, 110, 0.25);
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+      color: white;
+      box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.4);
     }
     .kyc-progress-circle.done {
-      background: var(--success-bg);
-      color: var(--success);
-      border-color: rgba(74, 222, 128, 0.3);
+      background: var(--emerald);
+      color: white;
     }
     .kyc-progress-circle.pending {
-      background: transparent;
-      color: var(--text-muted);
-      border-color: var(--text-muted);
+      background: var(--slate-100);
+      color: var(--slate-400);
+      border: 2px solid var(--slate-200);
     }
     .kyc-progress-line {
-      width: 32px;
-      height: 1px;
-      background: var(--text-muted);
+      width: 24px;
+      height: 2px;
+      background: var(--slate-200);
+      border-radius: 1px;
       position: relative;
       overflow: hidden;
     }
     .kyc-progress-line-fill {
       position: absolute;
       inset: 0;
-      background: var(--gold);
+      background: linear-gradient(90deg, var(--indigo) 0%, var(--cyan) 100%);
       width: 0%;
       transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     /* ===== STEP CARD ===== */
     .kyc-step-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(226, 232, 240, 0.7);
+      border-radius: 28px;
+      box-shadow: 0 20px 60px -16px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
       padding: 2rem 1.75rem;
-      box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.5);
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     /* ===== STEP HEADER ===== */
     .kyc-step-label {
-      font-family: var(--font-display);
-      font-size: 0.85rem;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
       font-weight: 600;
-      color: var(--gold);
+      color: var(--indigo);
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
       margin-bottom: 0.5rem;
     }
     .kyc-step-title {
-      font-family: var(--font-display);
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--text-primary);
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--slate-800);
       line-height: 1.2;
       margin-bottom: 0.5rem;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
     }
     .kyc-step-desc {
       font-size: 0.875rem;
-      color: var(--text-secondary);
-      font-weight: 400;
-      line-height: 1.6;
+      color: var(--slate-500);
+      font-weight: 500;
+      line-height: 1.5;
       margin-bottom: 1.5rem;
     }
 
@@ -324,116 +294,114 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     .kyc-client-chip {
       display: flex;
       align-items: center;
-      gap: 0.875rem;
-      padding: 0.875rem 1rem;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, var(--indigo-50) 0%, rgba(6, 182, 212, 0.06) 100%);
+      border: 1px solid var(--indigo-100);
+      border-radius: 18px;
       margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .kyc-client-chip:hover {
+      border-color: var(--indigo-200);
+      box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.1);
     }
     .kyc-client-chip-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--gold) 0%, #a08050 100%);
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--bg-deep);
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 1rem;
+      color: white;
       flex-shrink: 0;
     }
+    .kyc-client-chip-avatar svg { width: 22px; height: 22px; }
     .kyc-client-chip-name {
-      font-weight: 600;
+      font-family: var(--font-heading);
+      font-weight: 700;
       font-size: 0.9rem;
-      color: var(--text-primary);
+      color: var(--slate-800);
+      line-height: 1.3;
     }
     .kyc-client-chip-email {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: var(--slate-400);
       font-weight: 500;
     }
 
     /* ===== DECLARACIÓN ===== */
     .kyc-declaracion {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-left: 3px solid var(--gold);
-      border-radius: 16px;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-left: 3px solid var(--indigo);
+      border-radius: 18px;
       padding: 1.25rem;
       margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
     }
-    .kyc-declaracion ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    .kyc-declaracion:hover {
+      border-color: var(--indigo-200);
+      box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.08);
     }
+    .kyc-declaracion ul { list-style: none; padding: 0; margin: 0; }
     .kyc-declaracion li {
       position: relative;
       padding-left: 1.5rem;
-      font-size: 0.82rem;
-      line-height: 1.65;
-      color: var(--text-secondary);
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: var(--slate-600);
       margin-bottom: 0.625rem;
     }
     .kyc-declaracion li::before {
       content: '';
       position: absolute;
       left: 0;
-      top: 0.5rem;
-      width: 5px;
-      height: 5px;
+      top: 0.4rem;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--gold);
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
     }
     .kyc-declaracion li:last-child { margin-bottom: 0; }
     .kyc-declaracion a {
-      color: var(--gold);
+      color: var(--indigo);
       font-weight: 600;
       text-decoration: none;
-      border-bottom: 1px solid rgba(201, 169, 110, 0.3);
+      border-bottom: 1px solid var(--indigo-200);
       transition: all 0.2s ease;
     }
     .kyc-declaracion a:hover {
-      border-bottom-color: var(--gold);
-      color: var(--gold-light);
+      color: var(--indigo-dark);
+      border-bottom-color: var(--indigo);
     }
 
     /* ===== SIGNATURE ===== */
-    .kyc-signature-wrap {
-      margin-bottom: 1.5rem;
-    }
+    .kyc-signature-wrap { margin-bottom: 1.5rem; }
     .kyc-signature-label {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       font-size: 0.8rem;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--slate-700);
       margin-bottom: 0.625rem;
     }
-    .kyc-signature-label svg {
-      width: 16px;
-      height: 16px;
-      color: var(--gold);
-    }
+    .kyc-signature-label svg { width: 16px; height: 16px; color: var(--indigo); }
     .kyc-signature-box {
       position: relative;
-      border: 1.5px dashed var(--text-muted);
+      border: 2px dashed var(--slate-300);
       border-radius: 16px;
-      background: var(--bg-elevated);
+      background: white;
       overflow: hidden;
       transition: all 0.3s ease;
     }
-    .kyc-signature-box:hover {
-      border-color: var(--border-focus);
-    }
+    .kyc-signature-box:hover { border-color: var(--indigo-200); }
     .kyc-signature-box.drawing {
-      border-color: var(--gold);
+      border-color: var(--indigo);
       border-style: solid;
-      box-shadow: 0 0 0 3px var(--gold-dim);
+      box-shadow: 0 0 0 4px var(--indigo-50);
     }
     .kyc-signature-canvas {
       width: 100%;
@@ -450,8 +418,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       align-items: center;
       justify-content: center;
       pointer-events: none;
-      font-size: 0.8rem;
-      color: var(--text-muted);
+      font-size: 0.75rem;
+      color: var(--slate-300);
       font-weight: 500;
       letter-spacing: 0.02em;
     }
@@ -460,36 +428,33 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       align-items: center;
       justify-content: space-between;
       padding: 0.625rem 0.875rem;
-      background: var(--bg-deep);
-      border-top: 1px solid var(--border-subtle);
+      background: var(--slate-50);
+      border-top: 1px solid var(--slate-200);
     }
     .kyc-signature-clear {
       display: inline-flex;
       align-items: center;
       gap: 0.375rem;
-      padding: 0.5rem 0.875rem;
+      padding: 0.375rem 0.75rem;
       background: transparent;
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--slate-200);
       border-radius: 10px;
       font-family: var(--font-body);
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--slate-500);
       cursor: pointer;
       transition: all 0.2s ease;
     }
     .kyc-signature-clear:hover {
-      background: rgba(248, 113, 113, 0.1);
-      color: var(--error);
-      border-color: rgba(248, 113, 113, 0.3);
+      background: var(--rose);
+      color: white;
+      border-color: var(--rose);
     }
-    .kyc-signature-clear svg {
-      width: 14px;
-      height: 14px;
-    }
+    .kyc-signature-clear svg { width: 14px; height: 14px; }
     .kyc-signature-hint-text {
       font-size: 0.7rem;
-      color: var(--text-muted);
+      color: var(--slate-400);
       font-weight: 500;
     }
 
@@ -497,22 +462,23 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     .kyc-checkbox-wrap {
       display: flex;
       align-items: flex-start;
-      gap: 0.875rem;
+      gap: 0.75rem;
       padding: 1rem 1.25rem;
-      background: var(--bg-elevated);
-      border: 1.5px solid var(--border-subtle);
-      border-radius: 14px;
+      background: white;
+      border: 2px solid var(--slate-200);
+      border-radius: 16px;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       margin-bottom: 1.5rem;
     }
     .kyc-checkbox-wrap:hover {
-      border-color: var(--border-focus);
+      border-color: var(--indigo-200);
+      box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.08);
     }
     .kyc-checkbox-wrap.checked {
-      border-color: var(--gold);
-      background: rgba(201, 169, 110, 0.05);
-      box-shadow: 0 0 20px rgba(201, 169, 110, 0.06);
+      border-color: var(--indigo);
+      background: var(--indigo-50);
+      box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.12);
     }
     .kyc-checkbox {
       appearance: none;
@@ -520,17 +486,17 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       width: 22px;
       height: 22px;
       min-width: 22px;
-      border: 2px solid var(--text-muted);
-      border-radius: 6px;
+      border: 2px solid var(--slate-300);
+      border-radius: 7px;
       margin-top: 1px;
       cursor: pointer;
       transition: all 0.2s ease;
       position: relative;
-      background: transparent;
+      background: white;
     }
     .kyc-checkbox:checked {
-      background: var(--gold);
-      border-color: var(--gold);
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+      border-color: var(--indigo);
     }
     .kyc-checkbox:checked::after {
       content: '';
@@ -539,70 +505,70 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       top: 2px;
       width: 5px;
       height: 10px;
-      border: solid var(--bg-deep);
+      border: solid white;
       border-width: 0 2px 2px 0;
       transform: rotate(45deg);
     }
     .kyc-checkbox-label {
-      font-size: 0.82rem;
-      line-height: 1.55;
-      color: var(--text-secondary);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--slate-700);
       font-weight: 500;
       user-select: none;
     }
     .kyc-checkbox-label strong {
-      color: var(--text-primary);
+      color: var(--slate-900);
       font-weight: 700;
     }
 
     /* ===== UPLOAD AREA ===== */
     .kyc-upload-area {
       position: relative;
-      border: 1.5px dashed var(--text-muted);
-      border-radius: 20px;
-      background: var(--bg-elevated);
-      padding: 2.5rem 1.5rem;
       text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      padding: 2rem 1.5rem;
+      background: linear-gradient(135deg, var(--indigo-50) 0%, rgba(6, 182, 212, 0.04) 100%);
+      border: 2px dashed var(--indigo-200);
+      border-radius: 20px;
       margin-bottom: 1.25rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
     }
     .kyc-upload-area:hover {
-      border-color: var(--gold);
-      background: rgba(201, 169, 110, 0.03);
+      border-color: var(--indigo);
+      background: linear-gradient(135deg, var(--indigo-50) 0%, rgba(6, 182, 212, 0.08) 100%);
     }
     .kyc-upload-area.has-file {
       border-style: solid;
-      border-color: var(--success);
-      background: var(--success-bg);
+      border-color: var(--emerald);
+      background: var(--emerald-50);
     }
     .kyc-upload-icon-main {
-      width: 56px;
-      height: 56px;
+      width: 64px;
+      height: 64px;
       margin: 0 auto 1rem;
-      border-radius: 16px;
-      background: linear-gradient(135deg, var(--gold) 0%, #a08050 100%);
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 24px -6px rgba(201, 169, 110, 0.25);
+      box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.35);
       animation: float 4s ease-in-out infinite;
     }
     .kyc-upload-icon-main svg {
-      width: 24px;
-      height: 24px;
-      color: var(--bg-deep);
+      width: 28px;
+      height: 28px;
+      color: white;
     }
     .kyc-upload-area h3 {
-      font-family: var(--font-display);
-      font-size: 1.15rem;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
       font-weight: 700;
-      color: var(--text-primary);
+      color: var(--slate-800);
       margin-bottom: 0.375rem;
     }
     .kyc-upload-area p {
       font-size: 0.8rem;
-      color: var(--text-secondary);
+      color: var(--slate-500);
       font-weight: 500;
       margin-bottom: 1.25rem;
     }
@@ -615,8 +581,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     }
     .kyc-upload-file-name {
       font-size: 0.78rem;
-      color: var(--success);
-      font-weight: 600;
+      color: var(--emerald);
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -636,7 +602,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       gap: 0.5rem;
       width: 100%;
       padding: 0.875rem 1.5rem;
-      font-family: var(--font-body);
+      font-family: var(--font-heading);
       font-size: 0.9rem;
       font-weight: 700;
       border: none;
@@ -646,40 +612,48 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       position: relative;
       overflow: hidden;
     }
+    .kyc-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .kyc-btn:hover::after { opacity: 1; }
     .kyc-btn-secondary {
-      background: var(--bg-elevated);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-subtle);
+      background: white;
+      color: var(--slate-600);
+      border: 2px solid var(--slate-200);
     }
     .kyc-btn-secondary:hover {
-      border-color: var(--border-focus);
-      color: var(--text-primary);
+      border-color: var(--indigo-200);
+      color: var(--slate-800);
+      background: var(--slate-50);
     }
     .kyc-btn-primary {
-      background: linear-gradient(135deg, var(--gold) 0%, #a08050 100%);
-      color: var(--bg-deep);
-      box-shadow: 0 8px 24px -6px rgba(201, 169, 110, 0.35);
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+      color: white;
+      box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.4);
     }
     .kyc-btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 32px -6px rgba(201, 169, 110, 0.45);
+      box-shadow: 0 12px 32px -6px rgba(99, 102, 241, 0.5);
     }
-    .kyc-btn-primary:active {
-      transform: translateY(0) scale(0.98);
-    }
+    .kyc-btn-primary:active { transform: translateY(0) scale(0.98); }
     .kyc-btn-primary:disabled {
-      opacity: 0.5;
+      opacity: 0.6;
       cursor: not-allowed;
       transform: none;
     }
     .kyc-btn-success {
-      background: linear-gradient(135deg, var(--success) 0%, #22c55e 100%);
-      color: var(--bg-deep);
-      box-shadow: 0 8px 24px -6px rgba(74, 222, 128, 0.3);
+      background: linear-gradient(135deg, var(--emerald) 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 8px 24px -6px rgba(16, 185, 129, 0.4);
     }
     .kyc-btn-success:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 32px -6px rgba(74, 222, 128, 0.4);
+      box-shadow: 0 12px 32px -6px rgba(16, 185, 129, 0.5);
     }
 
     /* ===== REVIEW STEP ===== */
@@ -693,90 +667,97 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       align-items: center;
       gap: 1rem;
       padding: 0.875rem 1rem;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
+      background: white;
+      border: 1.5px dashed var(--slate-200);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    .kyc-review-item:hover { border-color: var(--indigo-200); }
+    .kyc-review-item.done {
+      border-style: solid;
+      border-color: var(--emerald-100);
+      background: linear-gradient(135deg, white 0%, var(--emerald-50) 100%);
     }
     .kyc-review-item-icon {
       width: 40px;
       height: 40px;
       border-radius: 12px;
-      background: var(--gold-dim);
+      background: var(--indigo-50);
+      color: var(--indigo);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
-    .kyc-review-item-icon svg {
-      width: 18px;
-      height: 18px;
-      color: var(--gold);
-    }
+    .kyc-review-item-icon svg { width: 20px; height: 20px; }
     .kyc-review-item-icon.done {
-      background: var(--success-bg);
-    }
-    .kyc-review-item-icon.done svg {
-      color: var(--success);
+      background: var(--emerald);
+      color: white;
     }
     .kyc-review-item-text strong {
       display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-primary);
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--slate-800);
     }
     .kyc-review-item-text span {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: var(--slate-500);
+      font-weight: 500;
     }
 
     /* ===== ALERT ===== */
     .kyc-alert {
       padding: 0.875rem 1rem;
-      background: var(--error-bg);
-      border: 1px solid rgba(248, 113, 113, 0.2);
-      color: var(--error);
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #c2410c;
       border-radius: 14px;
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 0.78rem;
+      font-weight: 700;
       line-height: 1.4;
       margin-bottom: 1rem;
     }
 
-    /* ===== SECURITY BADGE ===== */
+    /* ===== SECURITY ===== */
     .kyc-security {
       display: flex;
       align-items: center;
       gap: 0.875rem;
       padding: 1rem 1.25rem;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
+      background: linear-gradient(135deg, var(--emerald-50) 0%, rgba(6, 182, 212, 0.04) 100%);
+      border: 1px solid var(--emerald-100);
+      border-radius: 16px;
       margin-bottom: 1.25rem;
+      transition: all 0.3s ease;
+    }
+    .kyc-security:hover {
+      border-color: var(--emerald-200);
+      box-shadow: 0 4px 16px -4px rgba(16, 185, 129, 0.1);
     }
     .kyc-security-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: var(--gold-dim);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--emerald) 0%, var(--cyan) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.3);
     }
-    .kyc-security-icon svg {
-      width: 18px;
-      height: 18px;
-      color: var(--gold);
-    }
+    .kyc-security-icon svg { width: 20px; height: 20px; color: white; }
     .kyc-security-text p {
+      font-family: var(--font-heading);
       font-weight: 700;
-      font-size: 0.8rem;
-      color: var(--text-primary);
+      font-size: 0.85rem;
+      color: var(--slate-800);
       line-height: 1.3;
     }
     .kyc-security-text span {
-      font-size: 0.72rem;
-      color: var(--text-muted);
+      font-size: 0.75rem;
+      color: var(--slate-400);
       font-weight: 500;
     }
 
@@ -786,8 +767,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       padding: 3rem 1rem;
     }
     .kyc-loading-ring {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       margin: 0 auto 1.25rem;
       position: relative;
     }
@@ -795,14 +776,14 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       content: '';
       position: absolute;
       inset: 0;
-      border: 2.5px solid var(--border-subtle);
-      border-top-color: var(--gold);
+      border: 3px solid var(--indigo-100);
+      border-top-color: var(--indigo);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     .kyc-loading p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
+      font-size: 0.875rem;
+      color: var(--slate-500);
       font-weight: 500;
     }
 
@@ -812,69 +793,60 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       padding: 4rem 1.5rem;
     }
     .kyc-no-token-icon {
-      width: 72px;
-      height: 72px;
+      width: 80px;
+      height: 80px;
       margin: 0 auto 1.5rem;
-      border-radius: 20px;
-      background: var(--error-bg);
+      border-radius: 24px;
+      background: linear-gradient(135deg, var(--rose) 0%, #fb7185 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 24px -6px rgba(248, 113, 113, 0.15);
+      box-shadow: 0 8px 24px -6px rgba(244, 63, 94, 0.35);
       animation: float 4s ease-in-out infinite;
     }
-    .kyc-no-token-icon svg {
-      width: 32px;
-      height: 32px;
-      color: var(--error);
-    }
+    .kyc-no-token-icon svg { width: 36px; height: 36px; color: white; }
     .kyc-no-token h2 {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-primary);
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--slate-800);
       margin-bottom: 0.5rem;
     }
     .kyc-no-token p {
       font-size: 0.85rem;
-      color: var(--text-secondary);
+      color: var(--slate-500);
       font-weight: 500;
       margin-bottom: 1.5rem;
     }
 
     /* ===== SUCCESS ===== */
     .kyc-success-icon {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       margin: 0 auto 1.25rem;
-      border-radius: 20px;
-      background: var(--success-bg);
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--emerald) 0%, #059669 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 24px -6px rgba(74, 222, 128, 0.15);
+      box-shadow: 0 8px 24px -6px rgba(16, 185, 129, 0.35);
       animation: float 4s ease-in-out infinite;
     }
-    .kyc-success-icon svg {
-      width: 28px;
-      height: 28px;
-      color: var(--success);
-    }
+    .kyc-success-icon svg { width: 32px; height: 32px; color: white; }
 
     /* ===== HIDDEN ===== */
     .hidden { display: none !important; }
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 480px) {
-      .kyc-container { padding: 0 1rem 3rem; }
-      .kyc-step-card { padding: 1.5rem 1.25rem; border-radius: 20px; }
-      .kyc-step-title { font-size: 1.5rem; }
+      .kyc-container { padding: 0 0.75rem 2rem; }
+      .kyc-step-card { padding: 1.5rem 1.25rem; border-radius: 22px; }
+      .kyc-step-title { font-size: 1.25rem; }
       .kyc-progress { gap: 0.5rem; }
-      .kyc-progress-line { width: 20px; }
+      .kyc-progress-line { width: 16px; }
       .kyc-btn-group { flex-direction: column; }
     }
 
-    /* Touch targets */
     @media (pointer: coarse) {
       .kyc-btn, .kyc-signature-clear, .kyc-checkbox-wrap, .kyc-upload-area {
         min-height: 48px;
@@ -884,9 +856,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
 </head>
 <body>
   <div class="bg-decoration"></div>
-  <div class="bg-grid"></div>
 
-  <header class="kyc-header anim-fade-in">
+  <header class="kyc-header anim-fade-up">
     <div class="kyc-header-inner">
       <div class="kyc-header-logo"><img src="/img/logo.webp" alt="AD Global Pay" /></div>
       <span class="kyc-header-title">AD Global Pay</span>
@@ -910,13 +881,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     </div>
 
     <div id="kycContent" class="hidden">
-      <!-- Loading -->
       <div id="loadingState" class="kyc-loading">
         <div class="kyc-loading-ring"></div>
-        <p>Cargando verificador</p>
+        <p class="kyc-loading-dots">Cargando verificador</p>
       </div>
 
-      <!-- Progress -->
       <div id="progressBar" class="kyc-progress hidden">
         <div class="kyc-progress-step">
           <div class="kyc-progress-circle active" id="prog1">1</div>
@@ -943,7 +912,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
 
         <div class="kyc-client-chip anim-fade-up delay-2">
           <div class="kyc-client-chip-avatar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
           <div>
             <div class="kyc-client-chip-name" id="clientName">Cliente AD Global Pay</div>
@@ -1003,7 +972,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         <div class="kyc-upload-area" id="selfieUploadArea" onclick="document.getElementById('selfieInput').click()">
           <input id="selfieInput" type="file" accept="image/*" capture="user" class="hidden" onchange="handleSelfie(this)">
           <div class="kyc-upload-icon-main" id="selfieIcon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
           <h3>Toca para tomar selfie</h3>
           <p>Usa la cámara frontal o selecciona una foto</p>
@@ -1034,7 +1003,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         <div class="kyc-upload-area" id="idUploadArea" onclick="document.getElementById('idFrontInput').click()">
           <input id="idFrontInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleIdFront(this)">
           <div class="kyc-upload-icon-main" id="idIcon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
           </div>
           <h3>Toca para fotografiar cédula</h3>
           <p>Asegúrate que todos los datos sean legibles</p>
@@ -1063,30 +1032,30 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         <p class="kyc-step-desc">Verifica que toda la información esté correcta antes de enviar.</p>
 
         <div class="kyc-review-grid">
-          <div class="kyc-review-item">
+          <div class="kyc-review-item done">
             <div class="kyc-review-item-icon done">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <div class="kyc-review-item-text">
               <strong>Declaración jurada firmada</strong>
               <span>Firma digital registrada</span>
             </div>
           </div>
-          <div class="kyc-review-item">
-            <div class="kyc-review-item-icon done" id="reviewSelfieIcon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div class="kyc-review-item" id="reviewSelfieItem">
+            <div class="kyc-review-item-icon" id="reviewSelfieIcon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
             <div class="kyc-review-item-text">
-              <strong id="reviewSelfieLabel">Foto de rostro</strong>
+              <strong>Foto de rostro</strong>
               <span id="reviewSelfieStatus">Pendiente</span>
             </div>
           </div>
-          <div class="kyc-review-item">
-            <div class="kyc-review-item-icon done" id="reviewIdIcon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div class="kyc-review-item" id="reviewIdItem">
+            <div class="kyc-review-item-icon" id="reviewIdIcon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
             </div>
             <div class="kyc-review-item-text">
-              <strong id="reviewIdLabel">Foto de cédula</strong>
+              <strong>Foto de cédula</strong>
               <span id="reviewIdStatus">Pendiente</span>
             </div>
           </div>
@@ -1094,7 +1063,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
 
         <div class="kyc-security">
           <div class="kyc-security-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
           <div class="kyc-security-text">
             <p>Tu información está segura</p>
@@ -1154,8 +1123,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       }
 
       function updateProgress(step) {
-        var totalSteps = 4;
-        for (var i = 1; i <= totalSteps; i++) {
+        for (var i = 1; i <= 4; i++) {
           var circle = document.getElementById('prog' + i);
           var line = document.getElementById('progLine' + i);
           if (!circle) continue;
@@ -1174,12 +1142,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       }
 
       function goToStep(step) {
-        // Hide all steps
         for (var i = 1; i <= 4; i++) {
           var el = document.getElementById('step' + i);
           if (el) el.classList.add('hidden');
         }
-        // Show target step
         var target = document.getElementById('step' + step);
         if (target) {
           target.classList.remove('hidden');
@@ -1188,8 +1154,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         }
         currentStep = step;
         updateProgress(step);
-
-        // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
@@ -1214,8 +1178,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             '<div class="kyc-success-icon">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
             '</div>' +
-            '<h1 style="font-family:var(--font-display); font-size:1.75rem; font-weight:700; color:var(--text-primary); margin-bottom:0.5rem;">' + (approved ? 'Identidad verificada' : 'Verificación enviada') + '</h1>' +
-            '<p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:2rem; line-height:1.6;">' + (approved ? 'Tu identidad ya fue aprobada por AD Global Pay.' : 'Recibimos tus datos. El equipo revisará tu firma, selfie y cédula manualmente.') + '</p>' +
+            '<h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--slate-800); margin-bottom:0.5rem;">' + (approved ? 'Identidad verificada' : 'Verificación enviada') + '</h1>' +
+            '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">' + (approved ? 'Tu identidad ya fue aprobada por AD Global Pay.' : 'Recibimos tus datos. El equipo revisará tu firma, selfie y cédula manualmente.') + '</p>' +
             '<a href="/kyc/completado" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
           '</div>';
       }
@@ -1252,7 +1216,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         canvas = document.getElementById('signatureCanvas');
         if (!canvas) return;
         ctx = canvas.getContext('2d');
-        ctx.strokeStyle = '#c9a96e';
+        ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = 2.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -1320,18 +1284,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         if (clearBtn) {
           clearBtn.addEventListener('click', function() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#151d2e';
+            ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#c9a96e';
+            ctx.strokeStyle = '#1e293b';
             signatureIsEmpty = true;
             document.getElementById('signatureBox').classList.remove('drawing');
             document.getElementById('signatureHint').style.opacity = '1';
           });
         }
 
-        ctx.fillStyle = '#151d2e';
+        ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#c9a96e';
+        ctx.strokeStyle = '#1e293b';
       }
 
       // Checkbox
@@ -1387,7 +1351,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
               out.width = width;
               out.height = height;
               var outCtx = out.getContext('2d');
-              outCtx.fillStyle = '#0f1623';
+              outCtx.fillStyle = '#fff';
               outCtx.fillRect(0, 0, width, height);
               outCtx.drawImage(img, 0, 0, width, height);
               resolve(out.toDataURL('image/jpeg', 0.84));
@@ -1470,11 +1434,24 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             return;
           }
           hideStepError('step3Error');
-          // Update review step
           var reviewSelfieStatus = document.getElementById('reviewSelfieStatus');
           var reviewIdStatus = document.getElementById('reviewIdStatus');
+          var reviewSelfieItem = document.getElementById('reviewSelfieItem');
+          var reviewIdItem = document.getElementById('reviewIdItem');
+          var reviewSelfieIcon = document.getElementById('reviewSelfieIcon');
+          var reviewIdIcon = document.getElementById('reviewIdIcon');
           if (reviewSelfieStatus) reviewSelfieStatus.textContent = 'Listo';
           if (reviewIdStatus) reviewIdStatus.textContent = 'Listo';
+          if (reviewSelfieItem) { reviewSelfieItem.classList.add('done'); }
+          if (reviewIdItem) { reviewIdItem.classList.add('done'); }
+          if (reviewSelfieIcon) {
+            reviewSelfieIcon.classList.add('done');
+            reviewSelfieIcon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+          }
+          if (reviewIdIcon) {
+            reviewIdIcon.classList.add('done');
+            reviewIdIcon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+          }
           goToStep(4);
         });
       }
@@ -1489,7 +1466,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
           }
           hideStepError('step4Error');
           btnSubmit.disabled = true;
-          btnSubmit.innerHTML = '<div style="width:20px;height:20px;border:2px solid var(--bg-deep);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>';
+          btnSubmit.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>';
 
           fetch(API_URL + '/api/kyc/public/' + encodeURIComponent(token) + '/submit', {
             method: 'POST',
@@ -1515,8 +1492,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
                     '<div class="kyc-success-icon">' +
                       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
                     '</div>' +
-                    '<h1 style="font-family:var(--font-display); font-size:1.75rem; font-weight:700; color:var(--text-primary); margin-bottom:0.5rem;">¡Verificación enviada!</h1>' +
-                    '<p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:2rem; line-height:1.6;">Recibimos tu firma, selfie y cédula. El equipo de AD Global Pay revisará tus datos manualmente.</p>' +
+                    '<h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--slate-800); margin-bottom:0.5rem;">¡Verificación enviada!</h1>' +
+                    '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">Recibimos tu firma, selfie y cédula. El equipo de AD Global Pay revisará tus datos manualmente.</p>' +
                     '<a href="/kyc/completado" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
                   '</div>';
               }
@@ -1529,10 +1506,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         });
       }
 
-      // Global navigation helper
       window.goToStep = goToStep;
 
-      // Initialize
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initSignatureCanvas);
       } else {
