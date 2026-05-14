@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowRight, Phone, Mail, MapPin, CheckCircle2, Clock, ExternalLink,
   UserPlus, Wallet, FileText, ShieldCheck, Eye, Copy, Send, Upload,
-  AlertTriangle, Trash2, Pencil, Save, LoaderCircle, X
+  AlertTriangle, Trash2, Pencil, Save, LoaderCircle, X, Fingerprint
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -567,7 +567,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                 <p className="text-xs text-slate-400 font-medium">Identidad validada</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button onClick={handleSendKyc} className="btn-interactive px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5" /> Enviar link
               </button>
@@ -588,6 +588,14 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               }} className="px-3 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5">
                 <Upload className="w-3.5 h-3.5" /> Subir
               </button>
+              {latestKyc && (
+                <a
+                  href={`/admin/kyc?kycId=${latestKyc.id}`}
+                  className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
+                >
+                  <Fingerprint className="w-3.5 h-3.5" /> Ver KYC
+                </a>
+              )}
             </div>
           </div>
 

@@ -66,13 +66,27 @@ export default function KycReviewPage() {
   const [filter, setFilter] = useState('PROCESSING');
   const [reviewing, setReviewing] = useState('');
 
-  const loadKyc = useCallback(async () => {
+  const loadKyc = useCallback(async (preferredId?: string) => {
     setLoading(true);
     setError('');
     try {
       const data = await apiFetch('/api/kyc');
       setRequests(data || []);
-      setSelectedId((current) => current || data?.[0]?.id || '');
+
+      // Si hay un kycId en la URL, seleccionarlo
+      const params = new URLSearchParams(window.location.search);
+      const urlKycId = params.get('kycId');
+      if (urlKycId) {
+        const found = (data || []).find((r: KycRequest) => r.id === urlKycId);
+        if (found) {
+          setFilter('ALL');
+          setSelectedId(preferredId || found.id);
+        } else {
+          setSelectedId((current: string) => preferredId || current || data?.[0]?.id || '');
+        }
+      } else {
+        setSelectedId((current: string) => preferredId || current || data?.[0]?.id || '');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -119,7 +133,73 @@ export default function KycReviewPage() {
           description: `${clientName(selected)} actualizado correctamente.`
         }
       }));
-      await loadKyc();
+      await loadKyc(selected.id);
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    } finally {
+      setReviewing('');
+    }
+  };
+
+  const getKycLink = (token: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://adglobalpay.com';
+    return `${origin}/kyc/?token=${token}`;
+  };
+
+  const requestKycCorrection = async () => {
+    if (!selected) return;
+
+    setReviewing('CORRECTION');
+    try {
+      const kyc = await apiFetch('/api/kyc', {
+        method: 'POST',
+        body: JSON.stringify({ clientId: selected.client.id })
+      });
+
+      const link = getKycLink(kyc.token);
+
+      try {
+        await navigator.clipboard.writeText(link);
+      } catch {
+        // Clipboard can be blocked by the browser; the correction flow should continue anyway.
+      }
+
+      if (selected.client.email) {
+        try {
+          await apiFetch('/api/kyc/send-email', {
+            method: 'POST',
+            body: JSON.stringify({ clientId: selected.client.id, token: kyc.token, link })
+          });
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: {
+              type: 'success',
+              message: 'Corrección KYC enviada',
+              description: `Se envió un nuevo link de actualización a ${selected.client.email}.`
+            }
+          }));
+        } catch (emailErr: any) {
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: {
+              type: 'warning',
+              message: 'Link generado',
+              description: `${emailErr.message}. El nuevo link KYC quedó copiado al portapapeles.`
+            }
+          }));
+        }
+      } else {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: {
+            type: 'info',
+            message: 'Link generado',
+            description: 'El cliente no tiene email. El nuevo link KYC quedó copiado al portapapeles.'
+          }
+        }));
+      }
+
+      setFilter('PROCESSING');
+      await loadKyc(kyc.id);
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'error', message: 'Error', description: err.message }
@@ -247,6 +327,11 @@ export default function KycReviewPage() {
         <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 min-h-[520px]">
           {selected ? (
             <div className="space-y-5">
+              {selected.status === 'VERIFIED' && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                  Este KYC ya fue aprobado. Si necesitas actualizar firma, selfie o cédula, usa <span className="font-extrabold">Corregir KYC</span> para generar un nuevo enlace de carga.
+                </div>
+              )}
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -267,11 +352,21 @@ export default function KycReviewPage() {
                     {reviewing === 'REJECTED' ? 'Guardando...' : 'Rechazar'}
                   </button>
                   <button
-                    onClick={() => reviewRequest('VERIFIED')}
+                    onClick={() => selected.status === 'VERIFIED' ? requestKycCorrection() : reviewRequest('VERIFIED')}
                     disabled={!!reviewing}
-                    className="btn-interactive px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                    className={`btn-interactive px-4 py-2.5 text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-60 ${
+                      selected.status === 'VERIFIED'
+                        ? 'bg-indigo-600 hover:bg-indigo-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
                   >
-                    {reviewing === 'VERIFIED' ? 'Guardando...' : 'Aprobar KYC'}
+                    {reviewing === 'VERIFIED'
+                      ? 'Guardando...'
+                      : reviewing === 'CORRECTION'
+                        ? 'Preparando...'
+                        : selected.status === 'VERIFIED'
+                          ? 'Corregir KYC'
+                          : 'Aprobar KYC'}
                   </button>
                 </div>
               </div>
