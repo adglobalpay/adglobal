@@ -142,22 +142,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     .kyc-header-logo {
       width: 32px;
       height: 32px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
+      border-radius: 0;
+      background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-family: var(--font-heading);
-      font-weight: 800;
-      font-size: 14px;
       flex-shrink: 0;
       overflow: hidden;
     }
     .kyc-header-logo img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
     .kyc-header-title {
