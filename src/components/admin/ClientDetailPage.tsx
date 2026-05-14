@@ -596,6 +596,40 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                   <Fingerprint className="w-3.5 h-3.5" /> Ver KYC
                 </a>
               )}
+              <button
+                onClick={async () => {
+                  try {
+                    const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+                    const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+                    const res = await fetch(`${API_URL}/api/clients/${client.id}/kyc.pdf`, {
+                      headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    });
+                    if (!res.ok) {
+                      const err = await res.json().catch(() => ({ error: 'Error al generar PDF' }));
+                      throw new Error(err.error || 'Error al generar PDF');
+                    }
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `kyc-${client.id.substring(0, 8).toUpperCase()}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                      detail: { type: 'success', message: 'PDF descargado', description: 'Documentos KYC descargados correctamente.' }
+                    }));
+                  } catch (err: any) {
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                      detail: { type: 'error', message: 'Error al descargar PDF', description: err.message }
+                    }));
+                  }
+                }}
+                className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
+              >
+                <FileText className="w-3.5 h-3.5" /> Descargar PDF
+              </button>
             </div>
           </div>
 
