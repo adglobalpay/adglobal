@@ -202,6 +202,61 @@ export default function ConfigPage() {
     }
   };
 
+  const handleTestBinanceAlert = async () => {
+    try {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'info', message: 'Probando alerta', description: 'Enviando email de prueba...' }
+      }));
+
+      const response = await apiFetch('/api/binance/test-alert', {
+        method: 'POST'
+      });
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: 'Alerta enviada',
+          description: response?.result?.email
+            ? `Correo de prueba enviado a ${response.result.email}.`
+            : 'Correo de prueba enviado correctamente.'
+        }
+      }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error al probar alerta', description: err.message }
+      }));
+    }
+  };
+
+  const handleTestBinanceConnection = async () => {
+    try {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'info', message: 'Probando conexión', description: 'Consultando balance en Binance...' }
+      }));
+
+      const response = await apiFetch('/api/binance/test-connection', {
+        method: 'POST'
+      });
+
+      const formattedBalance = Number(response?.balance || 0).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: 'Conexión verificada',
+          description: `Balance USDT detectado: ${formattedBalance}.`
+        }
+      }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error de conexión', description: err.message }
+      }));
+    }
+  };
+
   // Payment Methods CRUD
   const loadPaymentMethods = async () => {
     setPmLoading(true);
@@ -587,11 +642,11 @@ export default function ConfigPage() {
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <button onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Probando conexión', description: 'Verificando conexión con Binance API...' } }))}
+          <button onClick={handleTestBinanceConnection}
             className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 font-bold text-sm transition-all btn-interactive flex items-center justify-center gap-2">
             <Plug className="w-4 h-4" /> Probar conexión
           </button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Notificación de prueba', description: 'Enviando notificación de prueba...' } }))}
+          <button onClick={handleTestBinanceAlert}
             className="flex-1 border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl hover:bg-slate-50 font-bold text-sm transition-all flex items-center justify-center gap-2">
             <Mail className="w-4 h-4" /> Probar alerta
           </button>
