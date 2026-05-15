@@ -9,6 +9,7 @@ import { apiFetch } from '../../lib/auth';
 
 interface Transaction {
   id: string;
+  clientId: string;
   fecha: string;
   ingresoUSD: number;
   salidaUSDT: number;
@@ -20,7 +21,7 @@ interface Transaction {
   fechaVerificacion?: string | null;
   comprobantePago: string | null;
   comprobanteAdmin: string | null;
-  client?: { firstName: string; lastName: string | null; email: string };
+  client?: { id: string; firstName: string; lastName: string | null; email: string };
   recipient?: { name: string; bank: string };
 }
 
@@ -121,6 +122,10 @@ export default function TransactionsPage() {
   const filtered = useMemo(() => {
     let result = [...transactions];
 
+    if (clienteFilter) {
+      result = result.filter(t => t.clientId === clienteFilter || t.client?.id === clienteFilter);
+    }
+
     // Filtro de período
     if (periodoFilter !== 'all') {
       const days = parseInt(periodoFilter);
@@ -152,7 +157,7 @@ export default function TransactionsPage() {
     }
 
     return result;
-  }, [transactions, searchQuery, estadoFilter, periodoFilter]);
+  }, [transactions, searchQuery, estadoFilter, periodoFilter, clienteFilter]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -374,10 +379,10 @@ export default function TransactionsPage() {
       </div>
 
       {/* Indicador de filtro por cliente */}
-      {clienteFilter && transactions.length > 0 && (
+      {clienteFilter && filtered.length > 0 && (
         <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3 anim-fade-in">
           <span className="text-sm font-bold text-indigo-700">
-            Transacciones de: {transactions[0].client ? `${transactions[0].client.firstName} ${transactions[0].client.lastName || ''}`.trim() : 'Cliente seleccionado'}
+            Transacciones de: {filtered[0].client ? `${filtered[0].client.firstName} ${filtered[0].client.lastName || ''}`.trim() : 'Cliente seleccionado'}
           </span>
           <a
             href="/admin/transacciones"
