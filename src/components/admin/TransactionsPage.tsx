@@ -26,6 +26,43 @@ interface Transaction {
 }
 
 const ADMIN_PENDING_FILTER = 'ADMIN_PENDING';
+const TRANSACTIONS_CACHE_TTL_MS = 2 * 60 * 1000;
+
+interface TransactionsCacheEntry {
+  data: Transaction[];
+  total: number;
+  cachedAt: number;
+}
+
+function getTransactionsCacheKey(clienteFilter: string) {
+  return `adglobal_transactions_cache:${clienteFilter || 'all'}`;
+}
+
+function readTransactionsCache(clienteFilter: string): TransactionsCacheEntry | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = sessionStorage.getItem(getTransactionsCacheKey(clienteFilter));
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as TransactionsCacheEntry;
+    if (!Array.isArray(parsed.data) || typeof parsed.cachedAt !== 'number') return null;
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeTransactionsCache(clienteFilter: string, entry: TransactionsCacheEntry) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    sessionStorage.setItem(getTransactionsCacheKey(clienteFilter), JSON.stringify(entry));
+  } catch {
+    // Storage can fail in private mode or when quota is full; the live fetch still works.
+  }
+}
 
 const ESTADOS_MAP: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
   COMPLETED: {
@@ -81,9 +118,20 @@ function downloadCSV(filename: string, headers: string[], rows: (string | number
 }
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const urlParams = useMemo(
+    () => new URLSearchParams(typeof window !== 'undefined' ? window.location.search : ''),
+    []
+  );
+  const clienteFilter = urlParams.get('cliente') || '';
+  const initialCache = useMemo(() => readTransactionsCache(clienteFilter), [clienteFilter]);
+  const hasFreshInitialCache = Boolean(
+    initialCache && Date.now() - initialCache.cachedAt < TRANSACTIONS_CACHE_TTL_MS
+  );
+
+  const [transactions, setTransactions] = useState<Transaction[]>(() => initialCache?.data || []);
+  const [totalCount, setTotalCount] = useState(() => initialCache?.total || 0);
+  const [loading, setLoading] = useState(() => !initialCache);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,32 +140,40 @@ export default function TransactionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const urlParams = useMemo(
-    () => new URLSearchParams(typeof window !== 'undefined' ? window.location.search : ''),
-    []
-  );
-  const clienteFilter = urlParams.get('cliente') || '';
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async (options: { showLoader?: boolean; resetPage?: boolean } = {}) => {
+    const { showLoader = true, resetPage = true } = options;
+    if (showLoader) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     setError('');
     try {
       let url = '/api/transactions?limit=500';
       if (clienteFilter) url += '&cliente=' + encodeURIComponent(clienteFilter);
       const data = await apiFetch(url);
-      setTransactions(data.data || []);
-      setTotalCount(data.total || 0);
-      setCurrentPage(1);
+      const nextTransactions = data.data || [];
+      const nextTotal = data.total || 0;
+      setTransactions(nextTransactions);
+      setTotalCount(nextTotal);
+      writeTransactionsCache(clienteFilter, {
+        data: nextTransactions,
+        total: nextTotal,
+        cachedAt: Date.now()
+      });
+      if (resetPage) setCurrentPage(1);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [clienteFilter]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (hasFreshInitialCache) return;
+    loadData({ showLoader: !initialCache, resetPage: false });
+  }, [hasFreshInitialCache, initialCache, loadData]);
 
   const filtered = useMemo(() => {
     let result = [...transactions];
@@ -281,10 +337,11 @@ export default function TransactionsPage() {
             <Download className="w-4 h-4" /> <span className="hidden sm:inline">Exportar CSV</span>
           </button>
           <button
-            onClick={loadData}
-            className="flex-1 md:flex-none bg-indigo-600 text-white px-4 md:px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all duration-300 font-bold text-sm flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(79,70,229,0.2)] btn-interactive"
+            onClick={() => loadData({ showLoader: transactions.length === 0 })}
+            disabled={refreshing}
+            className="flex-1 md:flex-none bg-indigo-600 text-white px-4 md:px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-70 disabled:hover:bg-indigo-600 transition-all duration-300 font-bold text-sm flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(79,70,229,0.2)] btn-interactive"
           >
-            <Filter className="w-4 h-4" /> <span className="hidden sm:inline">Actualizar</span>
+            <Filter className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> <span className="hidden sm:inline">{refreshing ? 'Actualizando' : 'Actualizar'}</span>
           </button>
         </div>
       </div>
