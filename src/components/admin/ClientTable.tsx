@@ -154,7 +154,7 @@ export default function ClientTable({ limit }: Props) {
         const email = (client.email || '').toLowerCase();
         const phone = (client.phone || '').toLowerCase();
         const country = (client.country || '').toLowerCase();
-        const method = (client.preferredMethod || '').toLowerCase();
+        const methods = (client.preferredMethod || '').toLowerCase().split(',').map(m => m.trim()).filter(Boolean).join(' ');
         const notes = (client.notes || '').toLowerCase();
         const kyc = (client.kycStatus || '').toLowerCase();
         const ofac = (client.ofacStatus || '').toLowerCase();
@@ -165,7 +165,7 @@ export default function ClientTable({ limit }: Props) {
           || email.includes(query)
           || phone.includes(query)
           || country.includes(query)
-          || method.includes(query)
+          || methods.includes(query)
           || notes.includes(query)
           || kyc.includes(query)
           || ofac.includes(query)
@@ -335,7 +335,15 @@ export default function ClientTable({ limit }: Props) {
                     <div className="space-y-1">
                       <span className="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">{client.country}</span>
                       <br/>
-                      <span className="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">{client.preferredMethod || 'N/A'}</span>
+                      {(client.preferredMethod || '').split(',').filter(Boolean).map(m => m.trim()).slice(0, 3).map((m, i) => (
+                        <span key={i} className="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">{m}</span>
+                      ))}
+                      {(client.preferredMethod || '').split(',').filter(Boolean).length > 3 && (
+                        <span className="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">+{(client.preferredMethod || '').split(',').filter(Boolean).length - 3}</span>
+                      )}
+                      {!(client.preferredMethod || '').split(',').filter(Boolean).length && (
+                        <span className="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[0.65rem] font-black uppercase tracking-wider border border-slate-200">N/A</span>
+                      )}
                     </div>
                   </td>
                   <td className="py-4 px-3 align-top">
