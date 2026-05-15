@@ -62,6 +62,7 @@ interface ClientDetail {
   referralCode: string | null;
   referredById: string | null;
   status: string;
+  ofacPdfUrl: string | null;
   createdAt: string;
   recipients: Recipient[];
   transactions: Transaction[];
@@ -188,6 +189,8 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
     notes: '',
     status: 'ACTIVE'
   });
+  const [isOfacModalOpen, setIsOfacModalOpen] = useState(false);
+  const [isUploadingOfac, setIsUploadingOfac] = useState(false);
 
   const clientId = clientIdProp || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
 
@@ -316,6 +319,52 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
       });
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'success', message: 'OFAC verificado', description: 'Cliente marcado sin coincidencias.' }
+      }));
+      loadClient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    }
+  };
+
+  const handleUploadOfacPdf = async (file: File) => {
+    if (!client) return;
+    setIsUploadingOfac(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+      const res = await fetch(`${API_URL}/api/clients/${client.id}/ofac-pdf`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Error al subir PDF');
+      }
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'PDF subido', description: 'Documento OFAC guardado correctamente.' }
+      }));
+      loadClient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error al subir PDF', description: err.message }
+      }));
+    } finally {
+      setIsUploadingOfac(false);
+    }
+  };
+
+  const handleDeleteOfacPdf = async () => {
+    if (!client) return;
+    if (!confirm('¿Eliminar el PDF de OFAC?')) return;
+    try {
+      await apiFetch(`/api/clients/${client.id}/ofac-pdf`, { method: 'DELETE' });
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'PDF eliminado', description: 'Documento OFAC eliminado correctamente.' }
       }));
       loadClient();
     } catch (err: any) {
@@ -578,20 +627,6 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               <button onClick={handleSendKyc} className="btn-interactive px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5" /> Enviar link
               </button>
-              <button onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file'; input.accept = 'image/*,application/pdf'; input.multiple = true;
-                input.onchange = (e: any) => {
-                  if (e.target.files.length > 0) {
-                    window.dispatchEvent(new CustomEvent('show-toast', {
-                      detail: { type: 'info', message: 'Documentos seleccionados', description: `${e.target.files.length} archivo(s) listos para subir.` }
-                    }));
-                  }
-                };
-                input.click();
-              }} className="px-3 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5">
-                <Upload className="w-3.5 h-3.5" /> Subir
-              </button>
               {latestKyc && (
                 <a
                   href={`/admin/kyc?kycId=${latestKyc.id}`}
@@ -687,9 +722,12 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               </div>
             </div>
             <div className="flex gap-2">
-              <a href="https://sanctionssearch.ofac.treas.gov/" target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5">
+              <button
+                onClick={() => setIsOfacModalOpen(true)}
+                className="px-3 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5"
+              >
                 <ExternalLink className="w-3.5 h-3.5" /> OFAC
-              </a>
+              </button>
               <button onClick={handleMarkOfacOk} className={`px-3 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 border ${ofacCfg.className}`}>
                 <CheckCircle2 className="w-3.5 h-3.5" /> Marcar OK
               </button>
@@ -1078,6 +1116,133 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isOfacModalOpen && client && (
+        <div
+          className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:items-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            aria-label="Cerrar modal"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-lg"
+            onClick={() => setIsOfacModalOpen(false)}
+          />
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_24px_80px_-20px_rgba(2,6,23,0.35)] transition-all duration-200">
+            <div className="relative bg-slate-900 px-5 py-6 sm:px-8 sm:py-7">
+              <div className="absolute inset-0 opacity-40">
+                <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl" />
+                <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-cyan-500/10 blur-3xl" />
+              </div>
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-emerald-400/80">Documento OFAC</p>
+                  <h2 className="mt-0.5 text-lg sm:text-xl font-bold tracking-tight text-white">PDF de verificación</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOfacModalOpen(false)}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-400 transition-all hover:bg-slate-700 hover:text-white ring-1 ring-white/10"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5 sm:p-8 space-y-5">
+              {client.ofacPdfUrl ? (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                    <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500 mb-2">Archivo actual</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">ofac.pdf</p>
+                        <a
+                          href={client.ofacPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-indigo-600 font-bold hover:underline"
+                        >
+                          Ver en S3
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-[0.98]">
+                      <Upload className="h-4 w-4" />
+                      Reemplazar
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadOfacPdf(file);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                    <button
+                      onClick={handleDeleteOfacPdf}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-600 transition-all hover:bg-rose-100 hover:text-rose-700 active:scale-[0.98]"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div
+                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-8 text-center transition-all hover:border-emerald-300 hover:bg-emerald-50/30"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files[0];
+                      if (file && file.type === 'application/pdf') {
+                        handleUploadOfacPdf(file);
+                      } else {
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                          detail: { type: 'warning', message: 'Formato no válido', description: 'Solo se permiten archivos PDF.' }
+                        }));
+                      }
+                    }}
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-700">Arrastra un PDF aquí</p>
+                    <p className="text-xs text-slate-400 font-medium mt-1">o</p>
+                    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-[0.98]">
+                      Seleccionar archivo
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadOfacPdf(file);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+              {isUploadingOfac && (
+                <div className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Subiendo...
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
