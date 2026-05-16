@@ -60,6 +60,12 @@ export default function ConfigPage() {
   const [bankForm, setBankForm] = useState({ name: '', label: '', sortOrder: 0, isActive: true });
   const [bankEditing, setBankEditing] = useState<string | null>(null);
 
+  // Users state
+  const [userLoading, setUserLoading] = useState(false);
+  const [userForm, setUserForm] = useState({ email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true });
+  const [userEditing, setUserEditing] = useState<string | null>(null);
+  const [showUserForm, setShowUserForm] = useState(false);
+
   // Local form state for all fields
   const [form, setForm] = useState({
     max_por_transaccion: '1000',
@@ -352,6 +358,60 @@ export default function ConfigPage() {
       await apiFetch(`/api/banks/${id}`, { method: 'DELETE' });
       loadBanks();
       window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Eliminado', description: 'Banco eliminado.' } }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
+  // Users CRUD
+  const loadUsers = async () => {
+    setUserLoading(true);
+    try {
+      const data = await apiFetch('/api/users');
+      setUsers(data);
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
+  const saveUser = async () => {
+    if (!userForm.email || !userForm.firstName || (!userEditing && !userForm.password)) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'warning', message: 'Campos requeridos', description: 'Email, nombre y contraseña (para nuevos) son obligatorios.' } }));
+      return;
+    }
+    try {
+      if (userEditing) {
+        const payload: any = { ...userForm };
+        if (!payload.password) delete payload.password;
+        await apiFetch(`/api/users/${userEditing}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Actualizado', description: 'Usuario actualizado.' } }));
+      } else {
+        await apiFetch('/api/users', { method: 'POST', body: JSON.stringify(userForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Creado', description: 'Usuario creado exitosamente.' } }));
+      }
+      setUserForm({ email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true });
+      setUserEditing(null);
+      setShowUserForm(false);
+      loadUsers();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
+  const editUser = (user: SystemUser) => {
+    setUserForm({ email: user.email, password: '', firstName: user.firstName, lastName: user.lastName || '', role: user.role, isActive: user.isActive });
+    setUserEditing(user.id);
+    setShowUserForm(true);
+  };
+
+  const deleteUser = async (id: string) => {
+    if (!confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')) return;
+    try {
+      await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+      loadUsers();
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Eliminado', description: 'Usuario eliminado.' } }));
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
     }
@@ -663,39 +723,110 @@ export default function ConfigPage() {
               <p className="text-xs text-slate-400 font-medium">Gestión de accesos y roles</p>
             </div>
           </div>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Nuevo usuario', description: 'Funcionalidad para agregar usuarios próximamente.' } }))}
+          <button onClick={() => { setShowUserForm(!showUserForm); setUserEditing(null); setUserForm({ email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true }); }}
             className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 font-bold text-sm transition-all btn-interactive flex items-center gap-2">
-            <Users className="w-4 h-4" /> Nuevo
+            <Users className="w-4 h-4" /> {showUserForm ? 'Cancelar' : 'Nuevo'}
           </button>
         </div>
-        <div className="space-y-3">
-          {users.length === 0 && (
-            <div className="text-center py-8 text-slate-400 text-sm font-medium">No hay usuarios registrados</div>
-          )}
-          {users.map((user, idx) => {
-            const color = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'
-              ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
-              : 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            return (
-              <div key={user.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 md:p-4 bg-slate-50 hover:bg-indigo-50/30 rounded-2xl transition-all duration-300 group cursor-pointer hover:shadow-sm gap-3 sm:gap-0" style={{ animationDelay: `${idx * 60}ms` }}>
-                <div className="flex items-center gap-3 md:gap-4">
-                  <div className={`w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-sm border transition-transform group-hover:scale-110 ${color}`}>
-                    {user.firstName.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-800 text-sm md:text-base">{user.firstName} {user.lastName || ''}</p>
-                    <p className="text-xs text-slate-500 font-medium">{user.email}</p>
-                  </div>
-                </div>
-                <div className="text-left sm:text-right w-full sm:w-auto">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${color}`}>
-                    {user.role}
-                  </span>
-                  <p className="text-xs text-slate-400 mt-1 font-medium">{user.isActive ? 'Activo' : 'Inactivo'}</p>
-                </div>
+
+        {showUserForm && (
+          <div className="mb-6 p-4 md:p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Nombre</label>
+                <input type="text" value={userForm.firstName} onChange={e => setUserForm({ ...userForm, firstName: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="Nombre" />
               </div>
-            );
-          })}
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Apellido</label>
+                <input type="text" value={userForm.lastName} onChange={e => setUserForm({ ...userForm, lastName: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="Apellido" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Email</label>
+                <input type="email" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="correo@ejemplo.com" />
+              </div>
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">{userEditing ? 'Nueva contraseña (opcional)' : 'Contraseña'}</label>
+                <input type="password" value={userForm.password} onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder={userEditing ? 'Dejar en blanco para no cambiar' : '••••••••'} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Rol</label>
+                <select value={userForm.role} onChange={e => setUserForm({ ...userForm, role: e.target.value })}
+                  className="custom-select w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer">
+                  <option value="OPERATOR">Operador</option>
+                  <option value="ADMIN">Administrador</option>
+                  <option value="SUPER_ADMIN">Super Admin</option>
+                  <option value="AUDITOR">Auditor</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-3 pt-5">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={userForm.isActive} onChange={e => setUserForm({ ...userForm, isActive: e.target.checked })} className="rounded accent-indigo-600 w-4 h-4" />
+                  <span className="text-sm font-semibold text-slate-700">Activo</span>
+                </label>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveUser} className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all btn-interactive flex items-center justify-center gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> {userEditing ? 'Actualizar usuario' : 'Crear usuario'}
+              </button>
+              {userEditing && (
+                <button onClick={() => { setUserEditing(null); setUserForm({ email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true }); }} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all">
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {userLoading ? (
+            <div className="text-center py-8 text-slate-400 text-sm">Cargando...</div>
+          ) : users.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-sm font-medium">No hay usuarios registrados</div>
+          ) : (
+            users.map((user, idx) => {
+              const color = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'
+                ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+              return (
+                <div key={user.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 md:p-4 bg-slate-50 hover:bg-indigo-50/30 rounded-2xl transition-all duration-300 group cursor-pointer hover:shadow-sm gap-3 sm:gap-0" style={{ animationDelay: `${idx * 60}ms` }}>
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className={`w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-sm border transition-transform group-hover:scale-110 ${color}`}>
+                      {user.firstName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-800 text-sm md:text-base">{user.firstName} {user.lastName || ''}</p>
+                      <p className="text-xs text-slate-500 font-medium">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="text-left sm:text-right">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${color}`}>
+                        {user.role}
+                      </span>
+                      <p className="text-xs text-slate-400 mt-1 font-medium">{user.isActive ? 'Activo' : 'Inactivo'}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => editUser(user)} className="w-8 h-8 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all" title="Editar">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => deleteUser(user.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-all" title="Eliminar">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
