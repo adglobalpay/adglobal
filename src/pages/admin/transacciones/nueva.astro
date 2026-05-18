@@ -207,21 +207,67 @@ import {
         </div>
 
         <!-- Comprobantes -->
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Comprobante pago</label>
-            <div id="dropPago" class="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 p-4 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all" onclick="document.getElementById('filePago').click()">
-              <FileUp class="w-6 h-6 text-slate-400 mx-auto mb-2" />
-              <p class="text-xs font-bold text-slate-500" id="labelPago">Arrastra o haz click</p>
+            <div id="dropPago" class="border-2 border-dashed border-slate-300 rounded-2xl bg-[linear-gradient(180deg,rgba(248,250,252,0.96)_0%,rgba(255,255,255,1)_100%)] text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]" onclick="document.getElementById('filePago').click()">
+              <div class="p-4 md:p-5">
+                <div class="w-12 h-12 rounded-2xl bg-white shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] border border-slate-200 flex items-center justify-center mx-auto mb-3">
+                  <FileUp class="w-5 h-5 text-slate-500" />
+                </div>
+                <p class="text-xs font-bold text-slate-500" id="labelPago">Arrastra o haz click</p>
+                <p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-300">JPG, PNG, WEBP o PDF</p>
+              </div>
               <input type="file" id="filePago" class="hidden" accept="image/*,application/pdf" onchange="procesarComprobante(this, 'pago')" />
+              <div id="previewPago" class="hidden border-t border-slate-200 bg-white/90 backdrop-blur-sm">
+                <div class="px-4 pt-4 flex items-start justify-between gap-3 text-left">
+                  <div class="min-w-0">
+                    <p id="previewPagoName" class="text-sm font-extrabold text-slate-800 truncate">Archivo</p>
+                    <p id="previewPagoMeta" class="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-slate-400">0 KB</p>
+                  </div>
+                  <a id="previewPagoOpen" href="#" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-indigo-700 hover:bg-indigo-100 transition-colors">
+                    Abrir
+                  </a>
+                </div>
+                <div class="px-4 pb-4 pt-3">
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                    <img id="previewPagoImg" alt="Preview comprobante pago" class="hidden w-full h-40 object-cover rounded-xl border border-slate-200 bg-white" />
+                    <iframe id="previewPagoPdf" title="Preview PDF comprobante pago" class="hidden w-full h-40 rounded-xl border border-slate-200 bg-white" loading="lazy"></iframe>
+                  </div>
+                  <p class="mt-2 text-[0.7rem] font-medium text-slate-400 text-left">Haz click en la tarjeta para reemplazar el archivo.</p>
+                </div>
+              </div>
             </div>
           </div>
           <div>
             <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Comprobante admin</label>
-            <div id="dropAdmin" class="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 p-4 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all" onclick="document.getElementById('fileAdmin').click()">
-              <FileUp class="w-6 h-6 text-slate-400 mx-auto mb-2" />
-              <p class="text-xs font-bold text-slate-500" id="labelAdmin">Arrastra o haz click</p>
+            <div id="dropAdmin" class="border-2 border-dashed border-slate-300 rounded-2xl bg-[linear-gradient(180deg,rgba(248,250,252,0.96)_0%,rgba(255,255,255,1)_100%)] text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]" onclick="document.getElementById('fileAdmin').click()">
+              <div class="p-4 md:p-5">
+                <div class="w-12 h-12 rounded-2xl bg-white shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] border border-slate-200 flex items-center justify-center mx-auto mb-3">
+                  <FileUp class="w-5 h-5 text-slate-500" />
+                </div>
+                <p class="text-xs font-bold text-slate-500" id="labelAdmin">Arrastra o haz click</p>
+                <p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-300">JPG, PNG, WEBP o PDF</p>
+              </div>
               <input type="file" id="fileAdmin" class="hidden" accept="image/*,application/pdf" onchange="procesarComprobante(this, 'admin')" />
+              <div id="previewAdmin" class="hidden border-t border-slate-200 bg-white/90 backdrop-blur-sm">
+                <div class="px-4 pt-4 flex items-start justify-between gap-3 text-left">
+                  <div class="min-w-0">
+                    <p id="previewAdminName" class="text-sm font-extrabold text-slate-800 truncate">Archivo</p>
+                    <p id="previewAdminMeta" class="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-slate-400">0 KB</p>
+                  </div>
+                  <a id="previewAdminOpen" href="#" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-indigo-700 hover:bg-indigo-100 transition-colors">
+                    Abrir
+                  </a>
+                </div>
+                <div class="px-4 pb-4 pt-3">
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                    <img id="previewAdminImg" alt="Preview comprobante admin" class="hidden w-full h-40 object-cover rounded-xl border border-slate-200 bg-white" />
+                    <iframe id="previewAdminPdf" title="Preview PDF comprobante admin" class="hidden w-full h-40 rounded-xl border border-slate-200 bg-white" loading="lazy"></iframe>
+                  </div>
+                  <p class="mt-2 text-[0.7rem] font-medium text-slate-400 text-left">Haz click en la tarjeta para reemplazar el archivo.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -467,6 +513,89 @@ import {
     tasa: 0,
     comprobantes: {}
   };
+  var previewUrls = {
+    pago: null,
+    admin: null
+  };
+
+  function formatFileSize(bytes) {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function revokePreviewUrl(tipo) {
+    if (previewUrls[tipo]) {
+      URL.revokeObjectURL(previewUrls[tipo]);
+      previewUrls[tipo] = null;
+    }
+  }
+
+  function resetPreview(tipo) {
+    var sufijo = tipo === 'pago' ? 'Pago' : 'Admin';
+    var preview = document.getElementById('preview' + sufijo);
+    var img = document.getElementById('preview' + sufijo + 'Img');
+    var pdf = document.getElementById('preview' + sufijo + 'Pdf');
+    var open = document.getElementById('preview' + sufijo + 'Open');
+    var name = document.getElementById('preview' + sufijo + 'Name');
+    var meta = document.getElementById('preview' + sufijo + 'Meta');
+
+    revokePreviewUrl(tipo);
+
+    if (preview) preview.classList.add('hidden');
+    if (img) {
+      img.classList.add('hidden');
+      img.removeAttribute('src');
+    }
+    if (pdf) {
+      pdf.classList.add('hidden');
+      pdf.removeAttribute('src');
+    }
+    if (open) open.setAttribute('href', '#');
+    if (name) name.textContent = 'Archivo';
+    if (meta) meta.textContent = '0 KB';
+  }
+
+  function renderPreviewComprobante(tipo, file) {
+    var sufijo = tipo === 'pago' ? 'Pago' : 'Admin';
+    var preview = document.getElementById('preview' + sufijo);
+    var img = document.getElementById('preview' + sufijo + 'Img');
+    var pdf = document.getElementById('preview' + sufijo + 'Pdf');
+    var open = document.getElementById('preview' + sufijo + 'Open');
+    var name = document.getElementById('preview' + sufijo + 'Name');
+    var meta = document.getElementById('preview' + sufijo + 'Meta');
+    var objectUrl = URL.createObjectURL(file);
+
+    revokePreviewUrl(tipo);
+    previewUrls[tipo] = objectUrl;
+
+    if (preview) preview.classList.remove('hidden');
+    if (name) name.textContent = file.name;
+    if (meta) meta.textContent = formatFileSize(file.size) + ' · ' + (file.type === 'application/pdf' ? 'PDF' : 'Imagen');
+    if (open) open.setAttribute('href', objectUrl);
+
+    if (file.type === 'application/pdf') {
+      if (img) {
+        img.classList.add('hidden');
+        img.removeAttribute('src');
+      }
+      if (pdf) {
+        pdf.src = objectUrl + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH';
+        pdf.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (pdf) {
+      pdf.classList.add('hidden');
+      pdf.removeAttribute('src');
+    }
+    if (img) {
+      img.src = objectUrl;
+      img.classList.remove('hidden');
+    }
+  }
 
   function ocultarAlertaKyc() {
     var box = document.getElementById('kycRequiredAlert');
@@ -890,10 +1019,12 @@ import {
     var tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (!tiposPermitidos.includes(file.type)) {
       showToast('error', 'Tipo no permitido', 'Solo imágenes o PDF');
+      input.value = '';
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
       showToast('error', 'Muy grande', 'Máximo 5MB');
+      input.value = '';
       return;
     }
     estado.comprobantes[tipo] = { nombre: file.name, tipo: file.type, archivo: file };
@@ -903,6 +1034,7 @@ import {
     label.classList.add('text-emerald-600');
     drop.classList.remove('border-slate-300', 'bg-slate-50');
     drop.classList.add('border-emerald-400', 'bg-emerald-50');
+    renderPreviewComprobante(tipo, file);
   }
 
   // ===================== UPLOAD S3 =====================
@@ -1013,6 +1145,8 @@ import {
     estado.salida = 0;
     estado.tasa = 0;
     estado.comprobantes = {};
+    resetPreview('pago');
+    resetPreview('admin');
     ocultarAlertaKyc();
 
     limpiarBusqueda();
@@ -1029,6 +1163,7 @@ import {
     labelP.classList.remove('text-emerald-600');
     dropP.classList.remove('border-emerald-400', 'bg-emerald-50');
     dropP.classList.add('border-slate-300', 'bg-slate-50');
+    document.getElementById('filePago').value = '';
 
     var labelA = document.getElementById('labelAdmin');
     var dropA = document.getElementById('dropAdmin');
@@ -1036,6 +1171,7 @@ import {
     labelA.classList.remove('text-emerald-600');
     dropA.classList.remove('border-emerald-400', 'bg-emerald-50');
     dropA.classList.add('border-slate-300', 'bg-slate-50');
+    document.getElementById('fileAdmin').value = '';
 
     document.getElementById('btnGuardarFinal').disabled = false;
     document.getElementById('btnGuardarFinal').innerHTML = '<Save class="w-4 h-4"/> Guardar transacción';
