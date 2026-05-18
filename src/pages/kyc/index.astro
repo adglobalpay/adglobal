@@ -996,13 +996,26 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         <h1 class="kyc-step-title">Foto de tu cédula</h1>
         <p class="kyc-step-desc">Documento completo, enfocado, sin reflejos y bien iluminado.</p>
 
+        <div id="idAlreadyUploaded" class="hidden" style="margin-bottom:1.5rem; padding:1.25rem; background:#eef2ff; border:1px solid #c7d2fe; border-radius:1rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <div style="width:2.5rem; height:2.5rem; border-radius:0.75rem; background:#6366f1; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <p style="font-weight:700; font-size:0.9rem; color:#1e293b;">Identificación ya cargada</p>
+              <p style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió tu documento. Puedes continuar.</p>
+            </div>
+          </div>
+          <img id="idAlreadyPreview" class="hidden" style="margin-top:0.75rem; width:100%; max-height:200px; object-fit:contain; border-radius:0.75rem; border:1px solid #c7d2fe;" alt="ID preview" />
+        </div>
+
         <div class="kyc-upload-area" id="idUploadArea" onclick="document.getElementById('idFrontInput').click()">
           <input id="idFrontInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleIdFront(this)">
           <div class="kyc-upload-icon-main" id="idIcon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
           </div>
-          <h3>Toca para fotografiar cédula</h3>
-          <p>Asegúrate que todos los datos sean legibles</p>
+          <h3 id="idUploadTitle">Toca para fotografiar cédula</h3>
+          <p id="idUploadDesc">Asegúrate que todos los datos sean legibles</p>
           <img id="idPreviewImg" class="kyc-upload-preview-img hidden" alt="ID preview" />
           <div id="idFileName" class="kyc-upload-file-name hidden"></div>
         </div>
@@ -1106,6 +1119,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       var signatureData = '';
       var selfieData = '';
       var idFrontData = '';
+      var hasManualIdFront = false;
       var canvas = null;
       var ctx = null;
 
@@ -1196,6 +1210,28 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             if (clientEmail) clientEmail.textContent = (data.client && data.client.email) || 'Solicitud de verificación';
             if (loadingEl) loadingEl.classList.add('hidden');
             if (progressBar) progressBar.classList.remove('hidden');
+
+            // Detectar documentos pre-subidos manualmente
+            if (data.documents && Array.isArray(data.documents)) {
+              var manualId = data.documents.find(function(d) { return d.documentType === 'id_front'; });
+              if (manualId && manualId.url) {
+                hasManualIdFront = true;
+                idFrontData = manualId.url;
+                var alreadyBox = document.getElementById('idAlreadyUploaded');
+                var alreadyPreview = document.getElementById('idAlreadyPreview');
+                var idUploadArea = document.getElementById('idUploadArea');
+                var idUploadTitle = document.getElementById('idUploadTitle');
+                var idUploadDesc = document.getElementById('idUploadDesc');
+                var btnStep3 = document.getElementById('btnStep3Next');
+                if (alreadyBox) alreadyBox.classList.remove('hidden');
+                if (alreadyPreview) { alreadyPreview.src = manualId.url; alreadyPreview.classList.remove('hidden'); }
+                if (idUploadArea) idUploadArea.style.display = 'none';
+                if (idUploadTitle) idUploadTitle.textContent = 'Reemplazar identificación';
+                if (idUploadDesc) idUploadDesc.textContent = 'Solo si quieres actualizarla';
+                if (btnStep3) btnStep3.disabled = false;
+              }
+            }
+
             if (data.status === 'PROCESSING' || data.status === 'VERIFIED') {
               showExistingStatus(data.status);
             } else {
@@ -1456,23 +1492,35 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       var btnSubmit = document.getElementById('btnSubmit');
       if (btnSubmit) {
         btnSubmit.addEventListener('click', function() {
-          if (!selfieData || !idFrontData || !signatureData) {
-            showStepError('step4Error', 'Faltan datos. Por favor completa todos los pasos.');
+          if (!signatureData) {
+            showStepError('step4Error', 'Faltan datos. Por favor completa la firma.');
+            return;
+          }
+          if (!selfieData) {
+            showStepError('step4Error', 'Faltan datos. Por favor sube tu foto.');
+            return;
+          }
+          if (!idFrontData && !hasManualIdFront) {
+            showStepError('step4Error', 'Faltan datos. Por favor sube tu cédula.');
             return;
           }
           hideStepError('step4Error');
           btnSubmit.disabled = true;
           btnSubmit.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>';
 
+          var payload = {
+            acceptedTerms: true,
+            signature: signatureData,
+            selfie: selfieData
+          };
+          if (idFrontData && !hasManualIdFront) {
+            payload.idFront = idFrontData;
+          }
+
           fetch(API_URL + '/api/kyc/public/' + encodeURIComponent(token) + '/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              acceptedTerms: true,
-              signature: signatureData,
-              selfie: selfieData,
-              idFront: idFrontData
-            })
+            body: JSON.stringify(payload)
           })
             .then(function(res) {
               return res.json().then(function(data) {

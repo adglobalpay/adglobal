@@ -31,6 +31,16 @@ interface Transaction {
   recipient: { name: string } | null;
 }
 
+interface KycDocument {
+  id: string;
+  documentType: string;
+  url: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  status: string | null;
+  uploadedAt: string;
+}
+
 interface KycRequest {
   id: string;
   status: string;
@@ -38,6 +48,7 @@ interface KycRequest {
   createdAt: string;
   expiresAt: string | null;
   completedAt: string | null;
+  documents: KycDocument[];
 }
 
 interface OfacCheck {
@@ -190,6 +201,12 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const [isOfacModalOpen, setIsOfacModalOpen] = useState(false);
   const [isUploadingOfac, setIsUploadingOfac] = useState(false);
 
+  // Modal subir documentos KYC
+  const [isKycUploadOpen, setIsKycUploadOpen] = useState(false);
+  const [kycUploadType, setKycUploadType] = useState('id_front');
+  const [kycUploadFile, setKycUploadFile] = useState<File | null>(null);
+  const [isUploadingKycDoc, setIsUploadingKycDoc] = useState(false);
+
   const clientId = clientIdProp || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
 
   const loadClient = useCallback(async () => {
@@ -307,6 +324,39 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
         detail: { type: 'success', message: 'Link copiado', description: 'El link KYC fue copiado al portapapeles.' }
       }));
     });
+  };
+
+  const handleUploadKycDoc = async () => {
+    if (!client || !latestKyc || !kycUploadFile) return;
+    setIsUploadingKycDoc(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+      const formData = new FormData();
+      formData.append('file', kycUploadFile);
+      formData.append('documentType', kycUploadType);
+      const res = await fetch(`${API_URL}/api/kyc/${latestKyc.id}/upload`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Error al subir' }));
+        throw new Error(err.error || 'Error al subir documento');
+      }
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Documento subido', description: 'El documento KYC fue guardado correctamente.' }
+      }));
+      setIsKycUploadOpen(false);
+      setKycUploadFile(null);
+      loadClient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    } finally {
+      setIsUploadingKycDoc(false);
+    }
   };
 
   const handleMarkOfacOk = async () => {
@@ -627,12 +677,20 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                 <Send className="w-3.5 h-3.5" /> Enviar link
               </button>
               {latestKyc && (
-                <a
-                  href={`/admin/kyc?kycId=${latestKyc.id}`}
-                  className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
-                >
-                  <Fingerprint className="w-3.5 h-3.5" /> Ver KYC
-                </a>
+                <>
+                  <a
+                    href={`/admin/kyc?kycId=${latestKyc.id}`}
+                    className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
+                  >
+                    <Fingerprint className="w-3.5 h-3.5" /> Ver KYC
+                  </a>
+                  <button
+                    onClick={() => setIsKycUploadOpen(true)}
+                    className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
+                  >
+                    <Upload className="w-3.5 h-3.5" /> Subir doc
+                  </button>
+                </>
               )}
               <button
                 onClick={async () => {
@@ -708,6 +766,46 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               <p className="text-sm font-bold text-slate-700">{latestKyc ? 'Manual' : '—'}</p>
             </div>
           </div>
+
+          {/* Documentos KYC subidos */}
+          {latestKyc && latestKyc.documents.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Documentos cargados</p>
+              <div className="grid grid-cols-1 gap-2">
+                {latestKyc.documents.map(doc => {
+                  const labels: Record<string, string> = {
+                    id_front: 'Cédula / Pasaporte (frente)',
+                    id_back: 'Cédula / Pasaporte (reverso)',
+                    selfie: 'Foto de rostro',
+                    signature: 'Firma digital',
+                    proof_address: 'Comprobante de domicilio',
+                    company_cert: 'Certificado de empresa',
+                    representante_id: 'ID del representante'
+                  };
+                  return (
+                    <a
+                      key={doc.id}
+                      href={doc.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-700 truncate">{labels[doc.documentType] || doc.documentType}</p>
+                          <p className="text-[0.65rem] text-slate-400 font-medium">{doc.status || 'Cargado'}</p>
+                        </div>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 group-hover:text-indigo-600 transition-all" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* OFAC */}
@@ -1115,6 +1213,133 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal subir documento KYC */}
+      {isKycUploadOpen && client && latestKyc && (
+        <div
+          className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:items-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            aria-label="Cerrar modal"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-lg"
+            onClick={() => { setIsKycUploadOpen(false); setKycUploadFile(null); }}
+          />
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_24px_80px_-20px_rgba(2,6,23,0.35)] transition-all duration-200">
+            <div className="relative bg-slate-900 px-5 py-6 sm:px-8 sm:py-7">
+              <div className="absolute inset-0 opacity-40">
+                <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
+                <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" />
+              </div>
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-indigo-400/80">Documento KYC</p>
+                  <h2 className="mt-0.5 text-lg sm:text-xl font-bold tracking-tight text-white">Subir identificación</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setIsKycUploadOpen(false); setKycUploadFile(null); }}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-400 transition-all hover:bg-slate-700 hover:text-white ring-1 ring-white/10"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5 sm:p-8 space-y-5">
+              <div>
+                <label className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Tipo de documento</label>
+                <select
+                  value={kycUploadType}
+                  onChange={e => setKycUploadType(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-indigo-400 focus:bg-white focus:ring-[3px] focus:ring-indigo-500/10"
+                >
+                  <option value="id_front">Cédula / Pasaporte (frente)</option>
+                  <option value="id_back">Cédula / Pasaporte (reverso)</option>
+                  <option value="selfie">Foto de rostro (selfie)</option>
+                  <option value="proof_address">Comprobante de domicilio</option>
+                  <option value="company_cert">Certificado de empresa</option>
+                  <option value="representante_id">ID del representante</option>
+                </select>
+              </div>
+
+              {kycUploadFile ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500 mb-2">Archivo seleccionado</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-slate-800 truncate">{kycUploadFile.name}</p>
+                      <p className="text-xs text-slate-400 font-medium">{(kycUploadFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <button
+                      onClick={() => setKycUploadFile(null)}
+                      className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-8 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/30"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files[0];
+                    if (file) setKycUploadFile(file);
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                    <Upload className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">Arrastra una imagen aquí</p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">o</p>
+                  <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-[0.98]">
+                    Seleccionar archivo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setKycUploadFile(file);
+                        e.currentTarget.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {isUploadingKycDoc && (
+                <div className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Subiendo...
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setIsKycUploadOpen(false); setKycUploadFile(null); }}
+                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUploadKycDoc}
+                  disabled={!kycUploadFile || isUploadingKycDoc}
+                  className="flex-1 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                >
+                  Subir documento
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
