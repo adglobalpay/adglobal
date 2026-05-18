@@ -220,13 +220,14 @@ export default function TransactionsPage() {
   const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
 
   const kpis = useMemo(() => {
-    const totalIngreso = filtered.reduce((s, t) => s + Number(t.ingresoUSD || 0), 0);
-    const totalSalida = filtered.reduce((s, t) => s + Number(t.salidaUSDT || 0), 0);
-    const tasaSum = filtered.reduce((s, t) => s + Number(t.tasa || 0), 0);
-    const promedioTasa = filtered.length > 0 ? (tasaSum / filtered.length) : 0;
-    const promedioMonto = filtered.length > 0 ? (totalIngreso / filtered.length) : 0;
-    const pendientes = filtered.filter(t => t.estado === 'PENDING' || t.estado === 'PROCESSING').length;
-    const validadoAdmin = filtered.reduce((s, t) => {
+    const validas = filtered.filter(t => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
+    const totalIngreso = validas.reduce((s, t) => s + Number(t.ingresoUSD || 0), 0);
+    const totalSalida = validas.reduce((s, t) => s + Number(t.salidaUSDT || 0), 0);
+    const tasaSum = validas.reduce((s, t) => s + Number(t.tasa || 0), 0);
+    const promedioTasa = validas.length > 0 ? (tasaSum / validas.length) : 0;
+    const promedioMonto = validas.length > 0 ? (totalIngreso / validas.length) : 0;
+    const pendientes = validas.filter(t => t.estado === 'PENDING' || t.estado === 'PROCESSING').length;
+    const validadoAdmin = validas.reduce((s, t) => {
       return s + (t.verificadorId ? Number(t.ingresoUSD || 0) : 0);
     }, 0);
     return { totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, validadoAdmin };

@@ -99,7 +99,9 @@ export default function ReportsDashboard() {
   }, [daysBack, period]);
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(t => new Date(t.fecha) >= cutoffDate);
+    return transactions
+      .filter(t => new Date(t.fecha) >= cutoffDate)
+      .filter(t => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
   }, [transactions, cutoffDate]);
 
   const reporteGeneral = useMemo(() => {

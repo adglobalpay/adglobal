@@ -86,8 +86,9 @@ export default function DashboardContent() {
         });
 
         const txs = txData.data || [];
+        const txsValidas = txs.filter((t: Transaction) => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
         const actividad = semana.map(d => {
-          const diaTxs = txs.filter((t: Transaction) => {
+          const diaTxs = txsValidas.filter((t: Transaction) => {
             const tf = new Date(t.fecha);
             return tf.getFullYear() === d.getFullYear() && tf.getMonth() === d.getMonth() && tf.getDate() === d.getDate();
           });

@@ -991,7 +991,7 @@ import {
     var ing = parseFloat(document.getElementById('txIngreso').value) || 0;
     var sal = parseFloat(document.getElementById('txSalida').value) || 0;
     var tasa = parseFloat(document.getElementById('txTasa').value) || 0;
-    var ves = sal * tasa;
+    var ves = ing * tasa;
     var profit = ing - sal;
     var margen = ing > 0 ? ((profit / ing) * 100) : 0;
     document.getElementById('resVES').textContent = new Intl.NumberFormat('es-VE').format(ves);
@@ -1008,7 +1008,7 @@ import {
     document.getElementById('resEntrada').textContent = '$' + new Intl.NumberFormat('es-US').format(estado.ingreso);
     document.getElementById('resSalida').textContent = '$' + new Intl.NumberFormat('es-US').format(estado.salida);
     document.getElementById('resTasa').textContent = new Intl.NumberFormat('es-VE').format(estado.tasa);
-    document.getElementById('resTotalVES').textContent = new Intl.NumberFormat('es-VE').format(estado.salida * estado.tasa);
+    document.getElementById('resTotalVES').textContent = new Intl.NumberFormat('es-VE').format(estado.ingreso * estado.tasa);
     document.getElementById('resTotalProfit').textContent = '$' + new Intl.NumberFormat('es-US').format(estado.ingreso - estado.salida);
   }
 
@@ -1090,7 +1090,7 @@ import {
         ingresoUSD: estado.ingreso,
         salidaUSDT: estado.salida,
         tasa: estado.tasa,
-        montoVES: estado.salida * estado.tasa,
+        montoVES: estado.ingreso * estado.tasa,
         metodo: metodo,
         profitUSD: estado.ingreso - estado.salida,
         estado: 'PENDING'

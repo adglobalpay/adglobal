@@ -452,8 +452,9 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   }
 
   const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName;
-  const totalUsd = client.transactions.reduce((sum, t) => sum + Number(t.ingresoUSD || 0), 0);
-  const totalTx = client.transactions.length;
+  const transaccionesValidas = client.transactions.filter(t => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
+  const totalUsd = transaccionesValidas.reduce((sum, t) => sum + Number(t.ingresoUSD || 0), 0);
+  const totalTx = transaccionesValidas.length;
   const levelInfo = getLevelInfo(totalTx);
   const kycCfg = KYC_MAP[client.kycStatus] || KYC_MAP.PENDING;
   const ofacCfg = OFAC_MAP[client.ofacStatus] || OFAC_MAP.PENDING;

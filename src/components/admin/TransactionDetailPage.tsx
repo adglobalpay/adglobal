@@ -21,6 +21,7 @@ interface TransactionDetail {
   notasAdmin: string | null;
   fechaVerificacion: string | null;
   verificador: { firstName: string; lastName: string | null } | null;
+  creadoPor: { id: string; firstName: string; lastName: string | null } | null;
   client: {
     id: string;
     firstName: string;
@@ -80,12 +81,27 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   const [estado, setEstado] = useState('');
   const [notas, setNotas] = useState('');
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Campos editables por operador
+  const [editIngresoUSD, setEditIngresoUSD] = useState('');
+  const [editSalidaUSDT, setEditSalidaUSDT] = useState('');
+  const [editTasa, setEditTasa] = useState('');
+  const [editMontoVES, setEditMontoVES] = useState('');
+  const [editMetodo, setEditMetodo] = useState('');
+  const [editComprobantePago, setEditComprobantePago] = useState('');
+  const [editComprobanteAdmin, setEditComprobanteAdmin] = useState('');
 
   const txId = (txIdProp && txIdProp !== 'placeholder')
     ? txIdProp
     : (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
   const currentUser = getUser();
   const isAdminReviewer = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
+
+  const canEdit = tx && (
+    isAdminReviewer ||
+    (currentUser?.role === 'OPERATOR' && tx.creadoPor?.id === currentUser?.id && (tx.estado === 'PENDING' || tx.estado === 'PROCESSING'))
+  );
 
   const loadTx = useCallback(async () => {
     if (!txId) {
@@ -102,6 +118,14 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
       setTx(data);
       setEstado(data.estado);
       setNotas(data.notasAdmin || '');
+      setEditIngresoUSD(String(data.ingresoUSD ?? ''));
+      setEditSalidaUSDT(String(data.salidaUSDT ?? ''));
+      setEditTasa(String(data.tasa ?? ''));
+      setEditMontoVES(String(data.montoVES ?? ''));
+      setEditMetodo(data.metodo ?? '');
+      setEditComprobantePago(data.comprobantePago ?? '');
+      setEditComprobanteAdmin(data.comprobanteAdmin ?? '');
+      setIsEditing(false);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -114,22 +138,43 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   }, [loadTx]);
 
   const handleSave = async () => {
-    if (!isAdminReviewer) {
+    if (!canEdit) {
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'warning', message: 'Acceso restringido', description: 'Solo admin puede validar o cambiar el estado de esta operación.' }
+        detail: { type: 'warning', message: 'Acceso restringido', description: 'No tienes permisos para editar esta transacción.' }
       }));
       return;
     }
 
     setSaving(true);
     try {
+      const body: any = {};
+
+      if (isAdminReviewer) {
+        // Admin puede cambiar estado y notas
+        body.estado = estado;
+        body.notasAdmin = notas;
+      }
+
+      if (isEditing) {
+        // Campos editables por operador o admin
+        body.ingresoUSD = editIngresoUSD ? parseFloat(editIngresoUSD) : undefined;
+        body.salidaUSDT = editSalidaUSDT ? parseFloat(editSalidaUSDT) : undefined;
+        body.tasa = editTasa ? parseFloat(editTasa) : undefined;
+        body.montoVES = editMontoVES ? parseFloat(editMontoVES) : undefined;
+        body.metodo = editMetodo || undefined;
+        body.comprobantePago = editComprobantePago || null;
+        body.comprobanteAdmin = editComprobanteAdmin || null;
+        body.notasAdmin = notas;
+      }
+
       await apiFetch(`/api/transactions/${txId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ estado, notasAdmin: notas })
+        body: JSON.stringify(body)
       });
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'success', message: 'Guardado', description: 'Transacción actualizada correctamente.' }
       }));
+      setIsEditing(false);
       loadTx();
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
@@ -191,6 +236,12 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
           <p className="text-sm text-slate-500 font-medium">{fechaStr} · Método: <span className="font-bold text-slate-700">{tx.metodo}</span></p>
         </div>
         <div className="flex gap-2 shrink-0">
+          {canEdit && (
+            <button onClick={() => setIsEditing(v => !v)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm ${isEditing ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>
+              {isEditing ? 'Cancelar edición' : 'Editar'}
+            </button>
+          )}
           <button onClick={() => window.print()} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all shadow-sm">
             <Printer className="w-4 h-4" /> Imprimir
           </button>
@@ -280,21 +331,79 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
       {/* Montos */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 anim-fade-in-up stagger-4">
-        {[
-          { label: 'Ingreso USD', value: `$${Number(tx.ingresoUSD).toFixed(2)}`, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: 'Salida USDT', value: `$${Number(tx.salidaUSDT).toFixed(2)}`, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Monto enviado (Bs)', value: `Bs. ${Number(tx.montoVES || (tx.salidaUSDT * tx.tasa)).toLocaleString()}`, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Tasa de cambio', value: `Bs. ${Number(tx.tasa).toFixed(2)}`, sub: tx.metodo, color: 'text-cyan-600', bg: 'bg-cyan-50' }
-        ].map((stat, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: `${0.35 + i * 0.05}s` }}>
-            <div className={`w-9 h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>
-              <FileText className="w-5 h-5" />
-            </div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{stat.label}</p>
-            <p className="text-lg md:text-xl font-bold text-slate-800 mt-1 tracking-tight">{stat.value}</p>
-            {stat.sub && <p className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{stat.sub}</p>}
+        {/* Ingreso USD */}
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: '0.35s' }}>
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+            <FileText className="w-5 h-5" />
           </div>
-        ))}
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Ingreso USD</p>
+          {isEditing ? (
+            <input type="number" step="0.01" value={editIngresoUSD} onChange={e => setEditIngresoUSD(e.target.value)}
+              className="w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
+          ) : (
+            <p className="text-lg md:text-xl font-bold text-slate-800 mt-1 tracking-tight">${Number(tx.ingresoUSD).toFixed(2)}</p>
+          )}
+        </div>
+
+        {/* Salida USDT */}
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+            <FileText className="w-5 h-5" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Salida USDT</p>
+          {isEditing ? (
+            <input type="number" step="0.01" value={editSalidaUSDT} onChange={e => setEditSalidaUSDT(e.target.value)}
+              className="w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
+          ) : (
+            <p className="text-lg md:text-xl font-bold text-slate-800 mt-1 tracking-tight">${Number(tx.salidaUSDT).toFixed(2)}</p>
+          )}
+        </div>
+
+        {/* Monto VES */}
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: '0.45s' }}>
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+            <FileText className="w-5 h-5" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Monto enviado (Bs)</p>
+          {isEditing ? (
+            <input type="number" step="0.01" value={editMontoVES} onChange={e => setEditMontoVES(e.target.value)}
+              className="w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
+          ) : (
+            <p className="text-lg md:text-xl font-bold text-slate-800 mt-1 tracking-tight">Bs. {Number(tx.montoVES || (tx.ingresoUSD * tx.tasa)).toLocaleString()}</p>
+          )}
+        </div>
+
+        {/* Tasa + Método */}
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-3">
+            <FileText className="w-5 h-5" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Tasa de cambio</p>
+          {isEditing ? (
+            <>
+              <input type="number" step="0.01" value={editTasa} onChange={e => setEditTasa(e.target.value)}
+                className="w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
+              <select value={editMetodo} onChange={e => setEditMetodo(e.target.value)}
+                className="custom-select w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+                <option value="USDT">USDT</option>
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TRANSFERENCIA">Transferencia</option>
+                <option value="ZELLE">Zelle</option>
+                <option value="VENMO">Venmo</option>
+                <option value="CASHAPP">CashApp</option>
+                <option value="PAYPAL">PayPal</option>
+                <option value="WIRE">Wire</option>
+                <option value="DEPOSITO">Depósito</option>
+                <option value="PAGO_MOVIL">Pago Móvil</option>
+              </select>
+            </>
+          ) : (
+            <>
+              <p className="text-lg md:text-xl font-bold text-slate-800 mt-1 tracking-tight">Bs. {Number(tx.tasa).toFixed(2)}</p>
+              <p className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{tx.metodo}</p>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Profit + Comisión */}
@@ -336,26 +445,55 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
           {/* Comprobantes */}
           <div className="space-y-3">
             <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Comprobantes</p>
-            {[
-              { key: 'comprobantePago' as const, label: 'Comprobante de pago' },
-              { key: 'comprobanteAdmin' as const, label: 'Comprobante administrativo' }
-            ].map(doc => (
-              <div key={doc.key} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0"><FileText className="w-4 h-4" /></div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-700">{doc.label}</p>
-                    <p className="text-xs text-slate-400 font-medium truncate">{tx[doc.key] || 'No disponible'}</p>
-                  </div>
+            {/* Comprobante de pago */}
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0"><FileText className="w-4 h-4" /></div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-slate-700">Comprobante de pago</p>
+                  {isEditing ? (
+                    <input type="text" value={editComprobantePago} onChange={e => setEditComprobantePago(e.target.value)}
+                      placeholder="URL del comprobante"
+                      className="w-full mt-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-500" />
+                  ) : (
+                    <p className="text-xs text-slate-400 font-medium truncate">{tx.comprobantePago || 'No disponible'}</p>
+                  )}
                 </div>
-                {tx[doc.key] ? (
-                  <a href={tx[doc.key]!} target="_blank" rel="noopener noreferrer"
+              </div>
+              {!isEditing && (
+                tx.comprobantePago ? (
+                  <a href={tx.comprobantePago} target="_blank" rel="noopener noreferrer"
                     className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100 shrink-0">Ver</a>
                 ) : (
                   <span className="text-xs text-slate-300 font-bold shrink-0">—</span>
-                )}
+                )
+              )}
+            </div>
+
+            {/* Comprobante administrativo */}
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0"><FileText className="w-4 h-4" /></div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-slate-700">Comprobante administrativo</p>
+                  {isEditing ? (
+                    <input type="text" value={editComprobanteAdmin} onChange={e => setEditComprobanteAdmin(e.target.value)}
+                      placeholder="URL del comprobante"
+                      className="w-full mt-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-500" />
+                  ) : (
+                    <p className="text-xs text-slate-400 font-medium truncate">{tx.comprobanteAdmin || 'No disponible'}</p>
+                  )}
+                </div>
               </div>
-            ))}
+              {!isEditing && (
+                tx.comprobanteAdmin ? (
+                  <a href={tx.comprobanteAdmin} target="_blank" rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100 shrink-0">Ver</a>
+                ) : (
+                  <span className="text-xs text-slate-300 font-bold shrink-0">—</span>
+                )
+              )}
+            </div>
             {tx.documents.length > 0 && tx.documents.map(d => (
               <div key={d.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
                 <div className="flex items-center gap-3 min-w-0">
@@ -389,14 +527,21 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
             <div>
               <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Notas de verificación</label>
-              <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3} disabled={!isAdminReviewer}
+              <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3} disabled={!canEdit}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium resize-none disabled:cursor-not-allowed disabled:opacity-60"
                 placeholder="Agregar notas sobre la verificación..." />
             </div>
 
+            {tx.creadoPor && (
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-500 font-medium">Creada por</p>
+                <p className="text-xs font-bold text-slate-700">{tx.creadoPor.firstName} {tx.creadoPor.lastName || ''}</p>
+              </div>
+            )}
+
             {!isAdminReviewer && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-                <p className="text-xs font-bold text-amber-700">Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar esta operación.</p>
+                <p className="text-xs font-bold text-amber-700">Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador creador, puedes corregir montos, comprobantes y notas mientras esté pendiente o en proceso.</p>
               </div>
             )}
 
@@ -411,14 +556,16 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
             )}
 
             <div className="flex gap-2 pt-1">
-              <button onClick={handleSave} disabled={saving || !isAdminReviewer}
+              <button onClick={handleSave} disabled={saving || !canEdit || (!isAdminReviewer && !isEditing)}
                 className="btn-interactive flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-1.5 disabled:opacity-60">
-                <Save className="w-3.5 h-3.5" /> {saving ? 'Guardando...' : 'Guardar verificación'}
+                <Save className="w-3.5 h-3.5" /> {saving ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Guardar verificación')}
               </button>
-              <button onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Próximamente', description: 'Subida de comprobantes en desarrollo.' } }))}
-                className="px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5">
-                <Upload className="w-3.5 h-3.5" /> Subir
-              </button>
+              {isEditing && (
+                <button onClick={() => setIsEditing(false)}
+                  className="px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5">
+                  Cancelar
+                </button>
+              )}
             </div>
           </div>
         </div>
