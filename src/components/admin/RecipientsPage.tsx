@@ -57,7 +57,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBanco, setFilterBanco] = useState('');
   const [filterRelacion, setFilterRelacion] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [banks, setBanks] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
