@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  CheckCircle2, Clock, ExternalLink, FileCheck2, Fingerprint, RefreshCw,
+  CheckCircle2, Clock, ExternalLink, FileCheck2, FileText, Fingerprint, RefreshCw,
   ShieldAlert, XCircle
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
@@ -209,6 +209,41 @@ export default function KycReviewPage() {
     }
   };
 
+  const downloadKycPdf = async () => {
+    if (!selected) return;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+      const res = await fetch(`${API_URL}/api/clients/${selected.client.id}/kyc.pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        if (contentType.includes('text/html')) {
+          throw new Error('El backend no reconoce esta ruta. Asegurate de que este desplegada la ultima version del backend.');
+        }
+        const err = await res.json().catch(() => ({ error: 'Error al generar PDF' }));
+        throw new Error(err.error || 'Error al generar PDF');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kyc-${selected.client.id.substring(0, 8).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'PDF descargado', description: 'Documentos KYC descargados correctamente.' }
+      }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error al descargar PDF', description: err.message }
+      }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -350,6 +385,13 @@ export default function KycReviewPage() {
                     className="px-4 py-2.5 bg-white text-rose-600 border border-rose-200 rounded-xl font-bold text-sm hover:bg-rose-50 transition-colors disabled:opacity-60"
                   >
                     {reviewing === 'REJECTED' ? 'Guardando...' : 'Rechazar'}
+                  </button>
+                  <button
+                    onClick={downloadKycPdf}
+                    disabled={!!reviewing}
+                    className="px-4 py-2.5 bg-white text-emerald-600 border border-emerald-200 rounded-xl font-bold text-sm hover:bg-emerald-50 transition-colors disabled:opacity-60 flex items-center gap-1.5"
+                  >
+                    <FileText className="w-4 h-4" /> Descargar PDF
                   </button>
                   <button
                     onClick={() => selected.status === 'VERIFIED' ? requestKycCorrection() : reviewRequest('VERIFIED')}

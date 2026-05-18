@@ -1176,7 +1176,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             '</div>' +
             '<h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--slate-800); margin-bottom:0.5rem;">' + (approved ? 'Identidad verificada' : 'Verificación enviada') + '</h1>' +
             '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">' + (approved ? 'Tu identidad ya fue aprobada por AD Global Pay.' : 'Recibimos tus datos. El equipo revisará tu firma, selfie y cédula manualmente.') + '</p>' +
-            '<a href="/kyc/completado" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
+            '<a href="/kyc/completado?status=' + encodeURIComponent(status) + '" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
           '</div>';
       }
 
@@ -1490,7 +1490,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
                     '</div>' +
                     '<h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--slate-800); margin-bottom:0.5rem;">¡Verificación enviada!</h1>' +
                     '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">Recibimos tu firma, selfie y cédula. El equipo de AD Global Pay revisará tus datos manualmente.</p>' +
-                    '<a href="/kyc/completado" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
+                    '<a href="/kyc/completado?status=PROCESSING" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
                   '</div>';
               }
             })
