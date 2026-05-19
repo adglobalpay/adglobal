@@ -116,9 +116,13 @@ export default function KycReviewPage() {
 
   const reviewRequest = async (status: 'VERIFIED' | 'REJECTED') => {
     if (!selected) return;
-    const notes = status === 'REJECTED'
-      ? window.prompt('Motivo del rechazo', 'Documento ilegible o datos incompletos') || ''
-      : '';
+
+    let notes = '';
+    if (status === 'REJECTED') {
+      const reason = window.prompt('Motivo del rechazo', 'Documento ilegible o datos incompletos');
+      if (reason === null) return; // Usuario canceló el prompt, abortar acción
+      notes = reason;
+    }
 
     setReviewing(status);
     try {
@@ -133,6 +137,8 @@ export default function KycReviewPage() {
           description: `${clientName(selected)} actualizado correctamente.`
         }
       }));
+      // Cambiar al tab correspondiente para que el usuario vea el resultado
+      setFilter(status === 'VERIFIED' ? 'VERIFIED' : 'REJECTED');
       await loadKyc(selected.id);
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
