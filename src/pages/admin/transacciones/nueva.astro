@@ -158,7 +158,7 @@ import {
           <!-- Banco -->
           <div>
             <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Banco destino *</label>
-            <select id="txBanco" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer">
+            <select id="txBanco" onchange="toggleTasaPorBanco(); calcularTransaccion()" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer">
               <option value="">Seleccionar...</option>
             </select>
           </div>
@@ -180,7 +180,7 @@ import {
               <input type="number" id="txSalida" step="0.01" placeholder="0.00" class="w-full pl-8 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="calcularTransaccion()" />
             </div>
           </div>
-          <div>
+          <div id="txTasaGroup">
             <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Tasa (VES) *</label>
             <div class="relative">
               <input type="number" id="txTasa" step="0.01" placeholder="0.00" class="w-full pl-4 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="calcularTransaccion()" />
@@ -637,6 +637,7 @@ import {
     await cargarBancosAPI();
     await cargarTiposCuentaAPI();
     poblarSelectMetodos();
+    toggleTasaPorBanco();
 
     // Autocomplete de clientes
     var inputBuscar = document.getElementById('buscarCliente');
@@ -897,14 +898,15 @@ import {
     if (estado.paso === 3) {
       var ing = parseFloat(document.getElementById('txIngreso').value) || 0;
       var sal = parseFloat(document.getElementById('txSalida').value) || 0;
-      var tasa = parseFloat(document.getElementById('txTasa').value) || 0;
+      var requiereTasa = !bancoDestinoEsBinance();
+      var tasa = requiereTasa ? (parseFloat(document.getElementById('txTasa').value) || 0) : 0;
       var met = document.getElementById('txMetodo').value;
       var ban = document.getElementById('txBanco').value;
       if (!met) { showToast('warning', 'Falta método', 'Selecciona un método de pago.'); return; }
       if (!ban) { showToast('warning', 'Falta banco', 'Selecciona un banco destino.'); return; }
       if (ing <= 0) { showToast('warning', 'Monto inválido', 'El ingreso debe ser mayor a 0.'); return; }
       if (sal <= 0) { showToast('warning', 'Monto inválido', 'La salida debe ser mayor a 0.'); return; }
-      if (tasa <= 0) { showToast('warning', 'Tasa inválida', 'La tasa debe ser mayor a 0.'); return; }
+      if (requiereTasa && tasa <= 0) { showToast('warning', 'Tasa inválida', 'La tasa debe ser mayor a 0.'); return; }
       estado.metodo = met;
       estado.banco = ban;
       estado.ingreso = ing;
@@ -985,6 +987,7 @@ import {
     if (!sel) return;
     sel.innerHTML = '<option value="">Seleccionar...</option>' +
       bancosLista.map(function(b) { return '<option value="' + b + '">' + b + '</option>'; }).join('');
+    toggleTasaPorBanco();
   }
 
   function poblarSelectBancosModal() {
@@ -1007,11 +1010,31 @@ import {
       metodos.map(function(m) { return '<option value="' + m.nombre + '">' + m.nombre + '</option>'; }).join('');
   }
 
+  function bancoDestinoEsBinance() {
+    var banco = document.getElementById('txBanco');
+    if (!banco) return false;
+    return String(banco.value || '').trim().toLowerCase() === 'binance';
+  }
+
+  function toggleTasaPorBanco() {
+    var tasaGroup = document.getElementById('txTasaGroup');
+    var tasaInput = document.getElementById('txTasa');
+    if (!tasaGroup || !tasaInput) return;
+
+    var ocultarTasa = bancoDestinoEsBinance();
+    tasaGroup.classList.toggle('hidden', ocultarTasa);
+    tasaInput.disabled = ocultarTasa;
+
+    if (ocultarTasa) {
+      tasaInput.value = '';
+    }
+  }
+
   // ===================== CÁLCULOS =====================
   function calcularTransaccion() {
     var ing = parseFloat(document.getElementById('txIngreso').value) || 0;
     var sal = parseFloat(document.getElementById('txSalida').value) || 0;
-    var tasa = parseFloat(document.getElementById('txTasa').value) || 0;
+    var tasa = bancoDestinoEsBinance() ? 0 : (parseFloat(document.getElementById('txTasa').value) || 0);
     var ves = ing * tasa;
     var profit = ing - sal;
     var margen = ing > 0 ? ((profit / ing) * 100) : 0;
@@ -1176,6 +1199,7 @@ import {
     document.getElementById('txIngreso').value = '';
     document.getElementById('txSalida').value = '';
     document.getElementById('txTasa').value = '';
+    toggleTasaPorBanco();
     calcularTransaccion();
 
     var labelP = document.getElementById('labelPago');

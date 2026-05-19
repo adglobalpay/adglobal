@@ -253,12 +253,18 @@ export default function ClientTable({ limit }: Props) {
     );
   }
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, typeLabel?: string) => {
     switch(status) {
       case 'VERIFIED': case 'OK':
         return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200"><ShieldCheck className="w-3 h-3 mr-1" />Verificado</span>;
       case 'PENDING':
-        return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200"><Clock className="w-3 h-3 mr-1" />Pendiente</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+            <Clock className="w-3 h-3" />
+            Pendiente
+            {typeLabel && <span className="text-[0.6rem] font-black text-amber-600/80 bg-amber-100 px-1 py-0.5 rounded">{typeLabel}</span>}
+          </span>
+        );
       case 'REVIEW':
         return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-200"><AlertCircle className="w-3 h-3 mr-1" />Revisar</span>;
       case 'COMPLETED': case 'DONE':
@@ -348,8 +354,8 @@ export default function ClientTable({ limit }: Props) {
                   </td>
                   <td className="py-4 px-3 align-top">
                     <div className="flex flex-col gap-1.5 items-start">
-                      {getStatusBadge(client.kycStatus)}
-                      {getStatusBadge(client.ofacStatus)}
+                      {getStatusBadge(client.kycStatus, 'KYC')}
+                      {getStatusBadge(client.ofacStatus, 'OFAC')}
                     </div>
                   </td>
                   <td className="py-4 px-3 align-top">
