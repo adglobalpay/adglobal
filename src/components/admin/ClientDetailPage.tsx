@@ -396,6 +396,15 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'success', message: 'PDF subido', description: 'Documento OFAC guardado correctamente.' }
       }));
+      // Actualizar estado OFAC a OK automáticamente
+      try {
+        await apiFetch(`/api/clients/${client.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ ofacStatus: 'OK' })
+        });
+      } catch (e) {
+        // Si falla el cambio de estado, no bloquear el flujo
+      }
       loadClient();
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
@@ -414,6 +423,15 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'success', message: 'PDF eliminado', description: 'Documento OFAC eliminado correctamente.' }
       }));
+      // Volver estado OFAC a PENDIENTE automáticamente
+      try {
+        await apiFetch(`/api/clients/${client.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ ofacStatus: 'PENDING' })
+        });
+      } catch (e) {
+        // Si falla el cambio de estado, no bloquear el flujo
+      }
       loadClient();
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
@@ -833,9 +851,10 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               >
                 <Upload className="w-3.5 h-3.5" /> Subir OFAC
               </button>
-              <button onClick={handleMarkOfacOk} className={`px-3 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 border ${ofacCfg.className}`}>
-                <CheckCircle2 className="w-3.5 h-3.5" /> Marcar OK
-              </button>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${client.ofacPdfUrl ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ofacCfg.className}`}>
+                {client.ofacPdfUrl ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                {client.ofacPdfUrl ? 'Verificado' : ofacCfg.label}
+              </span>
             </div>
           </div>
 
