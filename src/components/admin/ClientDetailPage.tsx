@@ -66,6 +66,7 @@ interface ClientDetail {
   lastName: string | null;
   phone: string | null;
   email: string | null;
+  documentId: string | null;
   preferredMethod: string | null;
   notes: string | null;
   kycStatus: string;
@@ -858,21 +859,27 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             </div>
           </div>
 
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Estado actual</span>
-              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border ${ofacCfg.className}`}>
-                {client.ofacStatus === 'OK' ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                {ofacCfg.label}
-              </span>
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 mb-4 space-y-3">
+            <div>
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Nombre para búsqueda</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-slate-200 text-sm font-mono text-slate-700">{fullName}</code>
+                <button onClick={() => handleCopy(fullName)} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5 shrink-0">
+                  <Copy className="w-3.5 h-3.5" /> Copiar
+                </button>
+              </div>
             </div>
-            <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Nombre para búsqueda</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-slate-200 text-sm font-mono text-slate-700">{fullName}</code>
-              <button onClick={() => handleCopy(fullName)} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5 shrink-0">
-                <Copy className="w-3.5 h-3.5" /> Copiar
-              </button>
-            </div>
+            {client.documentId && (
+              <div>
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Cédula / ID</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-slate-200 text-sm font-mono text-slate-700">{client.documentId}</code>
+                  <button onClick={() => handleCopy(client.documentId)} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5 shrink-0">
+                    <Copy className="w-3.5 h-3.5" /> Copiar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {latestOfac && (
