@@ -90,6 +90,7 @@ interface EditClientForm {
   lastName: string;
   email: string;
   phone: string;
+  documentId: string;
   country: string;
   preferredMethod: string[];
   notes: string;
@@ -160,6 +161,7 @@ function createEditForm(client: ClientDetail): EditClientForm {
     lastName: client.lastName || '',
     email: client.email || '',
     phone: client.phone || '',
+    documentId: client.documentId || '',
     country: client.country || 'us',
     preferredMethod: parsePreferredMethod(client.preferredMethod),
     notes: client.notes || '',
@@ -559,6 +561,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
           lastName: editForm.lastName,
           email: editForm.email,
           phone: editForm.phone,
+          documentId: editForm.documentId,
           country: editForm.country,
           preferredMethod: editForm.preferredMethod,
           notes: editForm.notes,
@@ -1104,6 +1107,15 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                         onChange={(e) => handleEditFieldChange('phone', e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
                         placeholder="+1 305 000 0000"
+                      />
+                    </label>
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Cédula / ID</span>
+                      <input
+                        value={editForm.documentId}
+                        onChange={(e) => handleEditFieldChange('documentId', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                        placeholder="V-12345678"
                       />
                     </label>
                     <label className="block group">
