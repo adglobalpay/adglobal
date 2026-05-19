@@ -90,7 +90,7 @@ export default function ConfigPage() {
     hora_fin: '18:00',
     zona_horaria: 'America/New_York',
     dias_laborales: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'] as string[],
-    porcentaje_operador: '36',
+    porcentaje_operador: '30',
     comision_global: '8.5',
     tasa_costo: '2.9',
     meta_operador: '5000',

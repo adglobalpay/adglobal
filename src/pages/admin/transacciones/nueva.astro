@@ -119,11 +119,15 @@ import {
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="text-lg font-bold text-slate-800">¿Quién recibe?</h2>
-            <p class="text-sm text-slate-400 font-medium mt-1">Selecciona un destinatario o crea uno nuevo</p>
+            <p class="text-sm text-slate-400 font-medium mt-1">Selecciona uno o varios destinatarios</p>
           </div>
           <button onclick="abrirModalDestinatario()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 rounded-xl font-bold text-xs border border-emerald-200 transition-all">
             <UserPlus class="w-4 h-4 shrink-0" /> Nuevo destinatario
           </button>
+        </div>
+
+        <div id="destinatariosSeleccionadosInfo" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+          0 destinatarios seleccionados
         </div>
 
         <div id="listaDestinatarios" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
@@ -143,49 +147,24 @@ import {
       <div id="step3" class="hidden p-6 md:p-8 space-y-6">
         <div class="mb-4">
           <h2 class="text-lg font-bold text-slate-800">Detalles de la operación</h2>
-          <p class="text-sm text-slate-400 font-medium mt-1">Ingresa los montos y selecciona el método</p>
+          <p class="text-sm text-slate-400 font-medium mt-1">La entrada es fija; los demás datos pueden variar por destinatario</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Método -->
-          <div>
-            <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Método de pago *</label>
-            <select id="txMetodo" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer">
-              <option value="">Seleccionar...</option>
-            </select>
-          </div>
-
-          <!-- Banco -->
-          <div>
-            <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Banco destino *</label>
-            <select id="txBanco" onchange="toggleTasaPorBanco(); calcularTransaccion()" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer">
-              <option value="">Seleccionar...</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Montos -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+        <!-- Entrada común -->
+        <div class="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+          <div class="max-w-xs">
             <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Entrada (USD) *</label>
             <div class="relative">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
               <input type="number" id="txIngreso" step="0.01" placeholder="0.00" class="w-full pl-8 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="calcularTransaccion()" />
             </div>
+            <p class="mt-2 text-xs font-semibold text-indigo-500">Este monto se aplicará a todos los destinatarios seleccionados.</p>
           </div>
-          <div>
-            <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Salida (USDT) *</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-              <input type="number" id="txSalida" step="0.01" placeholder="0.00" class="w-full pl-8 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="calcularTransaccion()" />
-            </div>
-          </div>
-          <div id="txTasaGroup">
-            <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Tasa (VES) *</label>
-            <div class="relative">
-              <input type="number" id="txTasa" step="0.01" placeholder="0.00" class="w-full pl-4 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="calcularTransaccion()" />
-            </div>
-          </div>
+        </div>
+
+        <!-- Detalles por destinatario -->
+        <div id="detallesDestinatarios" class="space-y-4">
+          <!-- Se llena dinámicamente -->
         </div>
 
         <!-- Resumen de cálculos -->
@@ -314,7 +293,7 @@ import {
           <div class="flex items-start gap-3 pb-4 border-b border-slate-200">
             <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><Send class="w-5 h-5"/></div>
             <div>
-              <p class="text-[0.65rem] font-black uppercase tracking-wider text-slate-400">Destinatario</p>
+              <p class="text-[0.65rem] font-black uppercase tracking-wider text-slate-400">Destinatarios</p>
               <p class="font-bold text-slate-800" id="resDestinatario">—</p>
               <p class="text-xs text-slate-500 font-medium" id="resDestinatarioInfo">—</p>
             </div>
@@ -470,8 +449,8 @@ import {
       <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
         <Check class="w-8 h-8" />
       </div>
-      <h2 class="text-xl font-extrabold text-slate-800 mb-2">¡Transacción guardada!</h2>
-      <p class="text-sm text-slate-500 font-medium mb-6">La operación fue registrada exitosamente.</p>
+      <h2 class="text-xl font-extrabold text-slate-800 mb-2" id="modalExitoTitulo">¡Transacción guardada!</h2>
+      <p class="text-sm text-slate-500 font-medium mb-6" id="modalExitoDescripcion">La operación fue registrada exitosamente.</p>
       <div class="flex flex-col gap-3">
         <button onclick="nuevaTransaccion()" class="w-full px-5 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-[0_4px_12px_rgba(79,70,229,0.2)] hover:bg-indigo-700 transition-all">
           <Plus class="w-4 h-4 inline -mt-0.5 mr-1" /> Registrar otra
@@ -504,6 +483,8 @@ import {
     paso: 1,
     cliente: null,
     destinatario: null,
+    destinatarios: [],
+    detallesPorDestinatario: {},
     metodo: '',
     banco: '',
     ingreso: 0,
@@ -628,6 +609,26 @@ import {
     window.dispatchEvent(new CustomEvent('show-toast', {
       detail: { type: type, message: message, description: description }
     }));
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function optionList(options, selected) {
+    return options.map(function(option) {
+      var safe = escapeHtml(option);
+      return '<option value="' + safe + '"' + (option === selected ? ' selected' : '') + '>' + safe + '</option>';
+    }).join('');
+  }
+
+  function bancoEsBinance(value) {
+    return String(value || '').trim().toLowerCase() === 'binance';
   }
 
   // ===================== CARGA INICIAL =====================
@@ -801,6 +802,9 @@ import {
     if (!c) return;
     ocultarAlertaKyc();
     estado.cliente = c;
+    estado.destinatario = null;
+    estado.destinatarios = [];
+    estado.detallesPorDestinatario = {};
     document.getElementById('buscarCliente').value = c.nombre;
     document.getElementById('clearBusqueda').classList.remove('hidden');
     document.getElementById('resultadosClientes').classList.add('hidden');
@@ -819,6 +823,10 @@ import {
     document.getElementById('clienteSeleccionado').classList.add('hidden');
     document.getElementById('resultadosClientes').classList.add('hidden');
     estado.cliente = null;
+    estado.destinatario = null;
+    estado.destinatarios = [];
+    estado.detallesPorDestinatario = {};
+    actualizarInfoDestinatariosSeleccionados();
   }
 
   function cambiarCliente() {
@@ -839,6 +847,10 @@ import {
 
     if (n === 2 && estado.cliente) {
       cargarDestinatariosWizard(estado.cliente.id);
+    }
+    if (n === 3) {
+      renderDetallesDestinatarios();
+      calcularTransaccion();
     }
     if (n === 4) {
       renderResumen();
@@ -890,28 +902,33 @@ import {
       }
     }
     if (estado.paso === 2) {
-      if (!estado.destinatario) {
+      if (!estado.destinatarios || estado.destinatarios.length === 0) {
         showToast('warning', 'Selecciona un destinatario', 'Elige quién recibe el envío.');
         return;
       }
     }
     if (estado.paso === 3) {
       var ing = parseFloat(document.getElementById('txIngreso').value) || 0;
-      var sal = parseFloat(document.getElementById('txSalida').value) || 0;
-      var requiereTasa = !bancoDestinoEsBinance();
-      var tasa = requiereTasa ? (parseFloat(document.getElementById('txTasa').value) || 0) : 0;
-      var met = document.getElementById('txMetodo').value;
-      var ban = document.getElementById('txBanco').value;
-      if (!met) { showToast('warning', 'Falta método', 'Selecciona un método de pago.'); return; }
-      if (!ban) { showToast('warning', 'Falta banco', 'Selecciona un banco destino.'); return; }
       if (ing <= 0) { showToast('warning', 'Monto inválido', 'El ingreso debe ser mayor a 0.'); return; }
-      if (sal <= 0) { showToast('warning', 'Monto inválido', 'La salida debe ser mayor a 0.'); return; }
-      if (requiereTasa && tasa <= 0) { showToast('warning', 'Tasa inválida', 'La tasa debe ser mayor a 0.'); return; }
-      estado.metodo = met;
-      estado.banco = ban;
+
+      var destinatarios = estado.destinatarios || [];
+      for (var idx = 0; idx < destinatarios.length; idx++) {
+        var destinatario = destinatarios[idx];
+        var detalle = obtenerDetalleDestinatario(destinatario.id);
+        var salida = parseFloat(detalle.salida) || 0;
+        var requiereTasa = !bancoEsBinance(detalle.banco);
+        var tasa = requiereTasa ? (parseFloat(detalle.tasa) || 0) : 0;
+        var nombreDestino = destinatario.nombre || ('Destinatario ' + (idx + 1));
+
+        if (!detalle.metodo) { showToast('warning', 'Falta método', 'Selecciona un método para ' + nombreDestino + '.'); return; }
+        if (!detalle.banco) { showToast('warning', 'Falta banco', 'Selecciona un banco para ' + nombreDestino + '.'); return; }
+        if (salida <= 0) { showToast('warning', 'Monto inválido', 'La salida de ' + nombreDestino + ' debe ser mayor a 0.'); return; }
+        if (requiereTasa && tasa <= 0) { showToast('warning', 'Tasa inválida', 'La tasa de ' + nombreDestino + ' debe ser mayor a 0.'); return; }
+
+        detalle.salida = salida;
+        detalle.tasa = tasa;
+      }
       estado.ingreso = ing;
-      estado.salida = sal;
-      estado.tasa = tasa;
     }
     mostrarPaso(estado.paso + 1);
   }
@@ -945,6 +962,10 @@ import {
         return { id: r.id, nombre: r.name, telefono: r.phone || '', banco: r.bank || '', cuenta: r.accountNumber || '', relacion: r.relationship || '' };
       });
       destinatariosPorCliente[clientId] = lista;
+      estado.destinatarios = estado.destinatarios.filter(function(selected) {
+        return lista.some(function(item) { return item.id === selected.id; });
+      });
+      estado.destinatario = estado.destinatarios[0] || null;
       renderDestinatariosWizard(lista);
     } catch (e) {
       cont.innerHTML = '';
@@ -958,13 +979,15 @@ import {
     if (lista.length === 0) {
       cont.innerHTML = '';
       sin.classList.remove('hidden');
+      actualizarInfoDestinatariosSeleccionados();
       return;
     }
     sin.classList.add('hidden');
     cont.innerHTML = lista.map(function(d) {
-      var sel = estado.destinatario && estado.destinatario.id === d.id ? 'ring-2 ring-emerald-500 border-emerald-300 bg-emerald-50/50' : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30';
+      var seleccionado = estado.destinatarios.some(function(item) { return item.id === d.id; });
+      var sel = seleccionado ? 'ring-2 ring-emerald-500 border-emerald-300 bg-emerald-50/50' : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30';
       return '<button type="button" onclick="seleccionarDestinatario(\'' + d.id + '\')" class="text-left p-4 rounded-xl border-2 ' + sel + ' transition-all duration-200 flex items-start gap-3">' +
-        '<div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold shrink-0">' + d.nombre.charAt(0) + '</div>' +
+        '<div class="w-10 h-10 rounded-lg ' + (seleccionado ? 'bg-emerald-500 text-white' : 'bg-emerald-100 text-emerald-600') + ' flex items-center justify-center text-sm font-bold shrink-0">' + (seleccionado ? '✓' : d.nombre.charAt(0)) + '</div>' +
         '<div class="flex-1 min-w-0">' +
           '<p class="font-bold text-sm text-slate-800 truncate">' + d.nombre + '</p>' +
           '<p class="text-xs text-slate-500 font-medium">' + d.banco + ' · ' + d.cuenta + '</p>' +
@@ -972,19 +995,133 @@ import {
         '</div>' +
       '</button>';
     }).join('');
+    actualizarInfoDestinatariosSeleccionados();
   }
 
   function seleccionarDestinatario(id) {
     var lista = destinatariosPorCliente[estado.cliente.id] || [];
     var d = lista.find(function(x) { return x.id === id; });
     if (!d) return;
-    estado.destinatario = d;
+    var existe = estado.destinatarios.some(function(item) { return item.id === id; });
+    if (existe) {
+      estado.destinatarios = estado.destinatarios.filter(function(item) { return item.id !== id; });
+      delete estado.detallesPorDestinatario[id];
+    } else {
+      estado.destinatarios.push(d);
+      obtenerDetalleDestinatario(d.id);
+    }
+    estado.destinatario = estado.destinatarios[0] || null;
     renderDestinatariosWizard(lista);
+  }
+
+  function actualizarInfoDestinatariosSeleccionados() {
+    var info = document.getElementById('destinatariosSeleccionadosInfo');
+    if (!info) return;
+    var total = estado.destinatarios ? estado.destinatarios.length : 0;
+    info.classList.toggle('hidden', total === 0);
+    info.textContent = total + ' destinatario' + (total === 1 ? '' : 's') + ' seleccionado' + (total === 1 ? '' : 's');
+  }
+
+  function obtenerDetalleDestinatario(id) {
+    if (!estado.detallesPorDestinatario) estado.detallesPorDestinatario = {};
+    if (!estado.detallesPorDestinatario[id]) {
+      var lista = estado.cliente ? (destinatariosPorCliente[estado.cliente.id] || []) : [];
+      var destinatario = lista.find(function(item) { return item.id === id; }) || {};
+      estado.detallesPorDestinatario[id] = {
+        metodo: '',
+        banco: destinatario.banco || '',
+        salida: '',
+        tasa: ''
+      };
+    }
+    return estado.detallesPorDestinatario[id];
+  }
+
+  function actualizarDetalleDestinatario(id, campo, valor) {
+    var detalle = obtenerDetalleDestinatario(id);
+    detalle[campo] = valor;
+    if (campo === 'banco') {
+      if (bancoEsBinance(valor)) detalle.tasa = '';
+      renderDetallesDestinatarios();
+    }
+    calcularTransaccion();
+  }
+
+  function renderDetallesDestinatarios() {
+    var cont = document.getElementById('detallesDestinatarios');
+    if (!cont) return;
+    var destinatarios = estado.destinatarios || [];
+
+    if (destinatarios.length === 0) {
+      cont.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center text-sm font-semibold text-slate-400">Selecciona destinatarios para configurar los detalles.</div>';
+      return;
+    }
+
+    cont.innerHTML = destinatarios.map(function(destinatario, index) {
+      var detalle = obtenerDetalleDestinatario(destinatario.id);
+      var esBinance = bancoEsBinance(detalle.banco);
+      var ingreso = parseFloat(document.getElementById('txIngreso')?.value) || 0;
+      var salida = parseFloat(detalle.salida) || 0;
+      var tasa = esBinance ? 0 : (parseFloat(detalle.tasa) || 0);
+      var ves = ingreso * tasa;
+      var profit = ingreso - salida;
+      var margen = ingreso > 0 ? ((profit / ingreso) * 100) : 0;
+      var safeId = escapeHtml(destinatario.id);
+      var titulo = escapeHtml(destinatario.nombre || ('Destinatario ' + (index + 1)));
+      var subtitulo = escapeHtml((destinatario.banco || 'Sin banco') + (destinatario.cuenta ? ' · ' + destinatario.cuenta : ''));
+
+      return '<div class="rounded-2xl border border-slate-200 bg-white p-4 md:p-5 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.45)]">' +
+        '<div class="mb-4 flex items-start justify-between gap-3">' +
+          '<div class="flex items-center gap-3 min-w-0">' +
+            '<div class="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-black shrink-0">' + (index + 1) + '</div>' +
+            '<div class="min-w-0">' +
+              '<p class="text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-600">Destinatario</p>' +
+              '<p class="mt-0.5 text-sm font-black text-slate-800 truncate">' + titulo + '</p>' +
+              '<p class="text-xs font-semibold text-slate-400 truncate">' + subtitulo + '</p>' +
+            '</div>' +
+          '</div>' +
+          '<span class="rounded-full bg-slate-100 px-3 py-1 text-[0.62rem] font-black uppercase tracking-wider text-slate-500">Individual</span>' +
+        '</div>' +
+        '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
+          '<div>' +
+            '<label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Método de pago *</label>' +
+            '<select id="detMetodo-' + safeId + '" onchange="actualizarDetalleDestinatario(\'' + safeId + '\', \'metodo\', this.value)" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer">' +
+              '<option value="">Seleccionar...</option>' + optionList(metodos.map(function(m) { return m.nombre; }), detalle.metodo) +
+            '</select>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Banco destino *</label>' +
+            '<select id="detBanco-' + safeId + '" onchange="actualizarDetalleDestinatario(\'' + safeId + '\', \'banco\', this.value)" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer">' +
+              '<option value="">Seleccionar...</option>' + optionList(bancosLista, detalle.banco) +
+            '</select>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Salida (USDT) *</label>' +
+            '<div class="relative">' +
+              '<span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>' +
+              '<input type="number" step="0.01" value="' + escapeHtml(detalle.salida) + '" placeholder="0.00" class="w-full pl-8 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="actualizarDetalleDestinatario(\'' + safeId + '\', \'salida\', this.value)" />' +
+            '</div>' +
+          '</div>' +
+          '<div class="' + (esBinance ? 'hidden' : '') + '">' +
+            '<label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Tasa (VES) *</label>' +
+            '<input type="number" step="0.01" value="' + escapeHtml(detalle.tasa) + '" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="actualizarDetalleDestinatario(\'' + safeId + '\', \'tasa\', this.value)" />' +
+          '</div>' +
+        '</div>' +
+        '<div class="mt-4 grid grid-cols-3 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">' +
+          '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">VES</p><p id="detVES-' + safeId + '" class="mt-1 text-sm font-black font-mono text-slate-700">' + new Intl.NumberFormat('es-VE').format(ves) + '</p></div>' +
+          '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Profit</p><p id="detProfit-' + safeId + '" class="mt-1 text-sm font-black font-mono text-emerald-600">$' + new Intl.NumberFormat('es-US').format(profit) + '</p></div>' +
+          '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Margen</p><p id="detMargen-' + safeId + '" class="mt-1 text-sm font-black font-mono text-indigo-600">' + margen.toFixed(1) + '%</p></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
   }
 
   function poblarSelectBancos() {
     var sel = document.getElementById('txBanco');
-    if (!sel) return;
+    if (!sel) {
+      renderDetallesDestinatarios();
+      return;
+    }
     sel.innerHTML = '<option value="">Seleccionar...</option>' +
       bancosLista.map(function(b) { return '<option value="' + b + '">' + b + '</option>'; }).join('');
     toggleTasaPorBanco();
@@ -1006,6 +1143,10 @@ import {
 
   function poblarSelectMetodos() {
     var sel = document.getElementById('txMetodo');
+    if (!sel) {
+      renderDetallesDestinatarios();
+      return;
+    }
     sel.innerHTML = '<option value="">Seleccionar...</option>' +
       metodos.map(function(m) { return '<option value="' + m.nombre + '">' + m.nombre + '</option>'; }).join('');
   }
@@ -1013,7 +1154,7 @@ import {
   function bancoDestinoEsBinance() {
     var banco = document.getElementById('txBanco');
     if (!banco) return false;
-    return String(banco.value || '').trim().toLowerCase() === 'binance';
+    return bancoEsBinance(banco.value);
   }
 
   function toggleTasaPorBanco() {
@@ -1033,27 +1174,70 @@ import {
   // ===================== CÁLCULOS =====================
   function calcularTransaccion() {
     var ing = parseFloat(document.getElementById('txIngreso').value) || 0;
-    var sal = parseFloat(document.getElementById('txSalida').value) || 0;
-    var tasa = bancoDestinoEsBinance() ? 0 : (parseFloat(document.getElementById('txTasa').value) || 0);
-    var ves = ing * tasa;
-    var profit = ing - sal;
-    var margen = ing > 0 ? ((profit / ing) * 100) : 0;
-    document.getElementById('resVES').textContent = new Intl.NumberFormat('es-VE').format(ves);
-    document.getElementById('resProfit').textContent = '$' + new Intl.NumberFormat('es-US').format(profit);
+    var destinatarios = estado.destinatarios || [];
+    var totalVES = 0;
+    var totalProfit = 0;
+
+    destinatarios.forEach(function(destinatario) {
+      var detalle = obtenerDetalleDestinatario(destinatario.id);
+      var salida = parseFloat(detalle.salida) || 0;
+      var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
+      var ves = ing * tasa;
+      var profit = ing - salida;
+      var margenDetalle = ing > 0 ? ((profit / ing) * 100) : 0;
+      totalVES += ves;
+      totalProfit += profit;
+
+      var detVES = document.getElementById('detVES-' + destinatario.id);
+      var detProfit = document.getElementById('detProfit-' + destinatario.id);
+      var detMargen = document.getElementById('detMargen-' + destinatario.id);
+      if (detVES) detVES.textContent = new Intl.NumberFormat('es-VE').format(ves);
+      if (detProfit) detProfit.textContent = '$' + new Intl.NumberFormat('es-US').format(profit);
+      if (detMargen) detMargen.textContent = margenDetalle.toFixed(1) + '%';
+    });
+
+    var baseIngreso = ing * destinatarios.length;
+    var margen = baseIngreso > 0 ? ((totalProfit / baseIngreso) * 100) : 0;
+    document.getElementById('resVES').textContent = new Intl.NumberFormat('es-VE').format(totalVES);
+    document.getElementById('resProfit').textContent = '$' + new Intl.NumberFormat('es-US').format(totalProfit);
     document.getElementById('resMargen').textContent = margen.toFixed(1) + '%';
   }
 
   function renderResumen() {
+    var destinatarios = estado.destinatarios || [];
     document.getElementById('resCliente').textContent = estado.cliente ? estado.cliente.nombre : '—';
     document.getElementById('resClienteInfo').textContent = estado.cliente ? (estado.cliente.telefono || estado.cliente.email) : '—';
-    document.getElementById('resDestinatario').textContent = estado.destinatario ? estado.destinatario.nombre : '—';
-    document.getElementById('resDestinatarioInfo').textContent = estado.destinatario ? (estado.destinatario.banco + ' · ' + estado.destinatario.cuenta) : '—';
-    document.getElementById('resMetodo').textContent = estado.metodo || '—';
-    document.getElementById('resEntrada').textContent = '$' + new Intl.NumberFormat('es-US').format(estado.ingreso);
-    document.getElementById('resSalida').textContent = '$' + new Intl.NumberFormat('es-US').format(estado.salida);
-    document.getElementById('resTasa').textContent = new Intl.NumberFormat('es-VE').format(estado.tasa);
-    document.getElementById('resTotalVES').textContent = new Intl.NumberFormat('es-VE').format(estado.ingreso * estado.tasa);
-    document.getElementById('resTotalProfit').textContent = '$' + new Intl.NumberFormat('es-US').format(estado.ingreso - estado.salida);
+    document.getElementById('resDestinatario').textContent = destinatarios.length > 0
+      ? destinatarios.map(function(d) { return d.nombre; }).join(', ')
+      : '—';
+    document.getElementById('resDestinatarioInfo').textContent = destinatarios.length > 0
+      ? destinatarios.length + ' destinatario' + (destinatarios.length === 1 ? '' : 's') + ' seleccionado' + (destinatarios.length === 1 ? '' : 's') + ' · entrada fija'
+      : '—';
+    var metodosUsados = [];
+    var tasasUsadas = [];
+    var totalSalida = 0;
+    var totalVES = 0;
+    var totalProfit = 0;
+
+    destinatarios.forEach(function(destinatario) {
+      var detalle = obtenerDetalleDestinatario(destinatario.id);
+      var salida = parseFloat(detalle.salida) || 0;
+      var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
+      if (detalle.metodo && !metodosUsados.includes(detalle.metodo)) metodosUsados.push(detalle.metodo);
+      if (!bancoEsBinance(detalle.banco) && tasa > 0) tasasUsadas.push(tasa);
+      totalSalida += salida;
+      totalVES += estado.ingreso * tasa;
+      totalProfit += estado.ingreso - salida;
+    });
+
+    document.getElementById('resMetodo').textContent = metodosUsados.length > 0 ? metodosUsados.join(', ') : '—';
+    document.getElementById('resEntrada').textContent = '$' + new Intl.NumberFormat('es-US').format(estado.ingreso) + ' fija';
+    document.getElementById('resSalida').textContent = '$' + new Intl.NumberFormat('es-US').format(totalSalida) + (destinatarios.length > 1 ? ' total' : '');
+    document.getElementById('resTasa').textContent = tasasUsadas.length === 0
+      ? '0'
+      : (tasasUsadas.length === 1 ? new Intl.NumberFormat('es-VE').format(tasasUsadas[0]) : 'Varias');
+    document.getElementById('resTotalVES').textContent = new Intl.NumberFormat('es-VE').format(totalVES);
+    document.getElementById('resTotalProfit').textContent = '$' + new Intl.NumberFormat('es-US').format(totalProfit);
   }
 
   // ===================== COMPROBANTES =====================
@@ -1114,7 +1298,6 @@ import {
       'PayPal': 'PAYPAL', 'Wire': 'WIRE', 'Deposito': 'DEPOSITO',
       'Pago Movil': 'PAGO_MOVIL', 'Transferencia': 'TRANSFERENCIA'
     };
-    var metodo = metodoMap[estado.metodo] || 'TRANSFERENCIA';
 
     try {
       // Subir comprobantes a S3 primero
@@ -1128,39 +1311,54 @@ import {
         comprobanteAdminUrl = await subirComprobanteAS3(estado.comprobantes.admin.archivo, 'admin');
       }
 
-      var payload = {
-        clientId: estado.cliente.id,
-        recipientId: estado.destinatario.id,
-        ingresoUSD: estado.ingreso,
-        salidaUSDT: estado.salida,
-        tasa: estado.tasa,
-        montoVES: estado.ingreso * estado.tasa,
-        metodo: metodo,
-        profitUSD: estado.ingreso - estado.salida,
-        estado: 'PENDING'
-      };
-
-      if (comprobantePagoUrl) payload.comprobantePago = comprobantePagoUrl;
-      if (comprobanteAdminUrl) payload.comprobanteAdmin = comprobanteAdminUrl;
-
       var token = localStorage.getItem('adglobal_token');
-      var res = await fetch(API_URL + '/api/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        var err = await res.json().catch(function() { return {}; });
-        if (err.code === 'KYC_REQUIRED') {
-          mostrarAlertaKyc(err);
-          showToast('warning', 'KYC obligatorio', err.error || 'El cliente debe completar KYC antes de registrar este giro.');
-          throw new Error('KYC obligatorio');
+      var destinatarios = estado.destinatarios || [];
+      for (var i = 0; i < destinatarios.length; i++) {
+        var destinatario = destinatarios[i];
+        var detalle = obtenerDetalleDestinatario(destinatario.id);
+        var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
+        var salida = parseFloat(detalle.salida) || 0;
+        var metodo = metodoMap[detalle.metodo] || 'TRANSFERENCIA';
+        var payload = {
+          clientId: estado.cliente.id,
+          recipientId: destinatario.id,
+          ingresoUSD: estado.ingreso,
+          salidaUSDT: salida,
+          tasa: tasa,
+          montoVES: estado.ingreso * tasa,
+          metodo: metodo,
+          profitUSD: estado.ingreso - salida,
+          estado: 'PENDING'
+        };
+
+        if (comprobantePagoUrl) payload.comprobantePago = comprobantePagoUrl;
+        if (comprobanteAdminUrl) payload.comprobanteAdmin = comprobanteAdminUrl;
+
+        var res = await fetch(API_URL + '/api/transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          var err = await res.json().catch(function() { return {}; });
+          if (err.code === 'KYC_REQUIRED') {
+            mostrarAlertaKyc(err);
+            showToast('warning', 'KYC obligatorio', err.error || 'El cliente debe completar KYC antes de registrar este giro.');
+            throw new Error('KYC obligatorio');
+          }
+          if (err.code === 'MIN_TRANSACTION_REQUIRED') {
+            throw new Error(err.error || 'La transacción no cumple el monto mínimo.');
+          }
+          throw new Error(err.error || 'Error al guardar');
         }
-        if (err.code === 'MIN_TRANSACTION_REQUIRED') {
-          throw new Error(err.error || 'La transacción no cumple el monto mínimo.');
-        }
-        throw new Error(err.error || 'Error al guardar');
       }
+
+      document.getElementById('modalExitoTitulo').textContent = destinatarios.length === 1
+        ? '¡Transacción guardada!'
+        : '¡Transacciones guardadas!';
+      document.getElementById('modalExitoDescripcion').textContent = destinatarios.length === 1
+        ? 'La operación fue registrada exitosamente.'
+        : 'Se registraron ' + destinatarios.length + ' transacciones exitosamente.';
 
       var modal = document.getElementById('modalExito');
       var content = document.getElementById('modalContentExito');
@@ -1183,6 +1381,8 @@ import {
     estado.paso = 1;
     estado.cliente = null;
     estado.destinatario = null;
+    estado.destinatarios = [];
+    estado.detallesPorDestinatario = {};
     estado.metodo = '';
     estado.banco = '';
     estado.ingreso = 0;
@@ -1194,11 +1394,9 @@ import {
     ocultarAlertaKyc();
 
     limpiarBusqueda();
-    document.getElementById('txMetodo').value = '';
-    document.getElementById('txBanco').value = '';
+    actualizarInfoDestinatariosSeleccionados();
     document.getElementById('txIngreso').value = '';
-    document.getElementById('txSalida').value = '';
-    document.getElementById('txTasa').value = '';
+    renderDetallesDestinatarios();
     toggleTasaPorBanco();
     calcularTransaccion();
 

@@ -53,6 +53,7 @@ export default function DashboardContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
   const [activity, setActivity] = useState<{ dia: string; cantidad: number; volumen: number }[]>([]);
+  const [realProfitGlobal, setRealProfitGlobal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Admin');
 
@@ -68,13 +69,25 @@ export default function DashboardContent() {
     async function loadAll() {
       setLoading(true);
       try {
-        const [statsData, txData] = await Promise.all([
+        const [statsData, txData, allTxData] = await Promise.all([
           apiFetch('/api/stats/dashboard').catch(() => null),
-          apiFetch('/api/transactions?limit=5').catch(() => ({ data: [] }))
+          apiFetch('/api/transactions?limit=5').catch(() => ({ data: [] })),
+          apiFetch('/api/transactions').catch(() => ({ data: [] }))
         ]);
 
         if (statsData) setStats(statsData);
         setRecentTx(txData.data || []);
+
+        // Calcular profit global real solo de transacciones COMPLETED
+        const allTxs = allTxData.data || [];
+        const completedTxs = allTxs.filter((t: any) => t.estado === 'COMPLETED');
+        const profitSum = completedTxs.reduce((s: number, t: any) => {
+          const p = t.profitUSD !== null && t.profitUSD !== undefined
+            ? Number(t.profitUSD)
+            : Number(t.ingresoUSD || 0) - Number(t.salidaUSDT || 0);
+          return s + p;
+        }, 0);
+        setRealProfitGlobal(profitSum);
 
         // Build weekly activity from transactions
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -115,13 +128,13 @@ export default function DashboardContent() {
     const tasaCosto = Number(stats?.costRate || 0);
     const meta = Number(stats?.operatorTarget || 0);
     const volumen = Number(stats?.monthlyVolume || 0);
-    const profitGlobal = Number(stats?.monthlyProfit || 0);
+    const profitGlobal = realProfitGlobal;
     const costoOperativo = Number(stats?.operatingCost || 0);
-    const profitOperador = Number(stats?.operatorProfit || 0);
+    const profitOperador = profitGlobal * (porcentaje / 100);
     const restantePorcentaje = Math.max(0, 100 - porcentaje);
     const restanteGlobal = Math.max(0, profitGlobal - profitOperador);
     return { porcentaje, comision, tasaCosto, meta, volumen, profitGlobal, costoOperativo, profitOperador, restantePorcentaje, restanteGlobal };
-  }, [stats]);
+  }, [stats, realProfitGlobal]);
 
   const alertas = useMemo(() => {
     const list: { tipo: string; mensaje: string; link: string }[] = [];
@@ -176,7 +189,7 @@ export default function DashboardContent() {
             </div>
           </div>
           <p className="text-5xl font-extrabold font-mono tracking-tighter relative z-10 flex items-baseline">
-            <span className="text-3xl text-indigo-400 mr-1">$</span>{profit.profitGlobal.toLocaleString()}
+            <span className="text-3xl text-indigo-400 mr-1">$</span>{realProfitGlobal.toLocaleString()}
           </p>
           <div className="grid grid-cols-3 gap-3 mt-8 pt-4 border-t border-white/10 relative z-10">
             <div className="transition-transform duration-300 hover:scale-105">
@@ -190,7 +203,7 @@ export default function DashboardContent() {
               </p>
             </div>
             <div className="text-right transition-transform duration-300 hover:scale-105">
-              <p className="text-[0.6rem] text-indigo-400 uppercase tracking-wider mb-1 font-semibold">Costo Total</p>
+              <p className="text-[0.6rem] text-indigo-400 uppercase tracking-wider mb-1 font-semibold">Costo Operativo</p>
               <p className="font-bold text-base md:text-lg flex items-center justify-end gap-1">
                 <span className="text-indigo-400 text-sm">$</span>{Math.round(profit.costoOperativo).toLocaleString()} <span className="text-sm font-normal text-indigo-400/80">({profit.tasaCosto}%)</span>
               </p>
