@@ -819,11 +819,19 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               </div>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setIsOfacModalOpen(true)}
+              <a
+                href="https://sanctionssearch.ofac.treas.gov"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="px-3 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5"
               >
                 <ExternalLink className="w-3.5 h-3.5" /> OFAC
+              </a>
+              <button
+                onClick={() => setIsOfacModalOpen(true)}
+                className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
+              >
+                <Upload className="w-3.5 h-3.5" /> Subir OFAC
               </button>
               <button onClick={handleMarkOfacOk} className={`px-3 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 border ${ofacCfg.className}`}>
                 <CheckCircle2 className="w-3.5 h-3.5" /> Marcar OK
