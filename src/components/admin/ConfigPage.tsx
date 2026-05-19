@@ -40,6 +40,14 @@ interface BankItem {
   isActive: boolean;
 }
 
+interface AccountTypeItem {
+  id: string;
+  name: string;
+  label: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export default function ConfigPage() {
   const [config, setConfig] = useState<ConfigMap>({});
   const [users, setUsers] = useState<SystemUser[]>([]);
@@ -59,6 +67,12 @@ export default function ConfigPage() {
   const [bankLoading, setBankLoading] = useState(false);
   const [bankForm, setBankForm] = useState({ name: '', label: '', sortOrder: 0, isActive: true });
   const [bankEditing, setBankEditing] = useState<string | null>(null);
+
+  // Account types state
+  const [accountTypes, setAccountTypes] = useState<AccountTypeItem[]>([]);
+  const [accountTypeLoading, setAccountTypeLoading] = useState(false);
+  const [accountTypeForm, setAccountTypeForm] = useState({ name: '', label: '', sortOrder: 0, isActive: true });
+  const [accountTypeEditing, setAccountTypeEditing] = useState<string | null>(null);
 
   // Users state
   const [userLoading, setUserLoading] = useState(false);
@@ -363,6 +377,61 @@ export default function ConfigPage() {
     }
   };
 
+  // Account types CRUD
+  const loadAccountTypes = async () => {
+    setAccountTypeLoading(true);
+    try {
+      const data = await apiFetch('/api/account-types');
+      setAccountTypes(data);
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    } finally {
+      setAccountTypeLoading(false);
+    }
+  };
+
+  const saveAccountType = async () => {
+    if (!accountTypeForm.name || !accountTypeForm.label) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'warning', message: 'Campos requeridos', description: 'Nombre y etiqueta son obligatorios.' } }));
+      return;
+    }
+    try {
+      if (accountTypeEditing) {
+        await apiFetch(`/api/account-types/${accountTypeEditing}`, { method: 'PATCH', body: JSON.stringify(accountTypeForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Actualizado', description: 'Tipo de cuenta actualizado.' } }));
+      } else {
+        await apiFetch('/api/account-types', { method: 'POST', body: JSON.stringify(accountTypeForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Creado', description: 'Tipo de cuenta creado.' } }));
+      }
+      setAccountTypeForm({ name: '', label: '', sortOrder: 0, isActive: true });
+      setAccountTypeEditing(null);
+      loadAccountTypes();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
+  const editAccountType = (accountType: AccountTypeItem) => {
+    setAccountTypeForm({
+      name: accountType.name,
+      label: accountType.label,
+      sortOrder: accountType.sortOrder,
+      isActive: accountType.isActive
+    });
+    setAccountTypeEditing(accountType.id);
+  };
+
+  const deleteAccountType = async (id: string) => {
+    if (!confirm('¿Eliminar este tipo de cuenta?')) return;
+    try {
+      await apiFetch(`/api/account-types/${id}`, { method: 'DELETE' });
+      loadAccountTypes();
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Eliminado', description: 'Tipo de cuenta eliminado.' } }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
   // Users CRUD
   const loadUsers = async () => {
     setUserLoading(true);
@@ -420,6 +489,7 @@ export default function ConfigPage() {
   useEffect(() => {
     loadPaymentMethods();
     loadBanks();
+    loadAccountTypes();
   }, []);
 
   const costoOperativo = Math.round(Number(form.volumen_mensual) * (Number(form.tasa_costo) / 100));
@@ -966,6 +1036,82 @@ export default function ConfigPage() {
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => deletePaymentMethod(pm.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-all" title="Eliminar">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Tipos de cuenta */}
+      <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center"><CreditCard className="w-5 h-5" /></div>
+            <div>
+              <h2 className="text-base md:text-lg font-extrabold text-slate-800 tracking-tight">Tipos de cuenta</h2>
+              <p className="text-xs text-slate-400 font-medium">Gestiona las opciones disponibles para destinatarios</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Nombre (ID)</label>
+                <input type="text" value={accountTypeForm.name} onChange={e => setAccountTypeForm({ ...accountTypeForm, name: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="corriente" />
+              </div>
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Etiqueta</label>
+                <input type="text" value={accountTypeForm.label} onChange={e => setAccountTypeForm({ ...accountTypeForm, label: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="Corriente" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Orden</label>
+                <input type="number" value={accountTypeForm.sortOrder} onChange={e => setAccountTypeForm({ ...accountTypeForm, sortOrder: Number(e.target.value) || 0 })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="0" />
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 cursor-pointer pb-2">
+                  <input type="checkbox" checked={accountTypeForm.isActive} onChange={e => setAccountTypeForm({ ...accountTypeForm, isActive: e.target.checked })} className="rounded accent-indigo-600 w-4 h-4" />
+                  <span className="text-sm font-semibold text-slate-700">Activo</span>
+                </label>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveAccountType} className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all btn-interactive flex items-center justify-center gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> {accountTypeEditing ? 'Actualizar' : 'Agregar'}
+              </button>
+              {accountTypeEditing && (
+                <button onClick={() => { setAccountTypeEditing(null); setAccountTypeForm({ name: '', label: '', sortOrder: 0, isActive: true }); }} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all">
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            {accountTypeLoading ? (
+              <div className="text-center py-8 text-slate-400 text-sm">Cargando...</div>
+            ) : accountTypes.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-sm font-medium">No hay tipos de cuenta</div>
+            ) : (
+              accountTypes.map(accountType => (
+                <div key={accountType.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-cyan-200 transition-all group">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{accountType.label}</p>
+                    <p className="text-[0.65rem] text-slate-400 font-medium">{accountType.name} · Orden {accountType.sortOrder} · {accountType.isActive ? 'Activo' : 'Inactivo'}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => editAccountType(accountType)} className="w-8 h-8 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all" title="Editar">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => deleteAccountType(accountType.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-all" title="Eliminar">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

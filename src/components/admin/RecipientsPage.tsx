@@ -28,6 +28,14 @@ interface Client {
   country: string;
 }
 
+interface AccountTypeItem {
+  id: string;
+  name: string;
+  label: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 const RELACIONES = ['Familiar', 'Hermano/a', 'Prima/o', 'Tío/a', 'Amigo/a', 'Colega', 'Cliente', 'Otro'];
 
 function formatDate(d: string) {
@@ -60,6 +68,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [banks, setBanks] = useState<string[]>([]);
+  const [accountTypes, setAccountTypes] = useState<AccountTypeItem[]>([]);
   const [saving, setSaving] = useState(false);
 
   const [showImportModal, setShowImportModal] = useState(false);
@@ -90,10 +99,18 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
     apiFetch('/api/banks')
       .then(data => setBanks(data.filter((b: any) => b.isActive !== false).map((b: any) => b.label)))
       .catch(() => setBanks([]));
+    apiFetch('/api/account-types')
+      .then(data => setAccountTypes(data))
+      .catch(() => setAccountTypes([]));
   }, [loadData]);
 
   const bancos = useMemo(() => [...new Set(recipients.map(r => r.bank))], [recipients]);
   const relaciones = useMemo(() => [...new Set(recipients.map(r => r.relationship))], [recipients]);
+  const activeAccountTypeLabels = useMemo(
+    () => accountTypes.filter(type => type.isActive !== false).map(type => type.label),
+    [accountTypes]
+  );
+  const defaultAccountType = activeAccountTypeLabels[0] || 'Corriente';
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -120,7 +137,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
     phone: '',
     bank: '',
     accountNumber: '',
-    accountType: 'Corriente',
+    accountType: '',
     identification: '',
     notes: ''
   });
@@ -133,7 +150,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
       phone: '',
       bank: '',
       accountNumber: '',
-      accountType: 'Corriente',
+      accountType: defaultAccountType,
       identification: '',
       notes: ''
     });
@@ -242,7 +259,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
             phone: cols[2] || null,
             bank: cols[3],
             accountNumber: cols[4],
-            accountType: cols[5] || 'Corriente',
+            accountType: cols[5] || defaultAccountType,
             identification: cols[6] || null,
             notes: cols[7] || null
           })
@@ -487,9 +504,16 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
                   <div>
                     <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Tipo cuenta</label>
                     <select value={form.accountType} onChange={e => setForm({ ...form, accountType: e.target.value })}
-                      className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 text-sm font-medium cursor-pointer">
-                      <option>Corriente</option>
-                      <option>Ahorros</option>
+                      disabled={activeAccountTypeLabels.length === 0 && !form.accountType}
+                      className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 text-sm font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                      {form.accountType && !activeAccountTypeLabels.includes(form.accountType) && (
+                        <option value={form.accountType}>{form.accountType}</option>
+                      )}
+                      {activeAccountTypeLabels.length === 0 ? (
+                        <option value="">Sin tipos disponibles</option>
+                      ) : (
+                        activeAccountTypeLabels.map(type => <option key={type} value={type}>{type}</option>)
+                      )}
                     </select>
                   </div>
                 </div>

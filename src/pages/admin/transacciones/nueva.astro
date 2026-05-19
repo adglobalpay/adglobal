@@ -438,10 +438,7 @@ import {
             <div>
               <label class="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Tipo de Cuenta</label>
               <select id="destAccountType" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-[3px] focus:ring-emerald-500/10">
-                <option value="Pago Móvil">Pago Móvil</option>
-                <option value="Corriente">Corriente</option>
-                <option value="Ahorro">Ahorro</option>
-                <option value="Zelle">Zelle</option>
+                <option value="">Seleccionar...</option>
               </select>
             </div>
             <div class="sm:col-span-2">
@@ -499,6 +496,7 @@ import {
   var destinatariosPorCliente = {};
   var metodos = [];
   var bancosLista = [];
+  var accountTypesLista = [];
 
   var API_URL = window.__ADGLOBAL_API_URL__ || 'https://backend-global-production.up.railway.app';
 
@@ -637,6 +635,7 @@ import {
     await cargarClientes();
     await cargarMetodosAPI();
     await cargarBancosAPI();
+    await cargarTiposCuentaAPI();
     poblarSelectMetodos();
 
     // Autocomplete de clientes
@@ -756,6 +755,21 @@ import {
       poblarSelectBancosModal();
     } catch (e) {
       console.error('Error cargando bancos:', e);
+    }
+  }
+
+  async function cargarTiposCuentaAPI() {
+    try {
+      var token = localStorage.getItem('adglobal_token');
+      var res = await fetch(API_URL + '/api/account-types', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) throw new Error('Error');
+      var data = await res.json();
+      accountTypesLista = data.filter(function(type) { return type.isActive !== false; }).map(function(type) {
+        return type.label;
+      });
+      poblarSelectTiposCuentaModal();
+    } catch (e) {
+      console.error('Error cargando tipos de cuenta:', e);
     }
   }
 
@@ -978,6 +992,13 @@ import {
     if (!sel) return;
     sel.innerHTML = '<option value="">Seleccionar...</option>' +
       bancosLista.map(function(b) { return '<option value="' + b + '">' + b + '</option>'; }).join('');
+  }
+
+  function poblarSelectTiposCuentaModal() {
+    var sel = document.getElementById('destAccountType');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Seleccionar...</option>' +
+      accountTypesLista.map(function(type) { return '<option value="' + type + '">' + type + '</option>'; }).join('');
   }
 
   function poblarSelectMetodos() {
