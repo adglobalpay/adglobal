@@ -186,9 +186,9 @@ import {
         </div>
 
         <!-- Comprobantes -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-4">
           <div>
-            <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Comprobante pago</label>
+            <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Comprobante ingreso</label>
             <div id="dropPago" class="border-2 border-dashed border-slate-300 rounded-2xl bg-[linear-gradient(180deg,rgba(248,250,252,0.96)_0%,rgba(255,255,255,1)_100%)] text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]" onclick="document.getElementById('filePago').click()">
               <div class="p-4 md:p-5">
                 <div class="w-12 h-12 rounded-2xl bg-white shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] border border-slate-200 flex items-center justify-center mx-auto mb-3">
@@ -218,35 +218,11 @@ import {
               </div>
             </div>
           </div>
+
           <div>
-            <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Comprobante admin</label>
-            <div id="dropAdmin" class="border-2 border-dashed border-slate-300 rounded-2xl bg-[linear-gradient(180deg,rgba(248,250,252,0.96)_0%,rgba(255,255,255,1)_100%)] text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]" onclick="document.getElementById('fileAdmin').click()">
-              <div class="p-4 md:p-5">
-                <div class="w-12 h-12 rounded-2xl bg-white shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] border border-slate-200 flex items-center justify-center mx-auto mb-3">
-                  <FileUp class="w-5 h-5 text-slate-500" />
-                </div>
-                <p class="text-xs font-bold text-slate-500" id="labelAdmin">Arrastra o haz click</p>
-                <p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-300">JPG, PNG, WEBP o PDF</p>
-              </div>
-              <input type="file" id="fileAdmin" class="hidden" accept="image/*,application/pdf" onchange="procesarComprobante(this, 'admin')" />
-              <div id="previewAdmin" class="hidden border-t border-slate-200 bg-white/90 backdrop-blur-sm">
-                <div class="px-4 pt-4 flex items-start justify-between gap-3 text-left">
-                  <div class="min-w-0">
-                    <p id="previewAdminName" class="text-sm font-extrabold text-slate-800 truncate">Archivo</p>
-                    <p id="previewAdminMeta" class="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-slate-400">0 KB</p>
-                  </div>
-                  <a id="previewAdminOpen" href="#" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-indigo-700 hover:bg-indigo-100 transition-colors">
-                    Abrir
-                  </a>
-                </div>
-                <div class="px-4 pb-4 pt-3">
-                  <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-                    <img id="previewAdminImg" alt="Preview comprobante admin" class="hidden w-full h-40 object-cover rounded-xl border border-slate-200 bg-white" />
-                    <iframe id="previewAdminPdf" title="Preview PDF comprobante admin" class="hidden w-full h-40 rounded-xl border border-slate-200 bg-white" loading="lazy"></iframe>
-                  </div>
-                  <p class="mt-2 text-[0.7rem] font-medium text-slate-400 text-left">Haz click en la tarjeta para reemplazar el archivo.</p>
-                </div>
-              </div>
+            <label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Comprobantes egreso</label>
+            <div id="comprobantesEgreso" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Se llena dinámicamente por destinatario -->
             </div>
           </div>
         </div>
@@ -490,7 +466,7 @@ import {
     ingreso: 0,
     salida: 0,
     tasa: 0,
-    comprobantes: {}
+    comprobantes: { egresos: {} }
   };
   var previewUrls = {
     pago: null,
@@ -671,7 +647,6 @@ import {
 
     // Setup drag & drop para comprobantes
     setupDropZone('dropPago', 'filePago', 'pago');
-    setupDropZone('dropAdmin', 'fileAdmin', 'admin');
   });
 
   function setupDropZone(dropId, inputId, tipo) {
@@ -850,6 +825,7 @@ import {
     }
     if (n === 3) {
       renderDetallesDestinatarios();
+      renderComprobantesEgreso();
       calcularTransaccion();
     }
     if (n === 4) {
@@ -1006,12 +982,15 @@ import {
     if (existe) {
       estado.destinatarios = estado.destinatarios.filter(function(item) { return item.id !== id; });
       delete estado.detallesPorDestinatario[id];
+      if (estado.comprobantes.egresos) delete estado.comprobantes.egresos[id];
+      revokePreviewUrl('egreso-' + id);
     } else {
       estado.destinatarios.push(d);
       obtenerDetalleDestinatario(d.id);
     }
     estado.destinatario = estado.destinatarios[0] || null;
     renderDestinatariosWizard(lista);
+    renderComprobantesEgreso();
   }
 
   function actualizarInfoDestinatariosSeleccionados() {
@@ -1047,6 +1026,26 @@ import {
     calcularTransaccion();
   }
 
+  function obtenerSalidaDetalle(destinatario) {
+    var detalle = obtenerDetalleDestinatario(destinatario.id);
+    return parseFloat(detalle.salida) || 0;
+  }
+
+  function obtenerTotalSalida(destinatarios) {
+    return destinatarios.reduce(function(total, destinatario) {
+      return total + obtenerSalidaDetalle(destinatario);
+    }, 0);
+  }
+
+  function obtenerIngresoAsignado(destinatario, destinatarios, ingresoTotal) {
+    var totalSalida = obtenerTotalSalida(destinatarios);
+    var salida = obtenerSalidaDetalle(destinatario);
+    if (totalSalida > 0) {
+      return ingresoTotal * (salida / totalSalida);
+    }
+    return destinatarios.length > 0 ? ingresoTotal / destinatarios.length : ingresoTotal;
+  }
+
   function renderDetallesDestinatarios() {
     var cont = document.getElementById('detallesDestinatarios');
     if (!cont) return;
@@ -1061,11 +1060,12 @@ import {
       var detalle = obtenerDetalleDestinatario(destinatario.id);
       var esBinance = bancoEsBinance(detalle.banco);
       var ingreso = parseFloat(document.getElementById('txIngreso')?.value) || 0;
+      var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, ingreso);
       var salida = parseFloat(detalle.salida) || 0;
       var tasa = esBinance ? 0 : (parseFloat(detalle.tasa) || 0);
-      var ves = ingreso * tasa;
-      var profit = ingreso - salida;
-      var margen = ingreso > 0 ? ((profit / ingreso) * 100) : 0;
+      var ves = ingresoAsignado * tasa;
+      var profit = ingresoAsignado - salida;
+      var margen = ingresoAsignado > 0 ? ((profit / ingresoAsignado) * 100) : 0;
       var safeId = escapeHtml(destinatario.id);
       var titulo = escapeHtml(destinatario.nombre || ('Destinatario ' + (index + 1)));
       var subtitulo = escapeHtml((destinatario.banco || 'Sin banco') + (destinatario.cuenta ? ' · ' + destinatario.cuenta : ''));
@@ -1107,7 +1107,8 @@ import {
             '<input type="number" step="0.01" value="' + escapeHtml(detalle.tasa) + '" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="actualizarDetalleDestinatario(\'' + safeId + '\', \'tasa\', this.value)" />' +
           '</div>' +
         '</div>' +
-        '<div class="mt-4 grid grid-cols-3 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">' +
+        '<div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">' +
+          '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Entrada asignada</p><p id="detIngreso-' + safeId + '" class="mt-1 text-sm font-black font-mono text-slate-700">$' + new Intl.NumberFormat('es-US').format(ingresoAsignado) + '</p></div>' +
           '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">VES</p><p id="detVES-' + safeId + '" class="mt-1 text-sm font-black font-mono text-slate-700">' + new Intl.NumberFormat('es-VE').format(ves) + '</p></div>' +
           '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Profit</p><p id="detProfit-' + safeId + '" class="mt-1 text-sm font-black font-mono text-emerald-600">$' + new Intl.NumberFormat('es-US').format(profit) + '</p></div>' +
           '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Margen</p><p id="detMargen-' + safeId + '" class="mt-1 text-sm font-black font-mono text-indigo-600">' + margen.toFixed(1) + '%</p></div>' +
@@ -1180,24 +1181,26 @@ import {
 
     destinatarios.forEach(function(destinatario) {
       var detalle = obtenerDetalleDestinatario(destinatario.id);
+      var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, ing);
       var salida = parseFloat(detalle.salida) || 0;
       var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
-      var ves = ing * tasa;
-      var profit = ing - salida;
-      var margenDetalle = ing > 0 ? ((profit / ing) * 100) : 0;
+      var ves = ingresoAsignado * tasa;
+      var profit = ingresoAsignado - salida;
+      var margenDetalle = ingresoAsignado > 0 ? ((profit / ingresoAsignado) * 100) : 0;
       totalVES += ves;
       totalProfit += profit;
 
+      var detIngreso = document.getElementById('detIngreso-' + destinatario.id);
       var detVES = document.getElementById('detVES-' + destinatario.id);
       var detProfit = document.getElementById('detProfit-' + destinatario.id);
       var detMargen = document.getElementById('detMargen-' + destinatario.id);
+      if (detIngreso) detIngreso.textContent = '$' + new Intl.NumberFormat('es-US').format(ingresoAsignado);
       if (detVES) detVES.textContent = new Intl.NumberFormat('es-VE').format(ves);
       if (detProfit) detProfit.textContent = '$' + new Intl.NumberFormat('es-US').format(profit);
       if (detMargen) detMargen.textContent = margenDetalle.toFixed(1) + '%';
     });
 
-    var baseIngreso = ing * destinatarios.length;
-    var margen = baseIngreso > 0 ? ((totalProfit / baseIngreso) * 100) : 0;
+    var margen = ing > 0 ? ((totalProfit / ing) * 100) : 0;
     document.getElementById('resVES').textContent = new Intl.NumberFormat('es-VE').format(totalVES);
     document.getElementById('resProfit').textContent = '$' + new Intl.NumberFormat('es-US').format(totalProfit);
     document.getElementById('resMargen').textContent = margen.toFixed(1) + '%';
@@ -1221,13 +1224,14 @@ import {
 
     destinatarios.forEach(function(destinatario) {
       var detalle = obtenerDetalleDestinatario(destinatario.id);
+      var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, estado.ingreso);
       var salida = parseFloat(detalle.salida) || 0;
       var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
       if (detalle.metodo && !metodosUsados.includes(detalle.metodo)) metodosUsados.push(detalle.metodo);
       if (!bancoEsBinance(detalle.banco) && tasa > 0) tasasUsadas.push(tasa);
       totalSalida += salida;
-      totalVES += estado.ingreso * tasa;
-      totalProfit += estado.ingreso - salida;
+      totalVES += ingresoAsignado * tasa;
+      totalProfit += ingresoAsignado - salida;
     });
 
     document.getElementById('resMetodo').textContent = metodosUsados.length > 0 ? metodosUsados.join(', ') : '—';
@@ -1241,20 +1245,26 @@ import {
   }
 
   // ===================== COMPROBANTES =====================
-  function procesarComprobante(input, tipo) {
+  function validarArchivoComprobante(input) {
     var file = input.files[0];
-    if (!file) return;
+    if (!file) return null;
     var tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (!tiposPermitidos.includes(file.type)) {
       showToast('error', 'Tipo no permitido', 'Solo imágenes o PDF');
       input.value = '';
-      return;
+      return null;
     }
     if (file.size > 5 * 1024 * 1024) {
       showToast('error', 'Muy grande', 'Máximo 5MB');
       input.value = '';
-      return;
+      return null;
     }
+    return file;
+  }
+
+  function procesarComprobante(input, tipo) {
+    var file = validarArchivoComprobante(input);
+    if (!file) return;
     estado.comprobantes[tipo] = { nombre: file.name, tipo: file.type, archivo: file };
     var label = document.getElementById('label' + (tipo === 'pago' ? 'Pago' : 'Admin'));
     var drop = document.getElementById('drop' + (tipo === 'pago' ? 'Pago' : 'Admin'));
@@ -1263,6 +1273,71 @@ import {
     drop.classList.remove('border-slate-300', 'bg-slate-50');
     drop.classList.add('border-emerald-400', 'bg-emerald-50');
     renderPreviewComprobante(tipo, file);
+  }
+
+  function procesarComprobanteEgreso(input, destinatarioId) {
+    var file = validarArchivoComprobante(input);
+    if (!file) return;
+    if (!estado.comprobantes.egresos) estado.comprobantes.egresos = {};
+    var previewKey = 'egreso-' + destinatarioId;
+    revokePreviewUrl(previewKey);
+    previewUrls[previewKey] = URL.createObjectURL(file);
+    estado.comprobantes.egresos[destinatarioId] = { nombre: file.name, tipo: file.type, archivo: file };
+    renderComprobantesEgreso();
+  }
+
+  function renderComprobantesEgreso() {
+    var cont = document.getElementById('comprobantesEgreso');
+    if (!cont) return;
+    var destinatarios = estado.destinatarios || [];
+    if (!estado.comprobantes.egresos) estado.comprobantes.egresos = {};
+
+    if (destinatarios.length === 0) {
+      cont.innerHTML = '<div class="md:col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center text-sm font-semibold text-slate-400">Selecciona destinatarios para cargar sus comprobantes de egreso.</div>';
+      return;
+    }
+
+    cont.innerHTML = destinatarios.map(function(destinatario, index) {
+      var fileInfo = estado.comprobantes.egresos[destinatario.id];
+      var previewKey = 'egreso-' + destinatario.id;
+      var previewUrl = previewUrls[previewKey] || '';
+      var safeId = escapeHtml(destinatario.id);
+      var titulo = escapeHtml(destinatario.nombre || ('Destinatario ' + (index + 1)));
+      var fileName = fileInfo ? escapeHtml(fileInfo.nombre) : 'Arrastra o haz click';
+      var fileMeta = fileInfo ? escapeHtml(formatFileSize(fileInfo.archivo.size) + ' · ' + (fileInfo.tipo === 'application/pdf' ? 'PDF' : 'Imagen')) : 'JPG, PNG, WEBP o PDF';
+      var hasFile = Boolean(fileInfo && previewUrl);
+      var isPdf = hasFile && fileInfo.tipo === 'application/pdf';
+
+      return '<div id="dropEgreso-' + safeId + '" class="border-2 border-dashed ' + (hasFile ? 'border-emerald-400 bg-emerald-50' : 'border-slate-300 bg-[linear-gradient(180deg,rgba(248,250,252,0.96)_0%,rgba(255,255,255,1)_100%)]') + ' rounded-2xl text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]" onclick="document.getElementById(\'fileEgreso-' + safeId + '\').click()">' +
+        '<div class="p-4 md:p-5">' +
+          '<div class="w-12 h-12 rounded-2xl bg-white shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] border border-slate-200 flex items-center justify-center mx-auto mb-3">' +
+            '<svg class="w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M12 12v6"></path><path d="m15 15-3-3-3 3"></path></svg>' +
+          '</div>' +
+          '<p class="text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-600">Egreso ' + (index + 1) + '</p>' +
+          '<p class="mt-1 text-sm font-black text-slate-800 truncate">' + titulo + '</p>' +
+          '<p class="mt-1 text-xs font-bold ' + (hasFile ? 'text-emerald-600' : 'text-slate-500') + ' truncate">' + fileName + '</p>' +
+          '<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-300">' + fileMeta + '</p>' +
+        '</div>' +
+        '<input type="file" id="fileEgreso-' + safeId + '" class="hidden" accept="image/*,application/pdf" onchange="procesarComprobanteEgreso(this, \'' + safeId + '\')" />' +
+        (hasFile ? '<div class="border-t border-slate-200 bg-white/90 backdrop-blur-sm">' +
+          '<div class="px-4 pt-4 flex items-start justify-between gap-3 text-left">' +
+            '<div class="min-w-0">' +
+              '<p class="text-sm font-extrabold text-slate-800 truncate">' + fileName + '</p>' +
+              '<p class="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-slate-400">' + fileMeta + '</p>' +
+            '</div>' +
+            '<a href="' + previewUrl + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-indigo-700 hover:bg-indigo-100 transition-colors">Abrir</a>' +
+          '</div>' +
+          '<div class="px-4 pb-4 pt-3">' +
+            '<div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">' +
+              (isPdf
+                ? '<iframe title="Preview PDF comprobante egreso" src="' + previewUrl + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH" class="w-full h-40 rounded-xl border border-slate-200 bg-white" loading="lazy"></iframe>'
+                : '<img alt="Preview comprobante egreso" src="' + previewUrl + '" class="w-full h-40 object-cover rounded-xl border border-slate-200 bg-white" />') +
+            '</div>' +
+            '<p class="mt-2 text-[0.7rem] font-medium text-slate-400 text-left">Haz click en la tarjeta para reemplazar el archivo.</p>' +
+          '</div>' +
+        '</div>' : '') +
+      '</div>';
+    }).join('');
   }
 
   // ===================== UPLOAD S3 =====================
@@ -1302,13 +1377,9 @@ import {
     try {
       // Subir comprobantes a S3 primero
       var comprobantePagoUrl = null;
-      var comprobanteAdminUrl = null;
 
       if (estado.comprobantes.pago && estado.comprobantes.pago.archivo) {
         comprobantePagoUrl = await subirComprobanteAS3(estado.comprobantes.pago.archivo, 'pago');
-      }
-      if (estado.comprobantes.admin && estado.comprobantes.admin.archivo) {
-        comprobanteAdminUrl = await subirComprobanteAS3(estado.comprobantes.admin.archivo, 'admin');
       }
 
       var token = localStorage.getItem('adglobal_token');
@@ -1316,23 +1387,28 @@ import {
       for (var i = 0; i < destinatarios.length; i++) {
         var destinatario = destinatarios[i];
         var detalle = obtenerDetalleDestinatario(destinatario.id);
+        var comprobanteEgreso = estado.comprobantes.egresos ? estado.comprobantes.egresos[destinatario.id] : null;
+        var comprobanteEgresoUrl = comprobanteEgreso && comprobanteEgreso.archivo
+          ? await subirComprobanteAS3(comprobanteEgreso.archivo, 'egreso-' + destinatario.id)
+          : null;
+        var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, estado.ingreso);
         var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
         var salida = parseFloat(detalle.salida) || 0;
         var metodo = metodoMap[detalle.metodo] || 'TRANSFERENCIA';
         var payload = {
           clientId: estado.cliente.id,
           recipientId: destinatario.id,
-          ingresoUSD: estado.ingreso,
+          ingresoUSD: ingresoAsignado,
           salidaUSDT: salida,
           tasa: tasa,
-          montoVES: estado.ingreso * tasa,
+          montoVES: ingresoAsignado * tasa,
           metodo: metodo,
-          profitUSD: estado.ingreso - salida,
+          profitUSD: ingresoAsignado - salida,
           estado: 'PENDING'
         };
 
         if (comprobantePagoUrl) payload.comprobantePago = comprobantePagoUrl;
-        if (comprobanteAdminUrl) payload.comprobanteAdmin = comprobanteAdminUrl;
+        if (comprobanteEgresoUrl) payload.comprobanteAdmin = comprobanteEgresoUrl;
 
         var res = await fetch(API_URL + '/api/transactions', {
           method: 'POST',
@@ -1388,15 +1464,18 @@ import {
     estado.ingreso = 0;
     estado.salida = 0;
     estado.tasa = 0;
-    estado.comprobantes = {};
+    Object.keys(previewUrls).forEach(function(key) {
+      revokePreviewUrl(key);
+    });
+    estado.comprobantes = { egresos: {} };
     resetPreview('pago');
-    resetPreview('admin');
     ocultarAlertaKyc();
 
     limpiarBusqueda();
     actualizarInfoDestinatariosSeleccionados();
     document.getElementById('txIngreso').value = '';
     renderDetallesDestinatarios();
+    renderComprobantesEgreso();
     toggleTasaPorBanco();
     calcularTransaccion();
 
@@ -1407,14 +1486,6 @@ import {
     dropP.classList.remove('border-emerald-400', 'bg-emerald-50');
     dropP.classList.add('border-slate-300', 'bg-slate-50');
     document.getElementById('filePago').value = '';
-
-    var labelA = document.getElementById('labelAdmin');
-    var dropA = document.getElementById('dropAdmin');
-    labelA.textContent = 'Arrastra o haz click';
-    labelA.classList.remove('text-emerald-600');
-    dropA.classList.remove('border-emerald-400', 'bg-emerald-50');
-    dropA.classList.add('border-slate-300', 'bg-slate-50');
-    document.getElementById('fileAdmin').value = '';
 
     document.getElementById('btnGuardarFinal').disabled = false;
     document.getElementById('btnGuardarFinal').innerHTML = '<Save class="w-4 h-4"/> Guardar transacción';

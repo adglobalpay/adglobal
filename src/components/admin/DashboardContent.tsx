@@ -98,7 +98,7 @@ export default function DashboardContent() {
           return d;
         });
 
-        const txs = txData.data || [];
+        const txs = allTxData.data || [];
         const txsValidas = txs.filter((t: Transaction) => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
         const actividad = semana.map(d => {
           const diaTxs = txsValidas.filter((t: Transaction) => {
