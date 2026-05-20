@@ -65,6 +65,13 @@ function toLocalDateStr(date: Date) {
   return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
 }
 
+function formatMoney(value: number) {
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
 export default function DashboardContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
@@ -295,7 +302,7 @@ export default function DashboardContent() {
             </div>
           </div>
           <p className="text-5xl font-extrabold font-mono tracking-tighter relative z-10 flex items-baseline">
-            <span className="text-3xl text-indigo-400 mr-1">$</span>{profit.profitGlobal.toLocaleString()}
+            <span className="text-3xl text-indigo-400 mr-1">$</span>{formatMoney(profit.profitGlobal)}
           </p>
           <div className="grid grid-cols-3 gap-3 mt-8 pt-4 border-t border-white/10 relative z-10">
             <div className="transition-transform duration-300 hover:scale-105">
@@ -305,13 +312,13 @@ export default function DashboardContent() {
             <div className="text-center transition-transform duration-300 hover:scale-105">
               <p className="text-[0.6rem] text-amber-300 uppercase tracking-wider mb-1 font-semibold">{profit.restantePorcentaje}% restante</p>
               <p className="font-bold text-base md:text-lg flex items-center justify-center gap-1">
-                <span className="text-amber-400 text-sm">$</span>{Math.round(profit.restanteGlobal).toLocaleString()}
+                <span className="text-amber-400 text-sm">$</span>{formatMoney(profit.restanteGlobal)}
               </p>
             </div>
             <div className="text-right transition-transform duration-300 hover:scale-105">
               <p className="text-[0.6rem] text-indigo-400 uppercase tracking-wider mb-1 font-semibold">Costo Operativo</p>
               <p className="font-bold text-base md:text-lg flex items-center justify-end gap-1">
-                <span className="text-indigo-400 text-sm">$</span>{Math.round(profit.costoOperativo).toLocaleString()} <span className="text-sm font-normal text-indigo-400/80">({profit.tasaCosto}%)</span>
+                <span className="text-indigo-400 text-sm">$</span>{formatMoney(profit.costoOperativo)} <span className="text-sm font-normal text-indigo-400/80">({profit.tasaCosto}%)</span>
               </p>
             </div>
           </div>
@@ -326,14 +333,14 @@ export default function DashboardContent() {
             </div>
           </div>
           <p className="text-5xl font-extrabold font-mono tracking-tighter relative z-10 flex items-baseline">
-            <span className="text-3xl text-emerald-400 mr-1">$</span>{profit.profitOperador.toLocaleString()}
+            <span className="text-3xl text-emerald-400 mr-1">$</span>{formatMoney(profit.profitOperador)}
           </p>
           <div className="mt-6 pt-4 border-t border-white/10 relative z-10">
             <div className="flex justify-between items-end mb-2">
               <p className="text-[0.65rem] text-emerald-400 uppercase tracking-wider font-semibold">Porcentaje: {profit.porcentaje}% del global</p>
               <div className="text-right">
                 <p className="text-[0.65rem] text-emerald-400/80 uppercase tracking-wider mb-0.5 font-semibold">Meta Mensual</p>
-                <p className="font-mono font-bold text-sm tracking-tight">${profit.meta.toLocaleString()}</p>
+                <p className="font-mono font-bold text-sm tracking-tight">${formatMoney(profit.meta)}</p>
               </div>
             </div>
             <div className="bg-slate-800/80 rounded-full h-2.5 overflow-hidden border border-slate-700/50 mt-1.5">
