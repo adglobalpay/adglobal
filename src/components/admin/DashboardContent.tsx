@@ -17,6 +17,7 @@ interface DashboardStats {
   todayVolume: number;
   monthlyVolume: number;
   monthlyProfit: number;
+  profitGlobal?: number;
   operatorPercentage: number;
   globalCommission: number;
   costRate: number;
@@ -57,7 +58,6 @@ export default function DashboardContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
   const [activity, setActivity] = useState<{ dia: string; cantidad: number; volumen: number }[]>([]);
-  const [realProfitGlobal, setRealProfitGlobal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Admin');
 
@@ -81,17 +81,6 @@ export default function DashboardContent() {
 
         if (statsData) setStats(statsData);
         setRecentTx(txData.data || []);
-
-        // Calcular profit global real solo de transacciones COMPLETED
-        const allTxs = allTxData.data || [];
-        const completedTxs = allTxs.filter((t: any) => t.estado === 'COMPLETED');
-        const profitSum = completedTxs.reduce((s: number, t: any) => {
-          const p = t.profitUSD !== null && t.profitUSD !== undefined
-            ? Number(t.profitUSD)
-            : Number(t.ingresoUSD || 0) - Number(t.salidaUSDT || 0);
-          return s + p;
-        }, 0);
-        setRealProfitGlobal(profitSum);
 
         // Build weekly activity from transactions
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -133,13 +122,13 @@ export default function DashboardContent() {
     const tasaCosto = Number(stats?.costRate || 0);
     const meta = Number(stats?.operatorTarget || 0);
     const volumen = Number(stats?.monthlyVolume || 0);
-    const profitGlobal = realProfitGlobal;
+    const profitGlobal = Number(stats?.profitGlobal ?? stats?.monthlyProfit ?? 0);
     const costoOperativo = Number(stats?.operatingCost || 0);
     const profitOperador = profitGlobal * (porcentaje / 100);
     const restantePorcentaje = Math.max(0, 100 - porcentaje);
     const restanteGlobal = Math.max(0, profitGlobal - profitOperador);
     return { porcentaje, comision, tasaCosto, meta, volumen, profitGlobal, costoOperativo, profitOperador, restantePorcentaje, restanteGlobal };
-  }, [stats, realProfitGlobal]);
+  }, [stats]);
 
   const alertas = useMemo(() => {
     const list: { tipo: string; mensaje: string; link: string }[] = [];
@@ -194,7 +183,7 @@ export default function DashboardContent() {
             </div>
           </div>
           <p className="text-5xl font-extrabold font-mono tracking-tighter relative z-10 flex items-baseline">
-            <span className="text-3xl text-indigo-400 mr-1">$</span>{realProfitGlobal.toLocaleString()}
+            <span className="text-3xl text-indigo-400 mr-1">$</span>{profit.profitGlobal.toLocaleString()}
           </p>
           <div className="grid grid-cols-3 gap-3 mt-8 pt-4 border-t border-white/10 relative z-10">
             <div className="transition-transform duration-300 hover:scale-105">
