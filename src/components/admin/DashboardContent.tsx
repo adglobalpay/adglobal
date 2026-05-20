@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Globe, BarChart3, TrendingUp, Zap, UserPlus, Wallet, FileBox,
   ArrowRight, AlertTriangle, Activity, CheckCircle2, Clock, PauseCircle,
-  BellRing
+  BellRing, ChevronDown, Check
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -30,6 +30,8 @@ interface Transaction {
   id: string;
   fecha: string;
   ingresoUSD: number;
+  salidaUSDT?: number | null;
+  profitUSD?: number | null;
   montoVES: number;
   tasa: number;
   estado: string;
@@ -37,6 +39,15 @@ interface Transaction {
   client: { firstName: string; lastName: string | null; email: string } | null;
   recipient: { bank: string } | null;
 }
+
+type DashboardPeriod = 'today' | 'yesterday' | 'weekly' | 'monthly';
+
+const PERIOD_OPTIONS: Array<{ key: DashboardPeriod; label: string }> = [
+  { key: 'today', label: 'Hoy' },
+  { key: 'yesterday', label: 'Ayer' },
+  { key: 'weekly', label: 'Semanal' },
+  { key: 'monthly', label: 'Mensual' }
+];
 
 const ESTADOS_MAP: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
   COMPLETED: { label: 'Completado', className: 'bg-emerald-50 text-emerald-700 border-emerald-100 group-hover:bg-emerald-100', icon: <CheckCircle2 className="w-3 h-3" /> },
@@ -57,9 +68,13 @@ function toLocalDateStr(date: Date) {
 export default function DashboardContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [activity, setActivity] = useState<{ dia: string; cantidad: number; volumen: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Admin');
+  const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>('monthly');
+  const [isPeriodMenuOpen, setIsPeriodMenuOpen] = useState(false);
+  const periodMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     try {
@@ -81,6 +96,7 @@ export default function DashboardContent() {
 
         if (statsData) setStats(statsData);
         setRecentTx(txData.data || []);
+        setAllTransactions(allTxData.data || []);
 
         // Build weekly activity from transactions
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -116,19 +132,79 @@ export default function DashboardContent() {
     loadAll();
   }, []);
 
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (!periodMenuRef.current?.contains(event.target as Node)) {
+        setIsPeriodMenuOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsPeriodMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
   const profit = useMemo(() => {
+    const now = new Date();
     const porcentaje = Number(stats?.operatorPercentage || 0);
     const comision = Number(stats?.globalCommission || 0);
     const tasaCosto = Number(stats?.costRate || 0);
     const meta = Number(stats?.operatorTarget || 0);
-    const volumen = Number(stats?.monthlyVolume || 0);
-    const profitGlobal = Number(stats?.profitGlobal ?? stats?.monthlyProfit ?? 0);
-    const costoOperativo = Number(stats?.operatingCost || 0);
+    const txsValidas = allTransactions.filter((transaction) => {
+      if (['FAILED', 'REJECTED', 'CANCELLED'].includes(transaction.estado)) {
+        return false;
+      }
+
+      const txDate = new Date(transaction.fecha);
+      const txDateStr = toLocalDateStr(txDate);
+      const todayStr = toLocalDateStr(now);
+
+      if (selectedPeriod === 'today') {
+        return txDateStr === todayStr;
+      }
+
+      if (selectedPeriod === 'yesterday') {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return txDateStr === toLocalDateStr(yesterday);
+      }
+
+      if (selectedPeriod === 'weekly') {
+        const weekStart = new Date(now);
+        weekStart.setHours(0, 0, 0, 0);
+        weekStart.setDate(weekStart.getDate() - 6);
+        const txMoment = new Date(transaction.fecha);
+        return txMoment >= weekStart && txMoment <= now;
+      }
+
+      return txDate.getFullYear() === now.getFullYear() && txDate.getMonth() === now.getMonth();
+    });
+
+    const txsCompleted = txsValidas.filter((transaction) => transaction.estado === 'COMPLETED');
+    const volumen = txsValidas.reduce((sum, transaction) => sum + Number(transaction.ingresoUSD || 0), 0);
+    const costoOperativo = volumen * (tasaCosto / 100);
+    const profitGlobalBruto = txsCompleted.reduce((sum, transaction) => {
+      const profitValue = transaction.profitUSD !== null && transaction.profitUSD !== undefined
+        ? Number(transaction.profitUSD)
+        : Number(transaction.ingresoUSD || 0) - Number(transaction.salidaUSDT || 0);
+      return sum + profitValue;
+    }, 0);
+    const profitGlobal = profitGlobalBruto - costoOperativo;
     const profitOperador = profitGlobal * (porcentaje / 100);
     const restantePorcentaje = Math.max(0, 100 - porcentaje);
-    const restanteGlobal = Math.max(0, profitGlobal - profitOperador);
+    const restanteGlobal = profitGlobal - profitOperador;
     return { porcentaje, comision, tasaCosto, meta, volumen, profitGlobal, costoOperativo, profitOperador, restantePorcentaje, restanteGlobal };
-  }, [stats]);
+  }, [allTransactions, selectedPeriod, stats]);
 
   const alertas = useMemo(() => {
     const list: { tipo: string; mensaje: string; link: string }[] = [];
@@ -145,6 +221,7 @@ export default function DashboardContent() {
   }, [stats]);
 
   const fechaHoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const selectedPeriodLabel = PERIOD_OPTIONS.find((option) => option.key === selectedPeriod)?.label || 'Mensual';
   const maxVolumen = Math.max(...activity.map(a => a.volumen), 1);
 
   if (loading) {
@@ -167,8 +244,43 @@ export default function DashboardContent() {
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
           <p className="text-slate-500 mt-2 font-medium">Bienvenido de nuevo, {userName}. Aquí está el resumen de tu negocio.</p>
         </div>
-        <div className="text-left md:text-right bg-white px-5 py-3 rounded-2xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all duration-300 anim-fade-in stagger-1">
-          <p className="text-sm font-bold text-slate-700 capitalize tracking-wide">{fechaHoy}</p>
+        <div ref={periodMenuRef} className="relative anim-fade-in stagger-1">
+          <button
+            type="button"
+            onClick={() => setIsPeriodMenuOpen((open) => !open)}
+            className="text-left md:text-right bg-white px-5 py-3 rounded-2xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all duration-300 min-w-[280px]"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-slate-700 capitalize tracking-wide">{fechaHoy}</p>
+                <p className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.22em] text-indigo-500">{selectedPeriodLabel}</p>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isPeriodMenuOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </button>
+
+          {isPeriodMenuOpen && (
+            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-20">
+              {PERIOD_OPTIONS.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPeriod(option.key);
+                    setIsPeriodMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors duration-200 ${
+                    selectedPeriod === option.key
+                      ? 'bg-indigo-50 text-indigo-700'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  {selectedPeriod === option.key && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

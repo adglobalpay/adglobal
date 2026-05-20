@@ -13,6 +13,7 @@ interface Transaction {
   fecha: string;
   ingresoUSD: number;
   salidaUSDT: number;
+  profitUSD?: number | null;
   tasa: number;
   montoVES: number;
   metodo: string;
@@ -228,7 +229,10 @@ export default function TransactionsPage() {
     const promedioMonto = validas.length > 0 ? (totalIngreso / validas.length) : 0;
     const pendientes = validas.filter(t => t.estado === 'PENDING' || t.estado === 'PROCESSING').length;
     const validadoAdmin = validas.reduce((s, t) => {
-      return s + (t.verificadorId ? Number(t.ingresoUSD || 0) : 0);
+      const profit = t.profitUSD !== null && t.profitUSD !== undefined
+        ? Number(t.profitUSD)
+        : Number(t.ingresoUSD || 0) - Number(t.salidaUSDT || 0);
+      return s + (t.verificadorId ? profit : 0);
     }, 0);
     return { totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, validadoAdmin };
   }, [filtered]);
@@ -409,7 +413,7 @@ export default function TransactionsPage() {
           <p className="text-2xl md:text-3xl font-extrabold font-mono text-slate-800 tracking-tight">
             <span className="text-emerald-500 text-lg md:text-xl mr-1">$</span>{kpis.validadoAdmin.toLocaleString()}
           </p>
-          <p className="text-emerald-600 text-xs font-bold mt-2">Total validado por admin</p>
+          <p className="text-emerald-600 text-xs font-bold mt-2">Profit validado por admin</p>
         </div>
       </div>
 
