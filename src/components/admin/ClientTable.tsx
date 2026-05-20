@@ -129,6 +129,23 @@ export default function ClientTable({ limit }: Props) {
     loadClients();
   }, [loadClients]);
 
+  // Aplicar filtro desde URL (?filtro=kyc|ofac)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const filtro = params.get('filtro');
+    if (!filtro) return;
+
+    if (filtro === 'kyc') {
+      setFilteredClients(prev => prev.filter(c => c.kycStatus === 'PENDING'));
+      setSearchQuery('KYC Pendiente');
+    } else if (filtro === 'ofac') {
+      setFilteredClients(prev => prev.filter(c => c.ofacStatus === 'REVIEW'));
+      setSearchQuery('OFAC Review');
+    }
+    setCurrentPage(1);
+  }, [clients]);
+
   // Escuchar evento de refresh desde el formulario de creación
   useEffect(() => {
     const handler = () => loadClients();

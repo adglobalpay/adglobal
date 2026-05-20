@@ -49,6 +49,10 @@ function formatDateShort(d: string) {
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
 }
 
+function toLocalDateStr(date: Date) {
+  return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+}
+
 export default function DashboardContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
@@ -72,7 +76,7 @@ export default function DashboardContent() {
         const [statsData, txData, allTxData] = await Promise.all([
           apiFetch('/api/stats/dashboard').catch(() => null),
           apiFetch('/api/transactions?limit=5').catch(() => ({ data: [] })),
-          apiFetch('/api/transactions').catch(() => ({ data: [] }))
+          apiFetch('/api/transactions?limit=5000').catch(() => ({ data: [] }))
         ]);
 
         if (statsData) setStats(statsData);
@@ -101,9 +105,10 @@ export default function DashboardContent() {
         const txs = allTxData.data || [];
         const txsValidas = txs.filter((t: Transaction) => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
         const actividad = semana.map(d => {
+          const diaStr = toLocalDateStr(d);
           const diaTxs = txsValidas.filter((t: Transaction) => {
             const tf = new Date(t.fecha);
-            return tf.getFullYear() === d.getFullYear() && tf.getMonth() === d.getMonth() && tf.getDate() === d.getDate();
+            return toLocalDateStr(tf) === diaStr;
           });
           return {
             dia: dias[d.getDay()],
