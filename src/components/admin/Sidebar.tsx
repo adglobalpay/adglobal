@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import CapitalOperador from './CapitalOperador';
 import { apiFetch } from '../../lib/auth';
 import { 
@@ -13,7 +13,8 @@ import {
   BadgeDollarSign,
   X,
   Menu,
-  LogOut
+  LogOut,
+  ExternalLink
 } from 'lucide-react';
 
 interface NavItem {
@@ -26,9 +27,11 @@ interface NavItem {
 interface InactiveClient {
   id: string;
   name: string;
-  lastTx: string;
+  lastTx: string | null;
   days: number;
   phone?: string | null;
+  email?: string | null;
+  hasCompletedTransaction?: boolean;
 }
 
 interface User {
@@ -40,12 +43,15 @@ interface User {
 }
 
 const getWhatsAppLink = (phone: string, name: string) => {
-  const normalizedPhone = phone.replace(/\D/g, '');
+  const digits = phone.replace(/\D/g, '');
+  const normalizedPhone = digits.length === 10 ? `1${digits}` : digits;
   const message = encodeURIComponent(`Hola ${name}, ¿cómo estás? Te escribimos porque notamos que hace varios días no realizas envíos. ¿Necesitas ayuda con algo?`);
   return `https://wa.me/${normalizedPhone}?text=${message}`;
 };
 
-const formatLastTransactionDate = (value: string) => {
+const formatLastTransactionDate = (value: string | null) => {
+  if (!value) return 'Sin giros completados';
+
   return new Date(value).toLocaleDateString('es-ES', {
     day: '2-digit',
     month: '2-digit',
@@ -57,23 +63,30 @@ export default function Sidebar() {
   const [currentPath, setCurrentPath] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [inactiveClients, setInactiveClients] = useState<InactiveClient[]>([]);
+  const [inactiveLoading, setInactiveLoading] = useState(true);
+  const [inactiveError, setInactiveError] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
+  const loadInactiveClients = useCallback(async () => {
+    setInactiveLoading(true);
+    setInactiveError('');
+    try {
+      const data = await apiFetch('/api/clients/inactive-reminders');
+      setInactiveClients(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      console.error('Error loading inactive clients:', e);
+      setInactiveError(e?.message || 'No se pudieron cargar los clientes inactivos');
+      setInactiveClients([]);
+    } finally {
+      setInactiveLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     setCurrentPath(window.location.pathname);
-
-    const loadInactiveClients = async () => {
-      try {
-        const data = await apiFetch('/api/clients/inactive-reminders');
-        setInactiveClients(Array.isArray(data) ? data : []);
-      } catch (e) {
-        console.error('Error loading inactive clients:', e);
-        setInactiveClients([]);
-      }
-    };
 
     void loadInactiveClients();
 
@@ -93,7 +106,7 @@ export default function Sidebar() {
       clearTimeout(timer);
       window.removeEventListener('resize', checkMobile);
     };
-  }, []);
+  }, [loadInactiveClients]);
 
   const handleLogout = () => {
     localStorage.removeItem('adglobal_token');
@@ -230,13 +243,33 @@ export default function Sidebar() {
               <div className="p-2 bg-rose-100 text-rose-500 rounded-xl">
                 <BellRing size={16} />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-slate-800 text-sm" style={{ fontFamily: 'var(--font-heading)' }}>Clientes inactivos</h3>
                 <p className="text-xs text-slate-500 font-medium">Más de 15 días sin girar</p>
               </div>
+              <span className="text-[0.65rem] font-bold text-rose-500 bg-rose-50 border border-rose-100 rounded-full px-2 py-1">
+                {inactiveClients.length}
+              </span>
             </div>
             <div className="max-h-96 overflow-y-auto">
-              {inactiveClients.length > 0 ? (
+              {inactiveLoading ? (
+                <div className="p-10 text-center text-slate-400 flex flex-col items-center gap-3 anim-fade-in">
+                  <BellRing size={30} className="text-slate-300 animate-pulse" />
+                  <span className="text-sm font-medium">Buscando clientes inactivos...</span>
+                </div>
+              ) : inactiveError ? (
+                <div className="p-8 text-center text-rose-500 flex flex-col items-center gap-3 anim-fade-in">
+                  <BellRing size={30} className="text-rose-300" />
+                  <span className="text-sm font-semibold">{inactiveError}</span>
+                  <button
+                    type="button"
+                    onClick={() => void loadInactiveClients()}
+                    className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 hover:bg-rose-100 transition-colors"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ) : inactiveClients.length > 0 ? (
                 inactiveClients.map((client, idx) => (
                   <div
                     key={client.id}
@@ -249,18 +282,29 @@ export default function Sidebar() {
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-semibold text-slate-800 text-sm">{client.name}</p>
+                        <a
+                          href={`/admin/clientes/${client.id}`}
+                          className="font-semibold text-slate-800 text-sm hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
+                        >
+                          {client.name}
+                          <ExternalLink size={12} className="text-slate-300" />
+                        </a>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[0.65rem] uppercase tracking-wider text-slate-400 font-medium">Último giro</span>
+                          <span className="text-[0.65rem] uppercase tracking-wider text-slate-400 font-medium">
+                            {client.hasCompletedTransaction ? 'Último giro' : 'Estado'}
+                          </span>
                           <span className="text-xs text-slate-600 font-medium">{formatLastTransactionDate(client.lastTx)}</span>
                         </div>
+                        {client.email && (
+                          <p className="text-[0.7rem] text-slate-400 mt-1 truncate max-w-[210px]">{client.email}</p>
+                        )}
                       </div>
                       <span className="bg-amber-100/50 text-amber-600 border border-amber-200/50 text-[0.65rem] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
                         {client.days} días
                       </span>
                     </div>
                     
-                    {client.phone && (
+                    {client.phone ? (
                       <a
                         href={getWhatsAppLink(client.phone, client.name.split(' ')[0])}
                         className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-white hover:bg-emerald-500 mt-2 p-2.5 bg-emerald-50 rounded-xl transition-all duration-300 border border-emerald-100 w-full group/whatsapp"
@@ -273,6 +317,10 @@ export default function Sidebar() {
                         <MessageCircle size={14} className="group-hover/whatsapp:scale-110 transition-transform" />
                         <span>Contactar por WhatsApp</span>
                       </a>
+                    ) : (
+                      <div className="mt-2 p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-center text-xs font-semibold text-slate-400">
+                        Sin teléfono registrado
+                      </div>
                     )}
                   </div>
                 ))
