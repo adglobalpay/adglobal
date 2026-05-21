@@ -84,6 +84,7 @@ export default function ConfigPage() {
   const [form, setForm] = useState({
     max_por_transaccion: '1000',
     min_por_transaccion: '10',
+    max_por_destinatario: '1000',
     max_diario_por_cliente: '3000',
     max_mensual_por_cliente: '15000',
     hora_inicio: '08:00',
@@ -135,6 +136,7 @@ export default function ConfigPage() {
             ...prev,
             max_por_transaccion: cfgData['limits.max_por_transaccion'] || prev.max_por_transaccion,
             min_por_transaccion: cfgData['limits.min_por_transaccion'] || prev.min_por_transaccion,
+            max_por_destinatario: cfgData['limits.max_por_destinatario'] || prev.max_por_destinatario,
             max_diario_por_cliente: cfgData['limits.max_diario_por_cliente'] || prev.max_diario_por_cliente,
             max_mensual_por_cliente: cfgData['limits.max_mensual_por_cliente'] || prev.max_mensual_por_cliente,
             hora_inicio: cfgData['schedule.hora_inicio'] || prev.hora_inicio,
@@ -185,6 +187,7 @@ export default function ConfigPage() {
       const payload: Record<string, string> = {
         'limits.max_por_transaccion': form.max_por_transaccion,
         'limits.min_por_transaccion': form.min_por_transaccion,
+        'limits.max_por_destinatario': form.max_por_destinatario,
         'limits.max_diario_por_cliente': form.max_diario_por_cliente,
         'limits.max_mensual_por_cliente': form.max_mensual_por_cliente,
         'schedule.hora_inicio': form.hora_inicio,
@@ -545,6 +548,7 @@ export default function ConfigPage() {
               {[
                 { key: 'max_por_transaccion', label: 'Máx. por txn' },
                 { key: 'min_por_transaccion', label: 'Mín. por txn' },
+                { key: 'max_por_destinatario', label: 'Tope destinatario' },
                 { key: 'max_diario_por_cliente', label: 'Máx. diario/cliente' },
                 { key: 'max_mensual_por_cliente', label: 'Máx. mensual/cliente' }
               ].map(field => (
@@ -561,7 +565,7 @@ export default function ConfigPage() {
             <div className="rounded-2xl border border-amber-200 bg-[linear-gradient(135deg,rgba(255,247,237,0.95)_0%,rgba(255,255,255,1)_100%)] p-4">
               <p className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-amber-500">Compliance automático</p>
               <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
-                Si una transacción alcanza el máximo por operación, o si el acumulado diario o mensual del cliente llega a esos topes, el sistema exige KYC antes de permitir guardar el giro.
+                Si una transacción alcanza el máximo por operación, si el destinatario llega a su tope, o si el acumulado diario o mensual del cliente llega a esos límites, el sistema exige KYC antes de permitir guardar el giro.
               </p>
             </div>
           </div>
