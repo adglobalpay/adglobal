@@ -75,7 +75,9 @@ import {
 
         <div class="relative max-w-md mx-auto">
           <div class="relative">
-            <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <Search class="w-5 h-5 text-slate-400" />
+            </div>
             <input
               type="text"
               id="buscarCliente"
@@ -130,16 +132,49 @@ import {
           0 destinatarios seleccionados
         </div>
 
+        <div class="relative">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+            <Search class="w-4 h-4 text-slate-400" />
+          </div>
+          <input
+            type="text"
+            id="buscarDestinatario"
+            class="w-full pl-11 pr-10 py-3 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-2xl text-sm font-semibold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400"
+            placeholder="Buscar por nombre, teléfono o cédula"
+            autocomplete="off"
+            oninput="actualizarBusquedaDestinatarios(this.value)"
+          />
+          <button
+            type="button"
+            id="clearBusquedaDestinatario"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 hidden"
+            onclick="limpiarBusquedaDestinatarios()"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
         <div id="listaDestinatarios" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
           <!-- Se llena dinámicamente -->
+        </div>
+
+        <div id="destinatariosLoadMoreWrap" class="hidden justify-center">
+          <button
+            type="button"
+            id="destinatariosLoadMoreBtn"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            onclick="cargarMasDestinatarios()"
+          >
+            Cargar más
+          </button>
         </div>
 
         <div id="sinDestinatarios" class="hidden text-center py-12">
           <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Users class="w-8 h-8 text-slate-300" />
           </div>
-          <p class="text-sm font-bold text-slate-500">Sin destinatarios</p>
-          <p class="text-xs text-slate-400 mt-1">Este cliente no tiene destinatarios registrados</p>
+          <p id="sinDestinatariosTitulo" class="text-sm font-bold text-slate-500">Sin destinatarios</p>
+          <p id="sinDestinatariosDescripcion" class="text-xs text-slate-400 mt-1">Este cliente no tiene destinatarios registrados</p>
         </div>
       </div>
 
@@ -449,9 +484,20 @@ import {
 <script is:inline>
   var clientes = [];
   var destinatariosPorCliente = {};
+  var destinatariosVista = [];
   var metodos = [];
   var bancosLista = [];
   var accountTypesLista = [];
+  var busquedaDestinatario = '';
+  var debounceBusquedaDestinatario = null;
+  var destinatariosRequestId = 0;
+  var paginacionDestinatarios = {
+    limit: 24,
+    offset: 0,
+    total: 0,
+    hasMore: false,
+    cargando: false
+  };
 
   var API_URL = window.__ADGLOBAL_API_URL__ || 'https://backend-global-production.up.railway.app';
 
@@ -594,6 +640,117 @@ import {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function normalizeSearchValue(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  function extractDigits(value) {
+    return String(value || '').replace(/\D/g, '');
+  }
+
+  function actualizarBusquedaDestinatarios(value) {
+    busquedaDestinatario = String(value || '');
+    var clearBtn = document.getElementById('clearBusquedaDestinatario');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !busquedaDestinatario.trim());
+    if (!estado.cliente) return;
+
+    if (debounceBusquedaDestinatario) clearTimeout(debounceBusquedaDestinatario);
+    debounceBusquedaDestinatario = setTimeout(function() {
+      cargarDestinatariosWizard(estado.cliente.id, { reset: true });
+    }, 250);
+  }
+
+  function limpiarBusquedaDestinatarios(shouldReload) {
+    if (typeof shouldReload === 'undefined') shouldReload = true;
+    busquedaDestinatario = '';
+    var input = document.getElementById('buscarDestinatario');
+    var clearBtn = document.getElementById('clearBusquedaDestinatario');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.classList.add('hidden');
+    if (debounceBusquedaDestinatario) clearTimeout(debounceBusquedaDestinatario);
+    if (!shouldReload || !estado.cliente) return;
+    cargarDestinatariosWizard(estado.cliente.id, { reset: true });
+  }
+
+  function actualizarEstadoVacioDestinatarios(hasQuery) {
+    var titulo = document.getElementById('sinDestinatariosTitulo');
+    var descripcion = document.getElementById('sinDestinatariosDescripcion');
+    if (!titulo || !descripcion) return;
+    if (hasQuery) {
+      titulo.textContent = 'Sin coincidencias';
+      descripcion.textContent = 'Prueba con otro nombre, teléfono o cédula.';
+      return;
+    }
+    titulo.textContent = 'Sin destinatarios';
+    descripcion.textContent = 'Este cliente no tiene destinatarios registrados';
+  }
+
+  function obtenerCatalogoDestinatarios(clientId) {
+    if (!destinatariosPorCliente[clientId]) destinatariosPorCliente[clientId] = {};
+    return destinatariosPorCliente[clientId];
+  }
+
+  function mapDestinatarioWizard(r) {
+    return {
+      id: r.id,
+      nombre: r.name,
+      telefono: r.phone || '',
+      banco: r.bank || '',
+      cuenta: r.accountNumber || '',
+      relacion: r.relationship || '',
+      identificacion: r.identification || ''
+    };
+  }
+
+  function filtrarDestinatariosLegacy(lista) {
+    var query = normalizeSearchValue(busquedaDestinatario);
+    if (!query) return lista;
+
+    var queryDigits = extractDigits(busquedaDestinatario);
+
+    return lista.filter(function(item) {
+      var nombre = normalizeSearchValue(item.nombre);
+      var telefono = normalizeSearchValue(item.telefono);
+      var identificacion = normalizeSearchValue(item.identificacion);
+      var telefonoDigits = extractDigits(item.telefono);
+      var identificacionDigits = extractDigits(item.identificacion);
+
+      return nombre.includes(query)
+        || telefono.includes(query)
+        || identificacion.includes(query)
+        || (queryDigits && telefonoDigits.includes(queryDigits))
+        || (queryDigits && identificacionDigits.includes(queryDigits));
+    });
+  }
+
+  function guardarDestinatariosEnCatalogo(clientId, lista) {
+    var catalogo = obtenerCatalogoDestinatarios(clientId);
+    lista.forEach(function(item) {
+      catalogo[item.id] = item;
+    });
+  }
+
+  function actualizarAccionesDestinatarios() {
+    var wrap = document.getElementById('destinatariosLoadMoreWrap');
+    var btn = document.getElementById('destinatariosLoadMoreBtn');
+    if (!wrap || !btn) return;
+
+    var mostrar = destinatariosVista.length > 0 && (paginacionDestinatarios.hasMore || paginacionDestinatarios.cargando);
+    wrap.classList.toggle('hidden', !mostrar);
+    wrap.classList.toggle('flex', mostrar);
+    btn.disabled = paginacionDestinatarios.cargando || !paginacionDestinatarios.hasMore;
+    btn.textContent = paginacionDestinatarios.cargando ? 'Buscando...' : 'Cargar más';
+  }
+
+  function cargarMasDestinatarios() {
+    if (!estado.cliente || paginacionDestinatarios.cargando || !paginacionDestinatarios.hasMore) return;
+    cargarDestinatariosWizard(estado.cliente.id, { reset: false });
   }
 
   function optionList(options, selected) {
@@ -789,6 +946,7 @@ import {
     document.getElementById('clienteTelefono').textContent = c.telefono || 'Sin teléfono';
     document.getElementById('clienteEmail').textContent = c.email || '';
     document.getElementById('clienteSeleccionado').classList.remove('hidden');
+    limpiarBusquedaDestinatarios(false);
   }
 
   function limpiarBusqueda() {
@@ -801,6 +959,8 @@ import {
     estado.destinatario = null;
     estado.destinatarios = [];
     estado.detallesPorDestinatario = {};
+    destinatariosVista = [];
+    limpiarBusquedaDestinatarios(false);
     actualizarInfoDestinatariosSeleccionados();
   }
 
@@ -918,65 +1078,125 @@ import {
   }
 
   // ===================== DESTINATARIOS =====================
-  async function cargarDestinatariosWizard(clientId) {
+  async function cargarDestinatariosWizard(clientId, options) {
+    options = options || {};
+    var reset = options.reset !== false;
     var cont = document.getElementById('listaDestinatarios');
     var sin = document.getElementById('sinDestinatarios');
-
-    if (destinatariosPorCliente[clientId]) {
-      renderDestinatariosWizard(destinatariosPorCliente[clientId]);
-      return;
-    }
+    var offset = reset ? 0 : paginacionDestinatarios.offset;
+    var requestId = ++destinatariosRequestId;
 
     try {
+      paginacionDestinatarios.cargando = true;
+      actualizarAccionesDestinatarios();
+      if (reset) {
+        cont.innerHTML = '<div class="md:col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center text-sm font-semibold text-slate-400">Buscando destinatarios...</div>';
+        sin.classList.add('hidden');
+      }
+
       var token = localStorage.getItem('adglobal_token');
-      var res = await fetch(API_URL + '/api/clients/' + clientId + '/recipients', {
+      var params = new URLSearchParams({
+        limit: String(paginacionDestinatarios.limit),
+        offset: String(offset)
+      });
+      if (busquedaDestinatario.trim()) params.set('search', busquedaDestinatario.trim());
+
+      var res = await fetch(API_URL + '/api/clients/' + clientId + '/recipients?' + params.toString(), {
         headers: { 'Authorization': 'Bearer ' + token }
       });
       if (!res.ok) throw new Error('Error');
       var data = await res.json();
-      var lista = data.map(function(r) {
-        return { id: r.id, nombre: r.name, telefono: r.phone || '', banco: r.bank || '', cuenta: r.accountNumber || '', relacion: r.relationship || '' };
+
+      if (requestId !== destinatariosRequestId) {
+        return;
+      }
+
+      var respuestaEsArray = Array.isArray(data);
+      var rawItems = respuestaEsArray ? data : (data.items || []);
+      var lista = rawItems.map(function(r) {
+        return mapDestinatarioWizard(r);
       });
-      destinatariosPorCliente[clientId] = lista;
+      if (respuestaEsArray) {
+        lista = filtrarDestinatariosLegacy(lista);
+      }
+      guardarDestinatariosEnCatalogo(clientId, lista);
+      destinatariosVista = reset ? lista : destinatariosVista.concat(lista.filter(function(item) {
+        return !destinatariosVista.some(function(existing) { return existing.id === item.id; });
+      }));
+
+      paginacionDestinatarios.offset = offset + lista.length;
+      paginacionDestinatarios.total = respuestaEsArray ? lista.length : Number(data.total || 0);
+      paginacionDestinatarios.hasMore = respuestaEsArray ? false : Boolean(data.hasMore);
+
+      var catalogo = obtenerCatalogoDestinatarios(clientId);
       estado.destinatarios = estado.destinatarios.filter(function(selected) {
-        return lista.some(function(item) { return item.id === selected.id; });
+        return !!catalogo[selected.id];
       });
       estado.destinatario = estado.destinatarios[0] || null;
-      renderDestinatariosWizard(lista);
+
+      renderDestinatariosWizard(destinatariosVista);
     } catch (e) {
+      if (requestId !== destinatariosRequestId) {
+        return;
+      }
+      destinatariosVista = [];
+      paginacionDestinatarios.offset = 0;
+      paginacionDestinatarios.total = 0;
+      paginacionDestinatarios.hasMore = false;
       cont.innerHTML = '';
+      actualizarEstadoVacioDestinatarios(!!normalizeSearchValue(busquedaDestinatario));
       sin.classList.remove('hidden');
+    } finally {
+      if (requestId === destinatariosRequestId) {
+        paginacionDestinatarios.cargando = false;
+        actualizarAccionesDestinatarios();
+      }
     }
   }
 
   function renderDestinatariosWizard(lista) {
     var cont = document.getElementById('listaDestinatarios');
     var sin = document.getElementById('sinDestinatarios');
+    var hasQuery = !!normalizeSearchValue(busquedaDestinatario);
+
     if (lista.length === 0) {
       cont.innerHTML = '';
+      actualizarEstadoVacioDestinatarios(hasQuery);
       sin.classList.remove('hidden');
       actualizarInfoDestinatariosSeleccionados();
+      actualizarAccionesDestinatarios();
       return;
     }
     sin.classList.add('hidden');
     cont.innerHTML = lista.map(function(d) {
       var seleccionado = estado.destinatarios.some(function(item) { return item.id === d.id; });
       var sel = seleccionado ? 'ring-2 ring-emerald-500 border-emerald-300 bg-emerald-50/50' : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30';
+      var nombre = escapeHtml(d.nombre);
+      var banco = escapeHtml(d.banco);
+      var cuenta = escapeHtml(d.cuenta);
+      var relacion = escapeHtml(d.relacion);
+      var telefono = escapeHtml(d.telefono);
+      var identificacion = escapeHtml(d.identificacion);
+      var meta = [];
+      if (telefono) meta.push('Tel: ' + telefono);
+      if (identificacion) meta.push('CI: ' + identificacion);
       return '<button type="button" onclick="seleccionarDestinatario(\'' + d.id + '\')" class="text-left p-4 rounded-xl border-2 ' + sel + ' transition-all duration-200 flex items-start gap-3">' +
-        '<div class="w-10 h-10 rounded-lg ' + (seleccionado ? 'bg-emerald-500 text-white' : 'bg-emerald-100 text-emerald-600') + ' flex items-center justify-center text-sm font-bold shrink-0">' + (seleccionado ? '✓' : d.nombre.charAt(0)) + '</div>' +
+        '<div class="w-10 h-10 rounded-lg ' + (seleccionado ? 'bg-emerald-500 text-white' : 'bg-emerald-100 text-emerald-600') + ' flex items-center justify-center text-sm font-bold shrink-0">' + (seleccionado ? '✓' : nombre.charAt(0)) + '</div>' +
         '<div class="flex-1 min-w-0">' +
-          '<p class="font-bold text-sm text-slate-800 truncate">' + d.nombre + '</p>' +
-          '<p class="text-xs text-slate-500 font-medium">' + d.banco + ' · ' + d.cuenta + '</p>' +
-          '<span class="inline-block mt-1 px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[0.6rem] font-black uppercase tracking-wider">' + d.relacion + '</span>' +
+          '<p class="font-bold text-sm text-slate-800 truncate">' + nombre + '</p>' +
+          '<p class="text-xs text-slate-500 font-medium truncate">' + banco + ' · ' + cuenta + '</p>' +
+          (meta.length > 0 ? '<p class="mt-1 text-[0.65rem] font-semibold text-slate-400 truncate">' + meta.join(' · ') + '</p>' : '') +
+          '<span class="inline-block mt-2 px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[0.6rem] font-black uppercase tracking-wider">' + relacion + '</span>' +
         '</div>' +
       '</button>';
     }).join('');
     actualizarInfoDestinatariosSeleccionados();
+    actualizarAccionesDestinatarios();
   }
 
   function seleccionarDestinatario(id) {
-    var lista = destinatariosPorCliente[estado.cliente.id] || [];
-    var d = lista.find(function(x) { return x.id === id; });
+    var catalogo = obtenerCatalogoDestinatarios(estado.cliente.id);
+    var d = catalogo[id];
     if (!d) return;
     var existe = estado.destinatarios.some(function(item) { return item.id === id; });
     if (existe) {
@@ -989,7 +1209,7 @@ import {
       obtenerDetalleDestinatario(d.id);
     }
     estado.destinatario = estado.destinatarios[0] || null;
-    renderDestinatariosWizard(lista);
+    renderDestinatariosWizard(destinatariosVista);
     renderComprobantesEgreso();
   }
 
@@ -1004,8 +1224,8 @@ import {
   function obtenerDetalleDestinatario(id) {
     if (!estado.detallesPorDestinatario) estado.detallesPorDestinatario = {};
     if (!estado.detallesPorDestinatario[id]) {
-      var lista = estado.cliente ? (destinatariosPorCliente[estado.cliente.id] || []) : [];
-      var destinatario = lista.find(function(item) { return item.id === id; }) || {};
+      var catalogo = estado.cliente ? obtenerCatalogoDestinatarios(estado.cliente.id) : {};
+      var destinatario = catalogo[id] || {};
       estado.detallesPorDestinatario[id] = {
         metodo: '',
         banco: destinatario.banco || '',
@@ -1540,8 +1760,16 @@ import {
       showToast('success', 'Destinatario creado', payload.name + ' fue registrado.');
       e.target.reset();
       cerrarModalDestinatario();
-      destinatariosPorCliente[estado.cliente.id] = null;
-      cargarDestinatariosWizard(estado.cliente.id);
+      limpiarBusquedaDestinatarios(false);
+      paginacionDestinatarios.offset = 0;
+      paginacionDestinatarios.total = 0;
+      paginacionDestinatarios.hasMore = false;
+      destinatariosVista = [];
+      if (estado.cliente) {
+        var nuevoDestinatario = mapDestinatarioWizard(data);
+        guardarDestinatariosEnCatalogo(estado.cliente.id, [nuevoDestinatario]);
+        cargarDestinatariosWizard(estado.cliente.id, { reset: true });
+      }
     } catch (err) {
       showToast('error', 'Error', err.message);
     } finally {
