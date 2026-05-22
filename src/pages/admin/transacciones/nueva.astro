@@ -1054,15 +1054,19 @@ import {
         var salida = parseFloat(detalle.salida) || 0;
         var requiereTasa = !bancoEsBinance(detalle.banco);
         var tasa = requiereTasa ? (parseFloat(detalle.tasa) || 0) : 0;
+        var vesManual = detalle.ves === undefined || detalle.ves === null ? '' : String(detalle.ves).trim();
+        var vesManualNumero = vesManual === '' ? null : parseFloat(vesManual);
         var nombreDestino = destinatario.nombre || ('Destinatario ' + (idx + 1));
 
         if (!detalle.metodo) { showToast('warning', 'Falta método', 'Selecciona un método para ' + nombreDestino + '.'); return; }
         if (!detalle.banco) { showToast('warning', 'Falta banco', 'Selecciona un banco para ' + nombreDestino + '.'); return; }
         if (salida <= 0) { showToast('warning', 'Monto inválido', 'La salida de ' + nombreDestino + ' debe ser mayor a 0.'); return; }
         if (requiereTasa && tasa <= 0) { showToast('warning', 'Tasa inválida', 'La tasa de ' + nombreDestino + ' debe ser mayor a 0.'); return; }
+        if (vesManual !== '' && (isNaN(vesManualNumero) || vesManualNumero < 0)) { showToast('warning', 'VES inválido', 'El monto VES de ' + nombreDestino + ' debe ser 0 o mayor.'); return; }
 
         detalle.salida = salida;
         detalle.tasa = tasa;
+        if (vesManual !== '') detalle.ves = vesManualNumero;
       }
       estado.ingreso = ing;
     }
@@ -1230,7 +1234,8 @@ import {
         metodo: '',
         banco: destinatario.banco || '',
         salida: '',
-        tasa: ''
+        tasa: '',
+        ves: ''
       };
     }
     return estado.detallesPorDestinatario[id];
@@ -1266,6 +1271,21 @@ import {
     return destinatarios.length > 0 ? ingresoTotal / destinatarios.length : ingresoTotal;
   }
 
+  function tieneVESManual(detalle) {
+    return detalle && detalle.ves !== undefined && detalle.ves !== null && String(detalle.ves).trim() !== '';
+  }
+
+  function obtenerVESDetalle(destinatario, destinatarios, ingresoTotal) {
+    var detalle = obtenerDetalleDestinatario(destinatario.id);
+    if (tieneVESManual(detalle)) {
+      var manual = parseFloat(detalle.ves);
+      if (!isNaN(manual)) return manual;
+    }
+    var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, ingresoTotal);
+    var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
+    return ingresoAsignado * tasa;
+  }
+
   function renderDetallesDestinatarios() {
     var cont = document.getElementById('detallesDestinatarios');
     if (!cont) return;
@@ -1283,12 +1303,14 @@ import {
       var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, ingreso);
       var salida = parseFloat(detalle.salida) || 0;
       var tasa = esBinance ? 0 : (parseFloat(detalle.tasa) || 0);
-      var ves = ingresoAsignado * tasa;
+      var ves = obtenerVESDetalle(destinatario, destinatarios, ingreso);
+      var vesManual = tieneVESManual(detalle);
       var profit = ingresoAsignado - salida;
       var margen = ingresoAsignado > 0 ? ((profit / ingresoAsignado) * 100) : 0;
       var safeId = escapeHtml(destinatario.id);
       var titulo = escapeHtml(destinatario.nombre || ('Destinatario ' + (index + 1)));
       var subtitulo = escapeHtml((destinatario.banco || 'Sin banco') + (destinatario.cuenta ? ' · ' + destinatario.cuenta : ''));
+      var vesPlaceholder = Number.isFinite(ves) ? ves.toFixed(2) : '0.00';
 
       return '<div class="rounded-[1.65rem] border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-4 md:p-5 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.34),0_12px_24px_-18px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)]">' +
         '<div class="mb-4 flex items-start justify-between gap-3">' +
@@ -1329,7 +1351,7 @@ import {
         '</div>' +
         '<div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.92)_0%,rgba(241,245,249,0.98)_100%)] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_28px_-24px_rgba(15,23,42,0.25)]">' +
           '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Entrada asignada</p><p id="detIngreso-' + safeId + '" class="mt-1 text-sm font-black font-mono text-slate-700">$' + new Intl.NumberFormat('es-US').format(ingresoAsignado) + '</p></div>' +
-          '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">VES</p><p id="detVES-' + safeId + '" class="mt-1 text-sm font-black font-mono text-slate-700">' + new Intl.NumberFormat('es-VE').format(ves) + '</p></div>' +
+          '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">' + (vesManual ? 'VES manual' : 'VES') + '</p><input id="detVES-' + safeId + '" type="number" step="0.01" min="0" value="' + escapeHtml(vesManual ? detalle.ves : '') + '" placeholder="' + escapeHtml(vesPlaceholder) + '" class="mt-1 w-full rounded-lg border border-transparent bg-white/60 px-2 py-1 text-center text-sm font-black font-mono text-slate-700 placeholder:text-slate-500 hover:border-indigo-200 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10" oninput="actualizarDetalleDestinatario(\'' + safeId + '\', \'ves\', this.value)" title="Déjalo vacío para calcular VES automáticamente" /></div>' +
           '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Profit</p><p id="detProfit-' + safeId + '" class="mt-1 text-sm font-black font-mono text-emerald-600">$' + new Intl.NumberFormat('es-US').format(profit) + '</p></div>' +
           '<div><p class="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Margen</p><p id="detMargen-' + safeId + '" class="mt-1 text-sm font-black font-mono text-indigo-600">' + margen.toFixed(1) + '%</p></div>' +
         '</div>' +
@@ -1403,8 +1425,7 @@ import {
       var detalle = obtenerDetalleDestinatario(destinatario.id);
       var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, ing);
       var salida = parseFloat(detalle.salida) || 0;
-      var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
-      var ves = ingresoAsignado * tasa;
+      var ves = obtenerVESDetalle(destinatario, destinatarios, ing);
       var profit = ingresoAsignado - salida;
       var margenDetalle = ingresoAsignado > 0 ? ((profit / ingresoAsignado) * 100) : 0;
       totalVES += ves;
@@ -1415,7 +1436,13 @@ import {
       var detProfit = document.getElementById('detProfit-' + destinatario.id);
       var detMargen = document.getElementById('detMargen-' + destinatario.id);
       if (detIngreso) detIngreso.textContent = '$' + new Intl.NumberFormat('es-US').format(ingresoAsignado);
-      if (detVES) detVES.textContent = new Intl.NumberFormat('es-VE').format(ves);
+      if (detVES) {
+        if (detVES.tagName === 'INPUT') {
+          if (!tieneVESManual(detalle)) detVES.placeholder = Number.isFinite(ves) ? ves.toFixed(2) : '0.00';
+        } else {
+          detVES.textContent = new Intl.NumberFormat('es-VE').format(ves);
+        }
+      }
       if (detProfit) detProfit.textContent = '$' + new Intl.NumberFormat('es-US').format(profit);
       if (detMargen) detMargen.textContent = margenDetalle.toFixed(1) + '%';
     });
@@ -1447,10 +1474,11 @@ import {
       var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, estado.ingreso);
       var salida = parseFloat(detalle.salida) || 0;
       var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
+      var ves = obtenerVESDetalle(destinatario, destinatarios, estado.ingreso);
       if (detalle.metodo && !metodosUsados.includes(detalle.metodo)) metodosUsados.push(detalle.metodo);
       if (!bancoEsBinance(detalle.banco) && tasa > 0) tasasUsadas.push(tasa);
       totalSalida += salida;
-      totalVES += ingresoAsignado * tasa;
+      totalVES += ves;
       totalProfit += ingresoAsignado - salida;
     });
 
@@ -1614,6 +1642,7 @@ import {
         var ingresoAsignado = obtenerIngresoAsignado(destinatario, destinatarios, estado.ingreso);
         var tasa = bancoEsBinance(detalle.banco) ? 0 : (parseFloat(detalle.tasa) || 0);
         var salida = parseFloat(detalle.salida) || 0;
+        var montoVES = obtenerVESDetalle(destinatario, destinatarios, estado.ingreso);
         var metodo = metodoMap[detalle.metodo] || 'TRANSFERENCIA';
         var payload = {
           clientId: estado.cliente.id,
@@ -1621,7 +1650,7 @@ import {
           ingresoUSD: ingresoAsignado,
           salidaUSDT: salida,
           tasa: tasa,
-          montoVES: ingresoAsignado * tasa,
+          montoVES: montoVES,
           metodo: metodo,
           profitUSD: ingresoAsignado - salida,
           estado: 'PENDING'
