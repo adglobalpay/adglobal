@@ -1307,9 +1307,6 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                   <option value="id_front">Cédula / Pasaporte (frente)</option>
                   <option value="id_back">Cédula / Pasaporte (reverso)</option>
                   <option value="selfie">Foto de rostro (selfie)</option>
-                  <option value="proof_address">Comprobante de domicilio</option>
-                  <option value="company_cert">Certificado de empresa</option>
-                  <option value="representante_id">ID del representante</option>
                 </select>
               </div>
 
