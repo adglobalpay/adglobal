@@ -255,7 +255,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
       {/* Remitente / Destinatario */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 anim-fade-in-up stagger-3">
         {/* Remitente */}
-        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
+        <div className="rounded-2xl md:rounded-3xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-5 md:p-6 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.34),0_12px_24px_-18px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] card-hover">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><Phone className="w-5 h-5" /></div>
             <div>
@@ -294,7 +294,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
         </div>
 
         {/* Destinatario */}
-        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
+        <div className="rounded-2xl md:rounded-3xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-5 md:p-6 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.34),0_12px_24px_-18px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] card-hover">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><Banknote className="w-5 h-5" /></div>
             <div>
@@ -332,7 +332,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
       {/* Montos */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 anim-fade-in-up stagger-4">
         {/* Ingreso USD */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: '0.35s' }}>
+        <div className="rounded-2xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-4 md:p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.32),0_10px_22px_-18px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] card-hover anim-fade-in-up" style={{ animationDelay: '0.35s' }}>
           <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
             <FileText className="w-5 h-5" />
           </div>
@@ -346,7 +346,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
         </div>
 
         {/* Salida USDT */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: '0.4s' }}>
+        <div className="rounded-2xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-4 md:p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.32),0_10px_22px_-18px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] card-hover anim-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
             <FileText className="w-5 h-5" />
           </div>
@@ -360,7 +360,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
         </div>
 
         {/* Monto VES */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: '0.45s' }}>
+        <div className="rounded-2xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-4 md:p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.32),0_10px_22px_-18px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] card-hover anim-fade-in-up" style={{ animationDelay: '0.45s' }}>
           <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
             <FileText className="w-5 h-5" />
           </div>
@@ -374,7 +374,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
         </div>
 
         {/* Tasa + Método */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: '0.5s' }}>
+        <div className="rounded-2xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-4 md:p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.32),0_10px_22px_-18px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] card-hover anim-fade-in-up" style={{ animationDelay: '0.5s' }}>
           <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-3">
             <FileText className="w-5 h-5" />
           </div>
@@ -408,7 +408,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
       {/* Profit + Comisión */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 anim-fade-in-up stagger-5">
-        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
+        <div className="rounded-2xl md:rounded-3xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-5 md:p-6 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.34),0_12px_24px_-18px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] card-hover">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><Banknote className="w-5 h-5" /></div>
             <div>
@@ -419,7 +419,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
           <p className="text-2xl md:text-3xl font-bold text-emerald-600 tracking-tight">${Number(tx.profitUSD || 0).toFixed(2)} <span className="text-sm text-emerald-500/70">USD</span></p>
         </div>
 
-        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
+        <div className="rounded-2xl md:rounded-3xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-5 md:p-6 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.34),0_12px_24px_-18px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] card-hover">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><FileText className="w-5 h-5" /></div>
             <div>
@@ -432,7 +432,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
       </div>
 
       {/* Verificación Administrativa */}
-      <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 anim-fade-in-up stagger-6 card-hover">
+      <div className="rounded-2xl md:rounded-3xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(248,250,252,0.98)_100%)] p-5 md:p-6 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.34),0_12px_24px_-18px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] anim-fade-in-up stagger-6 card-hover">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center"><FileText className="w-5 h-5" /></div>
           <div>
