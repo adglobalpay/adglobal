@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  CheckCircle2, ExternalLink, FileCheck2, FileText, Fingerprint, RefreshCw,
+  CalendarClock, CheckCircle2, ExternalLink, FileCheck2, FileText, Fingerprint, History, RefreshCw,
   ShieldAlert, XCircle
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
@@ -13,6 +13,18 @@ interface KycDocument {
   uploadedAt: string;
 }
 
+interface KycWebhookData {
+  submittedAt?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  manualReview?: {
+    status?: string;
+    notes?: string | null;
+    reviewedAt?: string;
+    reviewedById?: string;
+  };
+}
+
 interface KycRequest {
   id: string;
   token: string;
@@ -20,6 +32,7 @@ interface KycRequest {
   createdAt: string;
   completedAt: string | null;
   expiresAt: string | null;
+  webhookData?: KycWebhookData | null;
   client: {
     id: string;
     firstName: string;
@@ -34,7 +47,8 @@ const STATUS_MAP: Record<string, { label: string; className: string; icon: React
   PENDING: { label: 'Por revisar', className: 'bg-blue-50 text-blue-700 border-blue-200', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
   PROCESSING: { label: 'Por revisar', className: 'bg-blue-50 text-blue-700 border-blue-200', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
   VERIFIED: { label: 'Aprobado', className: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-  REJECTED: { label: 'Rechazado', className: 'bg-rose-50 text-rose-700 border-rose-200', icon: <XCircle className="w-3.5 h-3.5" /> }
+  REJECTED: { label: 'Rechazado', className: 'bg-rose-50 text-rose-700 border-rose-200', icon: <XCircle className="w-3.5 h-3.5" /> },
+  CANCELED: { label: 'Cancelado', className: 'bg-slate-100 text-slate-600 border-slate-200', icon: <XCircle className="w-3.5 h-3.5" /> }
 };
 
 const DOC_LABELS: Record<string, string> = {
@@ -60,6 +74,28 @@ function clientName(request: KycRequest) {
 
 function normalizeKycStatus(status: string) {
   return status === 'PENDING' ? 'PROCESSING' : status;
+}
+
+function isExpiredDraft(request: KycRequest) {
+  if (!request.expiresAt || request.completedAt) return false;
+  if (['VERIFIED', 'REJECTED'].includes(request.status)) return false;
+  return new Date(request.expiresAt).getTime() < Date.now();
+}
+
+function getDisplayStatus(request: KycRequest) {
+  return isExpiredDraft(request) ? 'CANCELED' : normalizeKycStatus(request.status);
+}
+
+function getReviewNotes(request: KycRequest) {
+  return request.webhookData?.manualReview?.notes?.trim() || '';
+}
+
+function getReviewDate(request: KycRequest) {
+  return request.webhookData?.manualReview?.reviewedAt || null;
+}
+
+function getSubmittedDate(request: KycRequest) {
+  return request.webhookData?.submittedAt || request.completedAt || request.createdAt;
 }
 
 export default function KycReviewPage() {
@@ -111,8 +147,15 @@ export default function KycReviewPage() {
     return filtered.find((request) => request.id === selectedId) || filtered[0] || null;
   }, [selectedId, filtered]);
 
+  const selectedHistory = useMemo(() => {
+    if (!selected) return [];
+    return [...requests]
+      .filter((request) => request.client.id === selected.client.id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [requests, selected]);
+
   const stats = useMemo(() => ({
-    processing: requests.filter((request) => normalizeKycStatus(request.status) === 'PROCESSING').length,
+    processing: requests.filter((request) => getDisplayStatus(request) === 'PROCESSING').length,
     verified: requests.filter((request) => request.status === 'VERIFIED').length,
     rejected: requests.filter((request) => request.status === 'REJECTED').length,
     total: requests.length
@@ -372,7 +415,7 @@ export default function KycReviewPage() {
         <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 min-h-[520px]">
           {selected ? (
             <div className="space-y-5">
-              {normalizeKycStatus(selected.status) === 'VERIFIED' && (
+              {getDisplayStatus(selected) === 'VERIFIED' && (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
                   Este KYC ya fue aprobado. Si necesitas actualizar firma, selfie o cédula, usa <span className="font-extrabold">Corregir KYC</span> para generar un nuevo enlace de carga.
                 </div>
@@ -381,8 +424,8 @@ export default function KycReviewPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl md:text-2xl font-extrabold text-slate-800">{clientName(selected)}</h2>
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${STATUS_MAP[normalizeKycStatus(selected.status)]?.className || STATUS_MAP.PROCESSING.className}`}>
-                      {STATUS_MAP[normalizeKycStatus(selected.status)]?.icon} {STATUS_MAP[normalizeKycStatus(selected.status)]?.label || normalizeKycStatus(selected.status)}
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${STATUS_MAP[getDisplayStatus(selected)]?.className || STATUS_MAP.PROCESSING.className}`}>
+                      {STATUS_MAP[getDisplayStatus(selected)]?.icon} {STATUS_MAP[getDisplayStatus(selected)]?.label || getDisplayStatus(selected)}
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 font-medium mt-1">{selected.client.email || 'Sin email registrado'}</p>
@@ -404,10 +447,10 @@ export default function KycReviewPage() {
                     <FileText className="w-4 h-4" /> Descargar PDF
                   </button>
                   <button
-                    onClick={() => normalizeKycStatus(selected.status) === 'VERIFIED' ? requestKycCorrection() : reviewRequest('VERIFIED')}
+                    onClick={() => getDisplayStatus(selected) === 'VERIFIED' ? requestKycCorrection() : reviewRequest('VERIFIED')}
                     disabled={!!reviewing}
                     className={`btn-interactive px-4 py-2.5 text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-60 ${
-                      normalizeKycStatus(selected.status) === 'VERIFIED'
+                      getDisplayStatus(selected) === 'VERIFIED'
                         ? 'bg-indigo-600 hover:bg-indigo-700'
                         : 'bg-emerald-600 hover:bg-emerald-700'
                     }`}
@@ -416,7 +459,7 @@ export default function KycReviewPage() {
                       ? 'Guardando...'
                       : reviewing === 'CORRECTION'
                         ? 'Preparando...'
-                        : normalizeKycStatus(selected.status) === 'VERIFIED'
+                        : getDisplayStatus(selected) === 'VERIFIED'
                           ? 'Corregir KYC'
                           : 'Aprobar KYC'}
                   </button>
@@ -452,6 +495,105 @@ export default function KycReviewPage() {
                   );
                 })}
               </div>
+
+              <section className="pt-5 border-t border-slate-100">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-2 mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-slate-800">
+                      <History className="w-5 h-5 text-indigo-600" />
+                      <h3 className="text-lg font-extrabold">Historial</h3>
+                    </div>
+                    <p className="text-sm text-slate-400 font-medium mt-1">Solicitudes anteriores, documentos cargados, fechas y notas de revisión.</p>
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-400">{selectedHistory.length} registros</span>
+                </div>
+
+                <div className="space-y-3">
+                  {selectedHistory.map((historyItem) => {
+                    const statusKey = getDisplayStatus(historyItem);
+                    const status = STATUS_MAP[statusKey] || STATUS_MAP.PROCESSING;
+                    const notes = getReviewNotes(historyItem);
+                    const reviewedAt = getReviewDate(historyItem);
+                    const isCurrent = historyItem.id === selected.id;
+
+                    return (
+                      <article
+                        key={historyItem.id}
+                        className={`rounded-2xl border p-4 transition-all ${
+                          isCurrent
+                            ? 'border-indigo-200 bg-indigo-50/50 shadow-[0_16px_32px_-24px_rgba(79,70,229,0.35)]'
+                            : 'border-slate-200 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.28)]'
+                        }`}
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${status.className}`}>
+                                {status.icon} {status.label}
+                              </span>
+                              {isCurrent && <span className="text-[0.65rem] font-black uppercase tracking-wider text-indigo-600">Actual</span>}
+                            </div>
+                            <div className="mt-3 grid gap-1 text-xs font-semibold text-slate-500">
+                              <span className="inline-flex items-center gap-1.5">
+                                <CalendarClock className="w-3.5 h-3.5 text-slate-400" />
+                                Creado: {formatDate(historyItem.createdAt)}
+                              </span>
+                              <span>Enviado: {formatDate(getSubmittedDate(historyItem))}</span>
+                              {reviewedAt && <span>Revisado: {formatDate(reviewedAt)}</span>}
+                              {historyItem.expiresAt && statusKey === 'CANCELED' && <span>Expiró: {formatDate(historyItem.expiresAt)}</span>}
+                            </div>
+                          </div>
+
+                          {!isCurrent && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedId(historyItem.id)}
+                              className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                            >
+                              Ver detalle
+                            </button>
+                          )}
+                        </div>
+
+                        {notes && (
+                          <div className="mt-3 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2">
+                            <p className="text-[0.65rem] font-black uppercase tracking-wider text-rose-400 mb-1">Motivo de rechazo</p>
+                            <p className="text-sm font-semibold text-rose-700">{notes}</p>
+                          </div>
+                        )}
+
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {['signature', 'selfie', 'id_front'].map((type) => {
+                            const doc = historyItem.documents.find((item) => item.documentType === type);
+                            return (
+                              <div key={type} className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+                                <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-slate-100">
+                                  <span className="text-[0.62rem] font-black uppercase tracking-wider text-slate-500">{DOC_LABELS[type]}</span>
+                                  {doc?.url && (
+                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700" aria-label={`Abrir ${DOC_LABELS[type]}`}>
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </a>
+                                  )}
+                                </div>
+                                {doc?.url ? (
+                                  <a href={doc.url} target="_blank" rel="noopener noreferrer" className="block bg-white">
+                                    <img src={doc.url} alt={DOC_LABELS[type]} className="h-24 w-full object-cover bg-white" />
+                                  </a>
+                                ) : (
+                                  <div className="h-24 flex items-center justify-center text-[0.7rem] font-bold text-slate-300">No enviado</div>
+                                )}
+                                <div className="px-3 py-2 text-[0.65rem] font-semibold text-slate-400">
+                                  {doc ? formatDate(doc.uploadedAt) : 'Sin archivo'}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
             </div>
           ) : (
             <div className="h-full min-h-[420px] flex flex-col items-center justify-center text-center text-slate-400">
