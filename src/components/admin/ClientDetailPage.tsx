@@ -111,8 +111,8 @@ const ESTADO_MAP: Record<string, { label: string; className: string }> = {
 
 const KYC_MAP: Record<string, { label: string; className: string }> = {
   VERIFIED: { label: 'Verificado', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  PENDING: { label: 'Pendiente', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  PROCESSING: { label: 'Procesando', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  PENDING: { label: 'Por revisar', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  PROCESSING: { label: 'Por revisar', className: 'bg-blue-50 text-blue-700 border-blue-200' },
   REJECTED: { label: 'Rechazado', className: 'bg-rose-50 text-rose-700 border-rose-200' }
 };
 

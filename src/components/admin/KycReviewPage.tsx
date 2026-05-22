@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  CheckCircle2, Clock, ExternalLink, FileCheck2, FileText, Fingerprint, RefreshCw,
+  CheckCircle2, ExternalLink, FileCheck2, FileText, Fingerprint, RefreshCw,
   ShieldAlert, XCircle
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
@@ -31,7 +31,7 @@ interface KycRequest {
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-  PENDING: { label: 'Pendiente', className: 'bg-amber-50 text-amber-700 border-amber-200', icon: <Clock className="w-3.5 h-3.5" /> },
+  PENDING: { label: 'Por revisar', className: 'bg-blue-50 text-blue-700 border-blue-200', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
   PROCESSING: { label: 'Por revisar', className: 'bg-blue-50 text-blue-700 border-blue-200', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
   VERIFIED: { label: 'Aprobado', className: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
   REJECTED: { label: 'Rechazado', className: 'bg-rose-50 text-rose-700 border-rose-200', icon: <XCircle className="w-3.5 h-3.5" /> }
@@ -56,6 +56,10 @@ function formatDate(d: string | null) {
 
 function clientName(request: KycRequest) {
   return `${request.client.firstName} ${request.client.lastName || ''}`.trim();
+}
+
+function normalizeKycStatus(status: string) {
+  return status === 'PENDING' ? 'PROCESSING' : status;
 }
 
 export default function KycReviewPage() {
@@ -100,7 +104,7 @@ export default function KycReviewPage() {
 
   const filtered = useMemo(() => {
     if (filter === 'ALL') return requests;
-    return requests.filter((request) => request.status === filter);
+    return requests.filter((request) => normalizeKycStatus(request.status) === filter);
   }, [requests, filter]);
 
   const selected = useMemo(() => {
@@ -108,7 +112,7 @@ export default function KycReviewPage() {
   }, [selectedId, filtered]);
 
   const stats = useMemo(() => ({
-    processing: requests.filter((request) => request.status === 'PROCESSING').length,
+    processing: requests.filter((request) => normalizeKycStatus(request.status) === 'PROCESSING').length,
     verified: requests.filter((request) => request.status === 'VERIFIED').length,
     rejected: requests.filter((request) => request.status === 'REJECTED').length,
     total: requests.length
@@ -310,7 +314,6 @@ export default function KycReviewPage() {
       <div className="flex flex-wrap gap-2">
         {[
           ['PROCESSING', 'Por revisar'],
-          ['PENDING', 'Pendientes'],
           ['VERIFIED', 'Aprobados'],
           ['REJECTED', 'Rechazados'],
           ['ALL', 'Todos']
@@ -334,7 +337,8 @@ export default function KycReviewPage() {
           </div>
           <div className="divide-y divide-slate-100 max-h-[620px] overflow-y-auto">
             {filtered.map((request) => {
-              const cfg = STATUS_MAP[request.status] || STATUS_MAP.PENDING;
+              const normalizedStatus = normalizeKycStatus(request.status);
+              const cfg = STATUS_MAP[normalizedStatus] || STATUS_MAP.PROCESSING;
               return (
                 <button
                   key={request.id}
@@ -368,7 +372,7 @@ export default function KycReviewPage() {
         <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 min-h-[520px]">
           {selected ? (
             <div className="space-y-5">
-              {selected.status === 'VERIFIED' && (
+              {normalizeKycStatus(selected.status) === 'VERIFIED' && (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
                   Este KYC ya fue aprobado. Si necesitas actualizar firma, selfie o cédula, usa <span className="font-extrabold">Corregir KYC</span> para generar un nuevo enlace de carga.
                 </div>
@@ -377,8 +381,8 @@ export default function KycReviewPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl md:text-2xl font-extrabold text-slate-800">{clientName(selected)}</h2>
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${STATUS_MAP[selected.status]?.className || STATUS_MAP.PENDING.className}`}>
-                      {STATUS_MAP[selected.status]?.icon} {STATUS_MAP[selected.status]?.label || selected.status}
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${STATUS_MAP[normalizeKycStatus(selected.status)]?.className || STATUS_MAP.PROCESSING.className}`}>
+                      {STATUS_MAP[normalizeKycStatus(selected.status)]?.icon} {STATUS_MAP[normalizeKycStatus(selected.status)]?.label || normalizeKycStatus(selected.status)}
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 font-medium mt-1">{selected.client.email || 'Sin email registrado'}</p>
@@ -400,10 +404,10 @@ export default function KycReviewPage() {
                     <FileText className="w-4 h-4" /> Descargar PDF
                   </button>
                   <button
-                    onClick={() => selected.status === 'VERIFIED' ? requestKycCorrection() : reviewRequest('VERIFIED')}
+                    onClick={() => normalizeKycStatus(selected.status) === 'VERIFIED' ? requestKycCorrection() : reviewRequest('VERIFIED')}
                     disabled={!!reviewing}
                     className={`btn-interactive px-4 py-2.5 text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-60 ${
-                      selected.status === 'VERIFIED'
+                      normalizeKycStatus(selected.status) === 'VERIFIED'
                         ? 'bg-indigo-600 hover:bg-indigo-700'
                         : 'bg-emerald-600 hover:bg-emerald-700'
                     }`}
@@ -412,7 +416,7 @@ export default function KycReviewPage() {
                       ? 'Guardando...'
                       : reviewing === 'CORRECTION'
                         ? 'Preparando...'
-                        : selected.status === 'VERIFIED'
+                        : normalizeKycStatus(selected.status) === 'VERIFIED'
                           ? 'Corregir KYC'
                           : 'Aprobar KYC'}
                   </button>

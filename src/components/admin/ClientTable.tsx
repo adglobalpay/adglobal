@@ -137,8 +137,8 @@ export default function ClientTable({ limit }: Props) {
     if (!filtro) return;
 
     if (filtro === 'kyc') {
-      setFilteredClients(prev => prev.filter(c => c.kycStatus === 'PENDING'));
-      setSearchQuery('KYC Pendiente');
+      setFilteredClients(prev => prev.filter(c => c.kycStatus === 'PENDING' || c.kycStatus === 'PROCESSING'));
+      setSearchQuery('KYC Por revisar');
     } else if (filtro === 'ofac') {
       setFilteredClients(prev => prev.filter(c => c.ofacStatus === 'REVIEW'));
       setSearchQuery('OFAC Review');
@@ -278,7 +278,15 @@ export default function ClientTable({ limit }: Props) {
         return (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
             <Clock className="w-3 h-3" />
-            Pendiente
+            {typeLabel === 'KYC' ? 'Por revisar' : 'Pendiente'}
+            {typeLabel && <span className="text-[0.6rem] font-black text-amber-600/80 bg-amber-100 px-1 py-0.5 rounded">{typeLabel}</span>}
+          </span>
+        );
+      case 'PROCESSING':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+            <Clock className="w-3 h-3" />
+            {typeLabel === 'KYC' ? 'Por revisar' : 'Procesando'}
             {typeLabel && <span className="text-[0.6rem] font-black text-amber-600/80 bg-amber-100 px-1 py-0.5 rounded">{typeLabel}</span>}
           </span>
         );

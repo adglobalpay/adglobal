@@ -53,7 +53,7 @@ export default function StatsCards() {
     { label: 'Clientes totales', value: stats.totalClients.toString(), change: '+12%', isPositive: true, icon: <Users size={20} className="text-blue-500" />, bgLight: 'bg-blue-50', bgIcon: 'bg-blue-100/50' },
     { label: 'Transacciones hoy', value: stats.todayTransactions.toString(), change: '+5%', isPositive: true, icon: <Coins size={20} className="text-emerald-500" />, bgLight: 'bg-emerald-50', bgIcon: 'bg-emerald-100/50' },
     { label: 'Volumen total', value: `$${Number(stats.totalVolume).toLocaleString()}`, change: '+8%', isPositive: true, icon: <TrendingUp size={20} className="text-indigo-500" />, bgLight: 'bg-indigo-50', bgIcon: 'bg-indigo-100/50' },
-    { label: 'Pendientes KYC', value: stats.pendingKyc.toString(), change: stats.pendingKyc > 0 ? `+${stats.pendingKyc}` : '0', isPositive: stats.pendingKyc === 0, icon: <UserCheck size={20} className="text-amber-500" />, bgLight: 'bg-amber-50', bgIcon: 'bg-amber-100/50' },
+    { label: 'KYC por revisar', value: stats.pendingKyc.toString(), change: stats.pendingKyc > 0 ? `+${stats.pendingKyc}` : '0', isPositive: stats.pendingKyc === 0, icon: <UserCheck size={20} className="text-amber-500" />, bgLight: 'bg-amber-50', bgIcon: 'bg-amber-100/50' },
   ];
 
   return (
