@@ -1003,34 +1003,60 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         </div>
       </div>
 
-      <!-- Step 3: Cédula -->
+      <!-- Step 3: Documento -->
       <div id="step3" class="kyc-step-card hidden">
         <div class="kyc-step-label">Paso 3 de 4</div>
-        <h1 class="kyc-step-title">Foto de tu cédula</h1>
-        <p class="kyc-step-desc">Documento completo, enfocado, sin reflejos y bien iluminado.</p>
+        <h1 class="kyc-step-title">Fotos de tu documento</h1>
+        <p class="kyc-step-desc">Sube el frente y el reverso completos, enfocados, sin reflejos y bien iluminados.</p>
 
-        <div id="idAlreadyUploaded" class="hidden" style="margin-bottom:1.5rem; padding:1.25rem; background:#eef2ff; border:1px solid #c7d2fe; border-radius:1rem;">
-          <div style="display:flex; align-items:center; gap:0.75rem;">
-            <div style="width:2.5rem; height:2.5rem; border-radius:0.75rem; background:#6366f1; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <div style="display:grid; gap:1rem;">
+          <div id="idFrontAlreadyUploaded" class="hidden" style="padding:1.25rem; background:#eef2ff; border:1px solid #c7d2fe; border-radius:1rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div style="width:2.5rem; height:2.5rem; border-radius:0.75rem; background:#6366f1; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p style="font-weight:700; font-size:0.9rem; color:#1e293b;">Documento frente ya cargado</p>
+                <p style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió esta imagen. Puedes reemplazarla si hace falta.</p>
+              </div>
             </div>
-            <div>
-              <p style="font-weight:700; font-size:0.9rem; color:#1e293b;">Identificación ya cargada</p>
-              <p style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió tu documento. Puedes continuar.</p>
-            </div>
+            <img id="idFrontAlreadyPreview" class="hidden" style="margin-top:0.75rem; width:100%; max-height:200px; object-fit:contain; border-radius:0.75rem; border:1px solid #c7d2fe;" alt="Documento frente cargado" />
           </div>
-          <img id="idAlreadyPreview" class="hidden" style="margin-top:0.75rem; width:100%; max-height:200px; object-fit:contain; border-radius:0.75rem; border:1px solid #c7d2fe;" alt="ID preview" />
-        </div>
 
-        <div class="kyc-upload-area" id="idUploadArea" onclick="document.getElementById('idFrontInput').click()">
-          <input id="idFrontInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleIdFront(this)">
-          <div class="kyc-upload-icon-main" id="idIcon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
+          <div class="kyc-upload-area" id="idFrontUploadArea" onclick="document.getElementById('idFrontInput').click()">
+            <input id="idFrontInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleIdFront(this)">
+            <div class="kyc-upload-icon-main" id="idFrontIcon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
+            </div>
+            <h3>Frente del documento</h3>
+            <p>Asegúrate de que todos los datos sean legibles</p>
+            <img id="idFrontPreviewImg" class="kyc-upload-preview-img hidden" alt="Documento frente preview" />
+            <div id="idFrontFileName" class="kyc-upload-file-name hidden"></div>
           </div>
-          <h3 id="idUploadTitle">Toca para fotografiar cédula</h3>
-          <p id="idUploadDesc">Asegúrate que todos los datos sean legibles</p>
-          <img id="idPreviewImg" class="kyc-upload-preview-img hidden" alt="ID preview" />
-          <div id="idFileName" class="kyc-upload-file-name hidden"></div>
+
+          <div id="idBackAlreadyUploaded" class="hidden" style="padding:1.25rem; background:#eef2ff; border:1px solid #c7d2fe; border-radius:1rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div style="width:2.5rem; height:2.5rem; border-radius:0.75rem; background:#6366f1; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p style="font-weight:700; font-size:0.9rem; color:#1e293b;">Documento reverso ya cargado</p>
+                <p style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió esta imagen. Puedes reemplazarla si hace falta.</p>
+              </div>
+            </div>
+            <img id="idBackAlreadyPreview" class="hidden" style="margin-top:0.75rem; width:100%; max-height:200px; object-fit:contain; border-radius:0.75rem; border:1px solid #c7d2fe;" alt="Documento reverso cargado" />
+          </div>
+
+          <div class="kyc-upload-area" id="idBackUploadArea" onclick="document.getElementById('idBackInput').click()">
+            <input id="idBackInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleIdBack(this)">
+            <div class="kyc-upload-icon-main" id="idBackIcon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
+            </div>
+            <h3>Reverso del documento</h3>
+            <p>Incluye sellos, texto y cualquier dato del reverso</p>
+            <img id="idBackPreviewImg" class="kyc-upload-preview-img hidden" alt="Documento reverso preview" />
+            <div id="idBackFileName" class="kyc-upload-file-name hidden"></div>
+          </div>
         </div>
 
         <div id="step3Error" class="kyc-alert hidden"></div>
@@ -1072,13 +1098,22 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
               <span id="reviewSelfieStatus">Pendiente</span>
             </div>
           </div>
-          <div class="kyc-review-item" id="reviewIdItem">
-            <div class="kyc-review-item-icon" id="reviewIdIcon">
+          <div class="kyc-review-item" id="reviewIdFrontItem">
+            <div class="kyc-review-item-icon" id="reviewIdFrontIcon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
             </div>
             <div class="kyc-review-item-text">
-              <strong>Foto de cédula</strong>
-              <span id="reviewIdStatus">Pendiente</span>
+              <strong>Documento frente</strong>
+              <span id="reviewIdFrontStatus">Pendiente</span>
+            </div>
+          </div>
+          <div class="kyc-review-item" id="reviewIdBackItem">
+            <div class="kyc-review-item-icon" id="reviewIdBackIcon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
+            </div>
+            <div class="kyc-review-item-text">
+              <strong>Documento reverso</strong>
+              <span id="reviewIdBackStatus">Pendiente</span>
             </div>
           </div>
         </div>
@@ -1132,8 +1167,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       var signatureData = '';
       var selfieData = '';
       var idFrontData = '';
+      var idBackData = '';
       var hasManualSelfie = false;
       var hasManualIdFront = false;
+      var hasManualIdBack = false;
       var canvas = null;
       var ctx = null;
 
@@ -1193,6 +1230,24 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         el.classList.add('hidden');
       }
 
+      function updateStep3ButtonState() {
+        var btn = document.getElementById('btnStep3Next');
+        if (!btn) return;
+        btn.disabled = !((idFrontData || hasManualIdFront) && (idBackData || hasManualIdBack));
+      }
+
+      function markReviewItemDone(statusId, itemId, iconId) {
+        var status = document.getElementById(statusId);
+        var item = document.getElementById(itemId);
+        var icon = document.getElementById(iconId);
+        if (status) status.textContent = 'Listo';
+        if (item) item.classList.add('done');
+        if (icon) {
+          icon.classList.add('done');
+          icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        }
+      }
+
       function showExistingStatus(status) {
         var area = document.getElementById('kycContent');
         if (!area) return;
@@ -1203,7 +1258,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
             '</div>' +
             '<h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--slate-800); margin-bottom:0.5rem;">' + (approved ? 'Identidad verificada' : 'Verificación enviada') + '</h1>' +
-            '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">' + (approved ? 'Tu identidad ya fue aprobada por AD Global Pay.' : 'Recibimos tus datos. El equipo revisará tu firma, selfie y cédula manualmente.') + '</p>' +
+            '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">' + (approved ? 'Tu identidad ya fue aprobada por AD Global Pay.' : 'Recibimos tu firma, selfie y las fotos del frente y reverso del documento. El equipo las revisará manualmente.') + '</p>' +
             '<a href="/kyc/completado?status=' + encodeURIComponent(status) + '" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
           '</div>';
       }
@@ -1241,23 +1296,27 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
                 if (btnStep2) btnStep2.disabled = false;
               }
 
-              var manualId = data.documents.find(function(d) { return d.documentType === 'id_front'; }) || data.documents.find(function(d) { return d.documentType === 'id_back'; });
-              if (manualId && manualId.url) {
+              var manualIdFront = data.documents.find(function(d) { return d.documentType === 'id_front'; });
+              if (manualIdFront && manualIdFront.url) {
                 hasManualIdFront = true;
-                idFrontData = manualId.url;
-                var alreadyBox = document.getElementById('idAlreadyUploaded');
-                var alreadyPreview = document.getElementById('idAlreadyPreview');
-                var idUploadArea = document.getElementById('idUploadArea');
-                var idUploadTitle = document.getElementById('idUploadTitle');
-                var idUploadDesc = document.getElementById('idUploadDesc');
-                var btnStep3 = document.getElementById('btnStep3Next');
-                if (alreadyBox) alreadyBox.classList.remove('hidden');
-                if (alreadyPreview) { alreadyPreview.src = manualId.url; alreadyPreview.classList.remove('hidden'); }
-                if (idUploadArea) idUploadArea.style.display = 'none';
-                if (idUploadTitle) idUploadTitle.textContent = 'Reemplazar identificación';
-                if (idUploadDesc) idUploadDesc.textContent = 'Solo si quieres actualizarla';
-                if (btnStep3) btnStep3.disabled = false;
+                idFrontData = manualIdFront.url;
+                var frontBox = document.getElementById('idFrontAlreadyUploaded');
+                var frontPreview = document.getElementById('idFrontAlreadyPreview');
+                if (frontBox) frontBox.classList.remove('hidden');
+                if (frontPreview) { frontPreview.src = manualIdFront.url; frontPreview.classList.remove('hidden'); }
               }
+
+              var manualIdBack = data.documents.find(function(d) { return d.documentType === 'id_back'; });
+              if (manualIdBack && manualIdBack.url) {
+                hasManualIdBack = true;
+                idBackData = manualIdBack.url;
+                var backBox = document.getElementById('idBackAlreadyUploaded');
+                var backPreview = document.getElementById('idBackAlreadyPreview');
+                if (backBox) backBox.classList.remove('hidden');
+                if (backPreview) { backPreview.src = manualIdBack.url; backPreview.classList.remove('hidden'); }
+              }
+
+              updateStep3ButtonState();
             }
 
             if (data.status === 'PROCESSING' || data.status === 'VERIFIED') {
@@ -1461,25 +1520,50 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
         });
       }
 
-      // ===================== ID FRONT =====================
+      // ===================== DOCUMENTO FRENTE =====================
       window.handleIdFront = function(input) {
         hideStepError('step3Error');
         if (!input.files || !input.files[0]) return;
         var file = input.files[0];
-        var area = document.getElementById('idUploadArea');
-        var icon = document.getElementById('idIcon');
-        var preview = document.getElementById('idPreviewImg');
-        var fileName = document.getElementById('idFileName');
-        var btn = document.getElementById('btnStep3Next');
+        var area = document.getElementById('idFrontUploadArea');
+        var icon = document.getElementById('idFrontIcon');
+        var preview = document.getElementById('idFrontPreviewImg');
+        var fileName = document.getElementById('idFrontFileName');
 
         compressImage(file)
           .then(function(dataUrl) {
+            hasManualIdFront = false;
             idFrontData = dataUrl;
             if (area) area.classList.add('has-file');
             if (icon) icon.classList.add('hidden');
             if (preview) { preview.src = dataUrl; preview.classList.remove('hidden'); }
             if (fileName) { fileName.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ' + (file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name); fileName.classList.remove('hidden'); }
-            if (btn) btn.disabled = false;
+            updateStep3ButtonState();
+          })
+          .catch(function(err) {
+            showStepError('step3Error', err.message);
+          });
+      };
+
+      // ===================== DOCUMENTO REVERSO =====================
+      window.handleIdBack = function(input) {
+        hideStepError('step3Error');
+        if (!input.files || !input.files[0]) return;
+        var file = input.files[0];
+        var area = document.getElementById('idBackUploadArea');
+        var icon = document.getElementById('idBackIcon');
+        var preview = document.getElementById('idBackPreviewImg');
+        var fileName = document.getElementById('idBackFileName');
+
+        compressImage(file)
+          .then(function(dataUrl) {
+            hasManualIdBack = false;
+            idBackData = dataUrl;
+            if (area) area.classList.add('has-file');
+            if (icon) icon.classList.add('hidden');
+            if (preview) { preview.src = dataUrl; preview.classList.remove('hidden'); }
+            if (fileName) { fileName.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ' + (file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name); fileName.classList.remove('hidden'); }
+            updateStep3ButtonState();
           })
           .catch(function(err) {
             showStepError('step3Error', err.message);
@@ -1489,29 +1573,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       var btnStep3 = document.getElementById('btnStep3Next');
       if (btnStep3) {
         btnStep3.addEventListener('click', function() {
-          if (!idFrontData) {
-            showStepError('step3Error', 'Debes subir una foto de tu cédula.');
+          if (!idFrontData && !hasManualIdFront) {
+            showStepError('step3Error', 'Debes subir el frente del documento.');
+            return;
+          }
+          if (!idBackData && !hasManualIdBack) {
+            showStepError('step3Error', 'Debes subir el reverso del documento.');
             return;
           }
           hideStepError('step3Error');
-          var reviewSelfieStatus = document.getElementById('reviewSelfieStatus');
-          var reviewIdStatus = document.getElementById('reviewIdStatus');
-          var reviewSelfieItem = document.getElementById('reviewSelfieItem');
-          var reviewIdItem = document.getElementById('reviewIdItem');
-          var reviewSelfieIcon = document.getElementById('reviewSelfieIcon');
-          var reviewIdIcon = document.getElementById('reviewIdIcon');
-          if (reviewSelfieStatus) reviewSelfieStatus.textContent = 'Listo';
-          if (reviewIdStatus) reviewIdStatus.textContent = 'Listo';
-          if (reviewSelfieItem) { reviewSelfieItem.classList.add('done'); }
-          if (reviewIdItem) { reviewIdItem.classList.add('done'); }
-          if (reviewSelfieIcon) {
-            reviewSelfieIcon.classList.add('done');
-            reviewSelfieIcon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-          }
-          if (reviewIdIcon) {
-            reviewIdIcon.classList.add('done');
-            reviewIdIcon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-          }
+          markReviewItemDone('reviewSelfieStatus', 'reviewSelfieItem', 'reviewSelfieIcon');
+          markReviewItemDone('reviewIdFrontStatus', 'reviewIdFrontItem', 'reviewIdFrontIcon');
+          markReviewItemDone('reviewIdBackStatus', 'reviewIdBackItem', 'reviewIdBackIcon');
           goToStep(4);
         });
       }
@@ -1529,7 +1602,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             return;
           }
           if (!idFrontData && !hasManualIdFront) {
-            showStepError('step4Error', 'Faltan datos. Por favor sube tu cédula.');
+            showStepError('step4Error', 'Faltan datos. Por favor sube el frente del documento.');
+            return;
+          }
+          if (!idBackData && !hasManualIdBack) {
+            showStepError('step4Error', 'Faltan datos. Por favor sube el reverso del documento.');
             return;
           }
           hideStepError('step4Error');
@@ -1545,6 +1622,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
           }
           if (idFrontData && !hasManualIdFront) {
             payload.idFront = idFrontData;
+          }
+          if (idBackData && !hasManualIdBack) {
+            payload.idBack = idBackData;
           }
 
           fetch(API_URL + '/api/kyc/public/' + encodeURIComponent(token) + '/submit', {
@@ -1567,7 +1647,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
                       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
                     '</div>' +
                     '<h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--slate-800); margin-bottom:0.5rem;">¡Verificación enviada!</h1>' +
-                    '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">Recibimos tu firma, selfie y cédula. El equipo de AD Global Pay revisará tus datos manualmente.</p>' +
+                    '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">Recibimos tu firma, selfie y las fotos del frente y reverso del documento. El equipo de AD Global Pay revisará tus datos manualmente.</p>' +
                     '<a href="/kyc/completado?status=PROCESSING" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
                   '</div>';
               }

@@ -132,6 +132,22 @@ const TX_ESTADO_MAP: Record<string, { label: string; className: string }> = {
   CANCELLED: { label: 'Cancelado', className: 'bg-slate-100 text-slate-600 border-slate-200' }
 };
 
+const KYC_DOCUMENT_LABELS: Record<string, string> = {
+  id_front: 'Cédula / Pasaporte / DNI / Cédula (frente)',
+  id_back: 'Cédula / Pasaporte / DNI / Cédula (reverso)',
+  selfie: 'Foto de rostro',
+  signature: 'Firma digital',
+  proof_address: 'Comprobante de domicilio',
+  company_cert: 'Certificado de empresa',
+  representante_id: 'ID del representante'
+};
+
+const KYC_UPLOAD_OPTIONS = [
+  { value: 'id_front', label: 'Cédula / Pasaporte / DNI / Cédula (frente)' },
+  { value: 'id_back', label: 'Cédula / Pasaporte / DNI / Cédula (reverso)' },
+  { value: 'selfie', label: 'Foto de rostro (selfie)' }
+];
+
 const COUNTRY_OPTIONS = [
   { value: 'us', label: 'Estados Unidos' },
   { value: 've', label: 'Venezuela' },
@@ -795,15 +811,6 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Documentos cargados</p>
               <div className="grid grid-cols-1 gap-2">
                 {latestKyc.documents.map(doc => {
-                  const labels: Record<string, string> = {
-                    id_front: 'Cédula / Pasaporte (frente)',
-                    id_back: 'Cédula / Pasaporte (reverso)',
-                    selfie: 'Foto de rostro',
-                    signature: 'Firma digital',
-                    proof_address: 'Comprobante de domicilio',
-                    company_cert: 'Certificado de empresa',
-                    representante_id: 'ID del representante'
-                  };
                   return (
                     <a
                       key={doc.id}
@@ -817,7 +824,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                           <FileText className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-slate-700 truncate">{labels[doc.documentType] || doc.documentType}</p>
+                          <p className="text-sm font-bold text-slate-700 truncate">{KYC_DOCUMENT_LABELS[doc.documentType] || doc.documentType}</p>
                           <p className="text-[0.65rem] text-slate-400 font-medium">{doc.status || 'Cargado'}</p>
                         </div>
                       </div>
@@ -1304,9 +1311,9 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                   onChange={e => setKycUploadType(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-indigo-400 focus:bg-white focus:ring-[3px] focus:ring-indigo-500/10"
                 >
-                  <option value="id_front">Cédula / Pasaporte (frente)</option>
-                  <option value="id_back">Cédula / Pasaporte (reverso)</option>
-                  <option value="selfie">Foto de rostro (selfie)</option>
+                  {KYC_UPLOAD_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
               </div>
 

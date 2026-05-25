@@ -54,8 +54,11 @@ const STATUS_MAP: Record<string, { label: string; className: string; icon: React
 const DOC_LABELS: Record<string, string> = {
   signature: 'Firma',
   selfie: 'Rostro',
-  id_front: 'Cedula'
+  id_front: 'Documento frente',
+  id_back: 'Documento reverso'
 };
+
+const REVIEW_DOC_TYPES = ['signature', 'selfie', 'id_front', 'id_back'] as const;
 
 function formatDate(d: string | null) {
   if (!d) return '-';
@@ -327,7 +330,7 @@ export default function KycReviewPage() {
             </div>
             Revisión KYC
           </h1>
-          <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Verifica manualmente firmas, selfies y cédulas enviadas por los clientes.</p>
+          <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Verifica manualmente firmas, selfies y los lados frente y reverso del documento enviado por el cliente.</p>
         </div>
         <button
           onClick={loadKyc}
@@ -417,7 +420,7 @@ export default function KycReviewPage() {
             <div className="space-y-5">
               {getDisplayStatus(selected) === 'VERIFIED' && (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                  Este KYC ya fue aprobado. Si necesitas actualizar firma, selfie o cédula, usa <span className="font-extrabold">Corregir KYC</span> para generar un nuevo enlace de carga.
+                  Este KYC ya fue aprobado. Si necesitas actualizar firma, selfie o el documento frente/reverso, usa <span className="font-extrabold">Corregir KYC</span> para generar un nuevo enlace de carga.
                 </div>
               )}
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -466,8 +469,8 @@ export default function KycReviewPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                {['signature', 'selfie', 'id_front'].map((type) => {
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {REVIEW_DOC_TYPES.map((type) => {
                   const doc = selected.documents.find((item) => item.documentType === type);
                   return (
                     <div key={type} className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
@@ -562,8 +565,8 @@ export default function KycReviewPage() {
                           </div>
                         )}
 
-                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          {['signature', 'selfie', 'id_front'].map((type) => {
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+                          {REVIEW_DOC_TYPES.map((type) => {
                             const doc = historyItem.documents.find((item) => item.documentType === type);
                             return (
                               <div key={type} className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
@@ -599,7 +602,7 @@ export default function KycReviewPage() {
             <div className="h-full min-h-[420px] flex flex-col items-center justify-center text-center text-slate-400">
               <Fingerprint className="w-12 h-12 mb-3" />
               <p className="font-bold text-slate-500">Selecciona una solicitud</p>
-              <p className="text-sm font-medium mt-1">Aquí verás la firma, selfie y cédula.</p>
+              <p className="text-sm font-medium mt-1">Aquí verás la firma, selfie y el documento por frente y reverso.</p>
             </div>
           )}
         </div>
