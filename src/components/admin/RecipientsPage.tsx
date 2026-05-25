@@ -185,12 +185,18 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
           detail: { type: 'success', message: 'Destinatario actualizado', description: 'Los cambios fueron guardados correctamente.' }
         }));
       } else {
-        await apiFetch(`/api/clients/${clientId}/recipients`, {
+        const result = await apiFetch(`/api/clients/${clientId}/recipients`, {
           method: 'POST',
           body: JSON.stringify(form)
         });
         window.dispatchEvent(new CustomEvent('show-toast', {
-          detail: { type: 'success', message: 'Destinatario creado', description: 'Nuevo destinatario registrado exitosamente.' }
+          detail: {
+            type: 'success',
+            message: result?.linkedExisting ? 'Destinatario vinculado' : 'Destinatario creado',
+            description: result?.linkedExisting
+              ? 'El destinatario existente quedó asociado a este cliente.'
+              : 'Nuevo destinatario registrado exitosamente.'
+          }
         }));
       }
       setShowModal(false);
@@ -205,11 +211,11 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Eliminar este destinatario?')) return;
+    if (!confirm('¿Quitar este destinatario de este cliente?')) return;
     try {
-      await apiFetch(`/api/recipients/${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/clients/${clientId}/recipients/${id}`, { method: 'DELETE' });
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'success', message: 'Eliminado', description: 'Destinatario eliminado correctamente.' }
+        detail: { type: 'success', message: 'Desvinculado', description: 'El destinatario ya no está asociado a este cliente.' }
       }));
       loadData();
     } catch (err: any) {

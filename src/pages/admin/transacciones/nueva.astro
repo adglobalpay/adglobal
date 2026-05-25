@@ -684,7 +684,7 @@ import {
     if (!titulo || !descripcion) return;
     if (hasQuery) {
       titulo.textContent = 'Sin coincidencias';
-      descripcion.textContent = 'Prueba con otro nombre, teléfono o cédula.';
+      descripcion.textContent = 'No se encontró en ningún cliente. Prueba con otro nombre, teléfono o cédula.';
       return;
     }
     titulo.textContent = 'Sin destinatarios';
@@ -704,7 +704,9 @@ import {
       banco: r.bank || '',
       cuenta: r.accountNumber || '',
       relacion: r.relationship || '',
-      identificacion: r.identification || ''
+      identificacion: r.identification || '',
+      clienteId: r.clientId || (r.client && r.client.id) || '',
+      clienteOrigen: r.client ? (r.client.firstName + (r.client.lastName ? ' ' + r.client.lastName : '')).trim() : ''
     };
   }
 
@@ -1105,7 +1107,11 @@ import {
       });
       if (busquedaDestinatario.trim()) params.set('search', busquedaDestinatario.trim());
 
-      var res = await fetch(API_URL + '/api/clients/' + clientId + '/recipients?' + params.toString(), {
+      var endpoint = busquedaDestinatario.trim()
+        ? '/api/recipients?' + params.toString()
+        : '/api/clients/' + clientId + '/recipients?' + params.toString();
+
+      var res = await fetch(API_URL + endpoint, {
         headers: { 'Authorization': 'Bearer ' + token }
       });
       if (!res.ok) throw new Error('Error');
@@ -1181,6 +1187,7 @@ import {
       var relacion = escapeHtml(d.relacion);
       var telefono = escapeHtml(d.telefono);
       var identificacion = escapeHtml(d.identificacion);
+      var clienteOrigen = d.clienteOrigen && d.clienteId !== estado.cliente.id ? escapeHtml('De: ' + d.clienteOrigen) : '';
       var meta = [];
       if (telefono) meta.push('Tel: ' + telefono);
       if (identificacion) meta.push('CI: ' + identificacion);
@@ -1190,7 +1197,10 @@ import {
           '<p class="font-bold text-sm text-slate-800 truncate">' + nombre + '</p>' +
           '<p class="text-xs text-slate-500 font-medium truncate">' + banco + ' · ' + cuenta + '</p>' +
           (meta.length > 0 ? '<p class="mt-1 text-[0.65rem] font-semibold text-slate-400 truncate">' + meta.join(' · ') + '</p>' : '') +
-          '<span class="inline-block mt-2 px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[0.6rem] font-black uppercase tracking-wider">' + relacion + '</span>' +
+          '<div class="mt-2 flex flex-wrap items-center gap-1.5">' +
+            '<span class="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[0.6rem] font-black uppercase tracking-wider">' + relacion + '</span>' +
+            (clienteOrigen ? '<span class="inline-block px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[0.6rem] font-black uppercase tracking-wider">' + clienteOrigen + '</span>' : '') +
+          '</div>' +
         '</div>' +
       '</button>';
     }).join('');
