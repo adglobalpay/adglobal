@@ -51,7 +51,14 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
       </div>
       <form id="formCliente" class="space-y-5" onsubmit="guardarCliente(event)">
         <div>
-          <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nombre *</label>
+          <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tipo de cliente *</label>
+          <select id="clienteTipo" class="custom-select w-full border-slate-200 bg-slate-50 text-slate-800 rounded-xl px-4 py-3 font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white cursor-pointer">
+            <option value="NATURAL">Natural</option>
+            <option value="JURIDICO">Jurídico</option>
+          </select>
+        </div>
+        <div>
+          <label id="clienteNombreLabel" class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nombre *</label>
           <input type="text" id="clienteNombre" required class="w-full border-slate-200 bg-slate-50 text-slate-800 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 hover:bg-white" placeholder="Ej. Juan Pérez">
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -342,7 +349,20 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
         abrirModalCliente();
       };
     }
+    updateClienteTipoUI();
+    var clienteTipo = document.getElementById('clienteTipo');
+    if (clienteTipo) {
+      clienteTipo.addEventListener('change', updateClienteTipoUI);
+    }
   });
+
+  function updateClienteTipoUI() {
+    var tipo = document.getElementById('clienteTipo') && document.getElementById('clienteTipo').value === 'JURIDICO' ? 'JURIDICO' : 'NATURAL';
+    var label = document.getElementById('clienteNombreLabel');
+    var input = document.getElementById('clienteNombre');
+    if (label) label.textContent = tipo === 'JURIDICO' ? 'Razón social *' : 'Nombre *';
+    if (input) input.placeholder = tipo === 'JURIDICO' ? 'Ej. AD Global Services LLC' : 'Ej. Juan Pérez';
+  }
 
   function abrirModalCliente() {
     const modal = document.getElementById('modalCliente');
@@ -368,12 +388,21 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
   async function guardarCliente(e) {
     e.preventDefault();
 
+    var clientType = document.getElementById('clienteTipo').value;
     var nombreCompleto = document.getElementById('clienteNombre').value.trim();
-    var partes = nombreCompleto.split(' ');
-    var firstName = partes[0] || '';
-    var lastName = partes.slice(1).join(' ') || '';
+    var firstName = '';
+    var lastName = '';
+
+    if (clientType === 'JURIDICO') {
+      firstName = nombreCompleto;
+    } else {
+      var partes = nombreCompleto.split(' ');
+      firstName = partes[0] || '';
+      lastName = partes.slice(1).join(' ') || '';
+    }
 
     var payload = {
+      clientType: clientType,
       firstName: firstName,
       lastName: lastName,
       phone: document.getElementById('clienteTelefono').value,
@@ -412,6 +441,7 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
 
       // Cerrar modal y limpiar formulario
       document.getElementById('formCliente').reset();
+      updateClienteTipoUI();
       cerrarModalCliente();
 
       // Notificar a la tabla para que refresque sin recargar la página

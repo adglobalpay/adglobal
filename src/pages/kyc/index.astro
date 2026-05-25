@@ -962,8 +962,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       <!-- Step 2: Selfie -->
       <div id="step2" class="kyc-step-card hidden">
         <div class="kyc-step-label">Paso 2 de 4</div>
-        <h1 class="kyc-step-title">Foto de tu cara</h1>
-        <p class="kyc-step-desc">Selfie frontal, con buena luz, sin lentes oscuros ni filtros.</p>
+        <h1 id="step2Title" class="kyc-step-title">Foto de tu cara</h1>
+        <p id="step2Desc" class="kyc-step-desc">Selfie frontal, con buena luz, sin lentes oscuros ni filtros.</p>
 
         <div id="selfieAlreadyUploaded" class="hidden" style="margin-bottom:1.5rem; padding:1.25rem; background:#eef2ff; border:1px solid #c7d2fe; border-radius:1rem;">
           <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -971,8 +971,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <div>
-              <p style="font-weight:700; font-size:0.9rem; color:#1e293b;">Selfie ya cargada</p>
-              <p style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió tu foto. Puedes continuar.</p>
+              <p id="step2UploadedTitle" style="font-weight:700; font-size:0.9rem; color:#1e293b;">Selfie ya cargada</p>
+              <p id="step2UploadedDesc" style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió tu foto. Puedes continuar.</p>
             </div>
           </div>
           <img id="selfieAlreadyPreview" class="hidden" style="margin-top:0.75rem; width:100%; max-height:240px; object-fit:contain; border-radius:0.75rem; border:1px solid #c7d2fe; background:white;" alt="Selfie cargada" />
@@ -983,8 +983,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
           <div class="kyc-upload-icon-main" id="selfieIcon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
-          <h3>Toca para tomar selfie</h3>
-          <p>Usa la cámara frontal o selecciona una foto</p>
+          <h3 id="step2UploadTitle">Toca para tomar selfie</h3>
+          <p id="step2UploadDesc">Usa la cámara frontal o selecciona una foto</p>
           <img id="selfiePreviewImg" class="kyc-upload-preview-img hidden" alt="Selfie preview" />
           <div id="selfieFileName" class="kyc-upload-file-name hidden"></div>
         </div>
@@ -1006,18 +1006,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       <!-- Step 3: Documento -->
       <div id="step3" class="kyc-step-card hidden">
         <div class="kyc-step-label">Paso 3 de 4</div>
-        <h1 class="kyc-step-title">Fotos de tu documento</h1>
-        <p class="kyc-step-desc">Sube el frente y el reverso completos, enfocados, sin reflejos y bien iluminados.</p>
+        <h1 id="step3Title" class="kyc-step-title">Fotos de tu documento</h1>
+        <p id="step3Desc" class="kyc-step-desc">Sube el frente y el reverso completos, enfocados, sin reflejos y bien iluminados.</p>
 
         <div style="display:grid; gap:1rem;">
           <div id="idFrontAlreadyUploaded" class="hidden" style="padding:1.25rem; background:#eef2ff; border:1px solid #c7d2fe; border-radius:1rem;">
             <div style="display:flex; align-items:center; gap:0.75rem;">
               <div style="width:2.5rem; height:2.5rem; border-radius:0.75rem; background:#6366f1; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
-              <div>
-                <p style="font-weight:700; font-size:0.9rem; color:#1e293b;">Documento frente ya cargado</p>
-                <p style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió esta imagen. Puedes reemplazarla si hace falta.</p>
+            </div>
+            <div>
+                <p id="step3PrimaryUploadedTitle" style="font-weight:700; font-size:0.9rem; color:#1e293b;">Documento frente ya cargado</p>
+                <p id="step3PrimaryUploadedDesc" style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió esta imagen. Puedes reemplazarla si hace falta.</p>
               </div>
             </div>
             <img id="idFrontAlreadyPreview" class="hidden" style="margin-top:0.75rem; width:100%; max-height:200px; object-fit:contain; border-radius:0.75rem; border:1px solid #c7d2fe;" alt="Documento frente cargado" />
@@ -1028,8 +1028,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             <div class="kyc-upload-icon-main" id="idFrontIcon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
             </div>
-            <h3>Frente del documento</h3>
-            <p>Asegúrate de que todos los datos sean legibles</p>
+            <h3 id="step3PrimaryUploadTitle">Frente del documento</h3>
+            <p id="step3PrimaryUploadDesc">Asegúrate de que todos los datos sean legibles</p>
             <img id="idFrontPreviewImg" class="kyc-upload-preview-img hidden" alt="Documento frente preview" />
             <div id="idFrontFileName" class="kyc-upload-file-name hidden"></div>
           </div>
@@ -1040,8 +1040,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
               <div>
-                <p style="font-weight:700; font-size:0.9rem; color:#1e293b;">Documento reverso ya cargado</p>
-                <p style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió esta imagen. Puedes reemplazarla si hace falta.</p>
+                <p id="step3SecondaryUploadedTitle" style="font-weight:700; font-size:0.9rem; color:#1e293b;">Documento reverso ya cargado</p>
+                <p id="step3SecondaryUploadedDesc" style="font-size:0.8rem; color:#64748b;">El equipo de AD Global Pay ya subió esta imagen. Puedes reemplazarla si hace falta.</p>
               </div>
             </div>
             <img id="idBackAlreadyPreview" class="hidden" style="margin-top:0.75rem; width:100%; max-height:200px; object-fit:contain; border-radius:0.75rem; border:1px solid #c7d2fe;" alt="Documento reverso cargado" />
@@ -1052,8 +1052,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             <div class="kyc-upload-icon-main" id="idBackIcon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
             </div>
-            <h3>Reverso del documento</h3>
-            <p>Incluye sellos, texto y cualquier dato del reverso</p>
+            <h3 id="step3SecondaryUploadTitle">Reverso del documento</h3>
+            <p id="step3SecondaryUploadDesc">Incluye sellos, texto y cualquier dato del reverso</p>
             <img id="idBackPreviewImg" class="kyc-upload-preview-img hidden" alt="Documento reverso preview" />
             <div id="idBackFileName" class="kyc-upload-file-name hidden"></div>
           </div>
@@ -1094,7 +1094,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
             <div class="kyc-review-item-text">
-              <strong>Foto de rostro</strong>
+              <strong id="reviewStep2Title">Foto de rostro</strong>
               <span id="reviewSelfieStatus">Pendiente</span>
             </div>
           </div>
@@ -1103,7 +1103,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
             </div>
             <div class="kyc-review-item-text">
-              <strong>Documento frente</strong>
+              <strong id="reviewPrimaryDocTitle">Documento frente</strong>
               <span id="reviewIdFrontStatus">Pendiente</span>
             </div>
           </div>
@@ -1112,7 +1112,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>
             </div>
             <div class="kyc-review-item-text">
-              <strong>Documento reverso</strong>
+              <strong id="reviewSecondaryDocTitle">Documento reverso</strong>
               <span id="reviewIdBackStatus">Pendiente</span>
             </div>
           </div>
@@ -1168,11 +1168,96 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       var selfieData = '';
       var idFrontData = '';
       var idBackData = '';
+      var clientType = 'NATURAL';
       var hasManualSelfie = false;
       var hasManualIdFront = false;
       var hasManualIdBack = false;
       var canvas = null;
       var ctx = null;
+
+      function isJuridicoClient() {
+        return clientType === 'JURIDICO';
+      }
+
+      function configureKycFlow(type) {
+        clientType = type === 'JURIDICO' ? 'JURIDICO' : 'NATURAL';
+
+        var step2Title = document.getElementById('step2Title');
+        var step2Desc = document.getElementById('step2Desc');
+        var step2UploadedTitle = document.getElementById('step2UploadedTitle');
+        var step2UploadedDesc = document.getElementById('step2UploadedDesc');
+        var step2UploadTitle = document.getElementById('step2UploadTitle');
+        var step2UploadDesc = document.getElementById('step2UploadDesc');
+        var step3Title = document.getElementById('step3Title');
+        var step3Desc = document.getElementById('step3Desc');
+        var step3PrimaryUploadedTitle = document.getElementById('step3PrimaryUploadedTitle');
+        var step3PrimaryUploadedDesc = document.getElementById('step3PrimaryUploadedDesc');
+        var step3PrimaryUploadTitle = document.getElementById('step3PrimaryUploadTitle');
+        var step3PrimaryUploadDesc = document.getElementById('step3PrimaryUploadDesc');
+        var step3SecondaryUploadedTitle = document.getElementById('step3SecondaryUploadedTitle');
+        var step3SecondaryUploadedDesc = document.getElementById('step3SecondaryUploadedDesc');
+        var step3SecondaryUploadTitle = document.getElementById('step3SecondaryUploadTitle');
+        var step3SecondaryUploadDesc = document.getElementById('step3SecondaryUploadDesc');
+        var reviewStep2Title = document.getElementById('reviewStep2Title');
+        var reviewPrimaryDocTitle = document.getElementById('reviewPrimaryDocTitle');
+        var reviewSecondaryDocTitle = document.getElementById('reviewSecondaryDocTitle');
+        var reviewIdBackItem = document.getElementById('reviewIdBackItem');
+        var idBackAlreadyUploaded = document.getElementById('idBackAlreadyUploaded');
+        var idBackUploadArea = document.getElementById('idBackUploadArea');
+
+        if (isJuridicoClient()) {
+          if (step2Title) step2Title.textContent = 'Articles of Organization';
+          if (step2Desc) step2Desc.textContent = 'Sube el documento oficial que demuestra que la empresa existe legalmente.';
+          if (step2UploadedTitle) step2UploadedTitle.textContent = 'Articles of Organization ya cargado';
+          if (step2UploadedDesc) step2UploadedDesc.textContent = 'El equipo de AD Global Pay ya subió este documento. Puedes continuar o reemplazarlo.';
+          if (step2UploadTitle) step2UploadTitle.textContent = 'Sube Articles of Organization';
+          if (step2UploadDesc) step2UploadDesc.textContent = 'Asegúrate de que el documento esté completo y legible.';
+
+          if (step3Title) step3Title.textContent = 'EIN Letter';
+          if (step3Desc) step3Desc.textContent = 'Sube la carta del IRS para confirmar la identidad fiscal de la empresa.';
+          if (step3PrimaryUploadedTitle) step3PrimaryUploadedTitle.textContent = 'EIN Letter ya cargado';
+          if (step3PrimaryUploadedDesc) step3PrimaryUploadedDesc.textContent = 'El equipo de AD Global Pay ya subió este documento. Puedes reemplazarlo si hace falta.';
+          if (step3PrimaryUploadTitle) step3PrimaryUploadTitle.textContent = 'Sube EIN Letter';
+          if (step3PrimaryUploadDesc) step3PrimaryUploadDesc.textContent = 'Debe verse completo, enfocado y sin recortes.';
+
+          if (step3SecondaryUploadedTitle) step3SecondaryUploadedTitle.textContent = 'Documento adicional';
+          if (step3SecondaryUploadedDesc) step3SecondaryUploadedDesc.textContent = '';
+          if (step3SecondaryUploadTitle) step3SecondaryUploadTitle.textContent = '';
+          if (step3SecondaryUploadDesc) step3SecondaryUploadDesc.textContent = '';
+
+          if (reviewStep2Title) reviewStep2Title.textContent = 'Articles of Organization';
+          if (reviewPrimaryDocTitle) reviewPrimaryDocTitle.textContent = 'EIN Letter';
+          if (reviewSecondaryDocTitle) reviewSecondaryDocTitle.textContent = 'Documento adicional';
+          if (reviewIdBackItem) reviewIdBackItem.style.display = 'none';
+          if (idBackAlreadyUploaded) idBackAlreadyUploaded.style.display = 'none';
+          if (idBackUploadArea) idBackUploadArea.style.display = 'none';
+        } else {
+          if (step2Title) step2Title.textContent = 'Foto de tu cara';
+          if (step2Desc) step2Desc.textContent = 'Selfie frontal, con buena luz, sin lentes oscuros ni filtros.';
+          if (step2UploadedTitle) step2UploadedTitle.textContent = 'Selfie ya cargada';
+          if (step2UploadedDesc) step2UploadedDesc.textContent = 'El equipo de AD Global Pay ya subió tu foto. Puedes continuar.';
+          if (step2UploadTitle) step2UploadTitle.textContent = 'Toca para tomar selfie';
+          if (step2UploadDesc) step2UploadDesc.textContent = 'Usa la cámara frontal o selecciona una foto';
+
+          if (step3Title) step3Title.textContent = 'Fotos de tu documento';
+          if (step3Desc) step3Desc.textContent = 'Sube el frente y el reverso completos, enfocados, sin reflejos y bien iluminados.';
+          if (step3PrimaryUploadedTitle) step3PrimaryUploadedTitle.textContent = 'Documento frente ya cargado';
+          if (step3PrimaryUploadedDesc) step3PrimaryUploadedDesc.textContent = 'El equipo de AD Global Pay ya subió esta imagen. Puedes reemplazarla si hace falta.';
+          if (step3PrimaryUploadTitle) step3PrimaryUploadTitle.textContent = 'Frente del documento';
+          if (step3PrimaryUploadDesc) step3PrimaryUploadDesc.textContent = 'Asegúrate de que todos los datos sean legibles';
+          if (step3SecondaryUploadedTitle) step3SecondaryUploadedTitle.textContent = 'Documento reverso ya cargado';
+          if (step3SecondaryUploadedDesc) step3SecondaryUploadedDesc.textContent = 'El equipo de AD Global Pay ya subió esta imagen. Puedes reemplazarla si hace falta.';
+          if (step3SecondaryUploadTitle) step3SecondaryUploadTitle.textContent = 'Reverso del documento';
+          if (step3SecondaryUploadDesc) step3SecondaryUploadDesc.textContent = 'Incluye sellos, texto y cualquier dato del reverso';
+
+          if (reviewStep2Title) reviewStep2Title.textContent = 'Foto de rostro';
+          if (reviewPrimaryDocTitle) reviewPrimaryDocTitle.textContent = 'Documento frente';
+          if (reviewSecondaryDocTitle) reviewSecondaryDocTitle.textContent = 'Documento reverso';
+          if (reviewIdBackItem) reviewIdBackItem.style.display = '';
+          if (idBackAlreadyUploaded) idBackAlreadyUploaded.style.display = hasManualIdBack ? '' : '';
+          if (idBackUploadArea) idBackUploadArea.style.display = '';
+        }
+      }
 
       function setInvalidState(message) {
         if (kycContentEl) kycContentEl.classList.add('hidden');
@@ -1233,6 +1318,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       function updateStep3ButtonState() {
         var btn = document.getElementById('btnStep3Next');
         if (!btn) return;
+        if (isJuridicoClient()) {
+          btn.disabled = !(idFrontData || hasManualIdFront);
+          return;
+        }
         btn.disabled = !((idFrontData || hasManualIdFront) && (idBackData || hasManualIdBack));
       }
 
@@ -1258,7 +1347,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
             '</div>' +
             '<h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--slate-800); margin-bottom:0.5rem;">' + (approved ? 'Identidad verificada' : 'Verificación enviada') + '</h1>' +
-            '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">' + (approved ? 'Tu identidad ya fue aprobada por AD Global Pay.' : 'Recibimos tu firma, selfie y las fotos del frente y reverso del documento. El equipo las revisará manualmente.') + '</p>' +
+            '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">' + (approved ? 'Tu identidad ya fue aprobada por AD Global Pay.' : (isJuridicoClient() ? 'Recibimos tu firma, Articles of Organization y EIN Letter. El equipo las revisará manualmente.' : 'Recibimos tu firma, selfie y las fotos del frente y reverso del documento. El equipo las revisará manualmente.')) + '</p>' +
             '<a href="/kyc/completado?status=' + encodeURIComponent(status) + '" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
           '</div>';
       }
@@ -1277,12 +1366,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             var clientEmail = document.getElementById('clientEmail');
             if (clientName) clientName.textContent = fullName || 'Cliente AD Global Pay';
             if (clientEmail) clientEmail.textContent = (data.client && data.client.email) || 'Solicitud de verificación';
+            configureKycFlow(data.client && data.client.clientType);
             if (loadingEl) loadingEl.classList.add('hidden');
             if (progressBar) progressBar.classList.remove('hidden');
 
             // Detectar documentos pre-subidos manualmente
             if (data.documents && Array.isArray(data.documents)) {
-              var manualSelfie = data.documents.find(function(d) { return d.documentType === 'selfie'; });
+              var manualSelfie = data.documents.find(function(d) { return d.documentType === (isJuridicoClient() ? 'articles_of_organization' : 'selfie'); });
               if (manualSelfie && manualSelfie.url) {
                 hasManualSelfie = true;
                 selfieData = manualSelfie.url;
@@ -1296,7 +1386,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
                 if (btnStep2) btnStep2.disabled = false;
               }
 
-              var manualIdFront = data.documents.find(function(d) { return d.documentType === 'id_front'; });
+              var manualIdFront = data.documents.find(function(d) { return d.documentType === (isJuridicoClient() ? 'ein_letter' : 'id_front'); });
               if (manualIdFront && manualIdFront.url) {
                 hasManualIdFront = true;
                 idFrontData = manualIdFront.url;
@@ -1306,7 +1396,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
                 if (frontPreview) { frontPreview.src = manualIdFront.url; frontPreview.classList.remove('hidden'); }
               }
 
-              var manualIdBack = data.documents.find(function(d) { return d.documentType === 'id_back'; });
+              var manualIdBack = !isJuridicoClient() ? data.documents.find(function(d) { return d.documentType === 'id_back'; }) : null;
               if (manualIdBack && manualIdBack.url) {
                 hasManualIdBack = true;
                 idBackData = manualIdBack.url;
@@ -1512,7 +1602,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       if (btnStep2) {
         btnStep2.addEventListener('click', function() {
           if (!selfieData && !hasManualSelfie) {
-            showStepError('step2Error', 'Debes subir una foto de tu cara.');
+            showStepError('step2Error', isJuridicoClient() ? 'Debes subir Articles of Organization.' : 'Debes subir una foto de tu cara.');
             return;
           }
           hideStepError('step2Error');
@@ -1574,17 +1664,19 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       if (btnStep3) {
         btnStep3.addEventListener('click', function() {
           if (!idFrontData && !hasManualIdFront) {
-            showStepError('step3Error', 'Debes subir el frente del documento.');
+            showStepError('step3Error', isJuridicoClient() ? 'Debes subir EIN Letter.' : 'Debes subir el frente del documento.');
             return;
           }
-          if (!idBackData && !hasManualIdBack) {
+          if (!isJuridicoClient() && !idBackData && !hasManualIdBack) {
             showStepError('step3Error', 'Debes subir el reverso del documento.');
             return;
           }
           hideStepError('step3Error');
           markReviewItemDone('reviewSelfieStatus', 'reviewSelfieItem', 'reviewSelfieIcon');
           markReviewItemDone('reviewIdFrontStatus', 'reviewIdFrontItem', 'reviewIdFrontIcon');
-          markReviewItemDone('reviewIdBackStatus', 'reviewIdBackItem', 'reviewIdBackIcon');
+          if (!isJuridicoClient()) {
+            markReviewItemDone('reviewIdBackStatus', 'reviewIdBackItem', 'reviewIdBackIcon');
+          }
           goToStep(4);
         });
       }
@@ -1598,14 +1690,14 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             return;
           }
           if (!selfieData) {
-            showStepError('step4Error', 'Faltan datos. Por favor sube tu foto.');
+            showStepError('step4Error', isJuridicoClient() ? 'Faltan datos. Por favor sube Articles of Organization.' : 'Faltan datos. Por favor sube tu foto.');
             return;
           }
           if (!idFrontData && !hasManualIdFront) {
-            showStepError('step4Error', 'Faltan datos. Por favor sube el frente del documento.');
+            showStepError('step4Error', isJuridicoClient() ? 'Faltan datos. Por favor sube EIN Letter.' : 'Faltan datos. Por favor sube el frente del documento.');
             return;
           }
-          if (!idBackData && !hasManualIdBack) {
+          if (!isJuridicoClient() && !idBackData && !hasManualIdBack) {
             showStepError('step4Error', 'Faltan datos. Por favor sube el reverso del documento.');
             return;
           }
@@ -1618,12 +1710,20 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             signature: signatureData
           };
           if (selfieData && !hasManualSelfie) {
-            payload.selfie = selfieData;
+            if (isJuridicoClient()) {
+              payload.articlesOfOrganization = selfieData;
+            } else {
+              payload.selfie = selfieData;
+            }
           }
           if (idFrontData && !hasManualIdFront) {
-            payload.idFront = idFrontData;
+            if (isJuridicoClient()) {
+              payload.einLetter = idFrontData;
+            } else {
+              payload.idFront = idFrontData;
+            }
           }
-          if (idBackData && !hasManualIdBack) {
+          if (!isJuridicoClient() && idBackData && !hasManualIdBack) {
             payload.idBack = idBackData;
           }
 
@@ -1647,7 +1747,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
                       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
                     '</div>' +
                     '<h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--slate-800); margin-bottom:0.5rem;">¡Verificación enviada!</h1>' +
-                    '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">Recibimos tu firma, selfie y las fotos del frente y reverso del documento. El equipo de AD Global Pay revisará tus datos manualmente.</p>' +
+                    '<p style="font-size:0.9rem; color:var(--slate-500); margin-bottom:2rem; line-height:1.6;">' + (isJuridicoClient() ? 'Recibimos tu firma, Articles of Organization y EIN Letter. El equipo de AD Global Pay revisará los documentos de la empresa manualmente.' : 'Recibimos tu firma, selfie y las fotos del frente y reverso del documento. El equipo de AD Global Pay revisará tus datos manualmente.') + '</p>' +
                     '<a href="/kyc/completado?status=PROCESSING" class="kyc-btn kyc-btn-success" style="width:auto; display:inline-flex; padding-left:2rem; padding-right:2rem;">Continuar</a>' +
                   '</div>';
               }

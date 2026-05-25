@@ -39,6 +39,7 @@ interface KycRequest {
     lastName: string | null;
     email: string | null;
     kycStatus: string;
+    clientType: 'NATURAL' | 'JURIDICO';
   };
   documents: KycDocument[];
 }
@@ -55,10 +56,13 @@ const DOC_LABELS: Record<string, string> = {
   signature: 'Firma',
   selfie: 'Rostro',
   id_front: 'Documento frente',
-  id_back: 'Documento reverso'
+  id_back: 'Documento reverso',
+  articles_of_organization: 'Articles of Organization',
+  ein_letter: 'EIN Letter'
 };
 
-const REVIEW_DOC_TYPES = ['signature', 'selfie', 'id_front', 'id_back'] as const;
+const NATURAL_REVIEW_DOC_TYPES = ['signature', 'selfie', 'id_front', 'id_back'] as const;
+const JURIDICO_REVIEW_DOC_TYPES = ['signature', 'articles_of_organization', 'ein_letter'] as const;
 
 function formatDate(d: string | null) {
   if (!d) return '-';
@@ -99,6 +103,10 @@ function getReviewDate(request: KycRequest) {
 
 function getSubmittedDate(request: KycRequest) {
   return request.webhookData?.submittedAt || request.completedAt || request.createdAt;
+}
+
+function getReviewDocTypes(request: KycRequest) {
+  return request.client.clientType === 'JURIDICO' ? JURIDICO_REVIEW_DOC_TYPES : NATURAL_REVIEW_DOC_TYPES;
 }
 
 export default function KycReviewPage() {
@@ -330,7 +338,7 @@ export default function KycReviewPage() {
             </div>
             Revisión KYC
           </h1>
-          <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Verifica manualmente firmas, selfies y los lados frente y reverso del documento enviado por el cliente.</p>
+          <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Verifica manualmente firmas y los documentos requeridos según el tipo de cliente: natural o jurídico.</p>
         </div>
         <button
           onClick={loadKyc}
@@ -420,7 +428,7 @@ export default function KycReviewPage() {
             <div className="space-y-5">
               {getDisplayStatus(selected) === 'VERIFIED' && (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                  Este KYC ya fue aprobado. Si necesitas actualizar firma, selfie o el documento frente/reverso, usa <span className="font-extrabold">Corregir KYC</span> para generar un nuevo enlace de carga.
+                  Este KYC ya fue aprobado. Si necesitas actualizar firma o los documentos cargados, usa <span className="font-extrabold">Corregir KYC</span> para generar un nuevo enlace de carga.
                 </div>
               )}
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -432,6 +440,7 @@ export default function KycReviewPage() {
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 font-medium mt-1">{selected.client.email || 'Sin email registrado'}</p>
+                  <p className="text-xs text-cyan-700 font-bold mt-2 uppercase tracking-wider">{selected.client.clientType === 'JURIDICO' ? 'Cliente jurídico' : 'Cliente natural'}</p>
                   <p className="text-xs text-slate-400 font-semibold mt-2">Enviado: {formatDate(selected.completedAt || selected.createdAt)}</p>
                 </div>
                 <div className="flex gap-2">
@@ -470,7 +479,7 @@ export default function KycReviewPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {REVIEW_DOC_TYPES.map((type) => {
+                {getReviewDocTypes(selected).map((type) => {
                   const doc = selected.documents.find((item) => item.documentType === type);
                   return (
                     <div key={type} className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">

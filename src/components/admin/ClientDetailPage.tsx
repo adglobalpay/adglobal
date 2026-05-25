@@ -61,6 +61,7 @@ interface OfacCheck {
 
 interface ClientDetail {
   id: string;
+  clientType: 'NATURAL' | 'JURIDICO';
   country: string;
   firstName: string;
   lastName: string | null;
@@ -86,6 +87,7 @@ interface ClientDetail {
 }
 
 interface EditClientForm {
+  clientType: 'NATURAL' | 'JURIDICO';
   firstName: string;
   lastName: string;
   email: string;
@@ -137,16 +139,28 @@ const KYC_DOCUMENT_LABELS: Record<string, string> = {
   id_back: 'Cédula / Pasaporte / DNI / Cédula (reverso)',
   selfie: 'Foto de rostro',
   signature: 'Firma digital',
+  articles_of_organization: 'Articles of Organization',
+  ein_letter: 'EIN Letter (Carta del IRS)',
   proof_address: 'Comprobante de domicilio',
   company_cert: 'Certificado de empresa',
   representante_id: 'ID del representante'
 };
 
-const KYC_UPLOAD_OPTIONS = [
+const NATURAL_KYC_UPLOAD_OPTIONS = [
   { value: 'id_front', label: 'Cédula / Pasaporte / DNI / Cédula (frente)' },
   { value: 'id_back', label: 'Cédula / Pasaporte / DNI / Cédula (reverso)' },
   { value: 'selfie', label: 'Foto de rostro (selfie)' }
 ];
+
+const JURIDICO_KYC_UPLOAD_OPTIONS = [
+  { value: 'articles_of_organization', label: 'Articles of Organization' },
+  { value: 'ein_letter', label: 'EIN Letter (Carta del IRS)' }
+];
+
+const CLIENT_TYPE_OPTIONS = [
+  { value: 'NATURAL', label: 'Natural' },
+  { value: 'JURIDICO', label: 'Jurídico' }
+] as const;
 
 const COUNTRY_OPTIONS = [
   { value: 'us', label: 'Estados Unidos' },
@@ -173,6 +187,7 @@ const PAYMENT_METHOD_OPTIONS = [
 
 function createEditForm(client: ClientDetail): EditClientForm {
   return {
+    clientType: client.clientType || 'NATURAL',
     firstName: client.firstName || '',
     lastName: client.lastName || '',
     email: client.email || '',
@@ -208,6 +223,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editForm, setEditForm] = useState<EditClientForm>({
+    clientType: 'NATURAL',
     firstName: '',
     lastName: '',
     email: '',
@@ -548,6 +564,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const statusCfg = ESTADO_MAP[client.status] || ESTADO_MAP.ACTIVE;
   const latestKyc = client.kycRequests[0];
   const latestOfac = client.ofacChecks[0];
+  const clientTypeLabel = client.clientType === 'JURIDICO' ? 'Jurídico' : 'Natural';
   const countryOptions = COUNTRY_OPTIONS.some(option => option.value === client.country)
     ? COUNTRY_OPTIONS
     : [{ value: client.country, label: client.country.toUpperCase() }, ...COUNTRY_OPTIONS];
@@ -556,6 +573,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const paymentMethodOptions = extraMethods.length > 0
     ? [...extraMethods, ...PAYMENT_METHOD_OPTIONS]
     : PAYMENT_METHOD_OPTIONS;
+  const kycUploadOptions = client.clientType === 'JURIDICO' ? JURIDICO_KYC_UPLOAD_OPTIONS : NATURAL_KYC_UPLOAD_OPTIONS;
 
   const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -573,6 +591,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
       await apiFetch(`/api/clients/${client.id}`, {
         method: 'PATCH',
         body: JSON.stringify({
+          clientType: editForm.clientType,
           firstName: editForm.firstName,
           lastName: editForm.lastName,
           email: editForm.email,
@@ -598,6 +617,12 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
       setIsSavingEdit(false);
     }
   };
+
+  useEffect(() => {
+    if (!kycUploadOptions.some((option) => option.value === kycUploadType)) {
+      setKycUploadType(kycUploadOptions[0]?.value || 'id_front');
+    }
+  }, [kycUploadOptions, kycUploadType]);
 
   return (
     <>
@@ -635,6 +660,9 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                     </select>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500 font-medium">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-cyan-50 text-cyan-700 rounded text-[0.65rem] font-black uppercase tracking-wider border border-cyan-200">
+                    {clientTypeLabel}
+                  </span>
                   {client.email && (
                     <span className="flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5" />{client.email}
@@ -1079,7 +1107,21 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                 <div className="space-y-5 p-5 sm:p-8">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="block group">
-                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Nombre</span>
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Tipo de cliente</span>
+                      <select
+                        value={editForm.clientType}
+                        onChange={(e) => handleEditFieldChange('clientType', e.target.value as 'NATURAL' | 'JURIDICO')}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                      >
+                        {CLIENT_TYPE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                        {editForm.clientType === 'JURIDICO' ? 'Razón social' : 'Nombre'}
+                      </span>
                       <input
                         value={editForm.firstName}
                         onChange={(e) => handleEditFieldChange('firstName', e.target.value)}
@@ -1089,7 +1131,9 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                       />
                     </label>
                     <label className="block group">
-                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Apellido</span>
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                        {editForm.clientType === 'JURIDICO' ? 'Complemento' : 'Apellido'}
+                      </span>
                       <input
                         value={editForm.lastName}
                         onChange={(e) => handleEditFieldChange('lastName', e.target.value)}
@@ -1311,7 +1355,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                   onChange={e => setKycUploadType(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-indigo-400 focus:bg-white focus:ring-[3px] focus:ring-indigo-500/10"
                 >
-                  {KYC_UPLOAD_OPTIONS.map(option => (
+                  {kycUploadOptions.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
