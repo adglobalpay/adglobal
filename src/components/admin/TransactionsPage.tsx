@@ -90,6 +90,11 @@ const ESTADOS_MAP: Record<string, { label: string; className: string; icon: Reac
     label: 'Rechazado',
     className: 'bg-red-50 text-red-700 border-red-200',
     icon: <XCircle className="w-3 h-3" />
+  },
+  CANCELLED: {
+    label: 'Cancelado',
+    className: 'bg-slate-100 text-slate-700 border-slate-200',
+    icon: <XCircle className="w-3 h-3" />
   }
 };
 
@@ -479,7 +484,10 @@ export default function TransactionsPage() {
                 { key: ADMIN_PENDING_FILTER, label: 'Por revisar', dot: 'bg-amber-400' },
                 { key: 'PENDING', label: 'Pendiente', dot: 'bg-blue-400' },
                 { key: 'PROCESSING', label: 'Procesando', dot: 'bg-amber-500' },
-                { key: 'COMPLETED', label: 'Completado', dot: 'bg-emerald-400' }
+                { key: 'COMPLETED', label: 'Completado', dot: 'bg-emerald-400' },
+                { key: 'FAILED', label: 'Fallida', dot: 'bg-red-500' },
+                { key: 'CANCELLED', label: 'Cancelada', dot: 'bg-slate-500' },
+                { key: 'REJECTED', label: 'Rechazada', dot: 'bg-rose-500' }
               ].map((s) => (
                 <button
                   key={s.key}
