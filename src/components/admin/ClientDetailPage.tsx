@@ -243,6 +243,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const [isUploadingKycDoc, setIsUploadingKycDoc] = useState(false);
 
   const clientId = clientIdProp || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
+  const kycUploadOptions = client?.clientType === 'JURIDICO' ? JURIDICO_KYC_UPLOAD_OPTIONS : NATURAL_KYC_UPLOAD_OPTIONS;
 
   const loadClient = useCallback(async () => {
     setLoading(true);
@@ -279,6 +280,12 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isEditOpen, isSavingEdit]);
+
+  useEffect(() => {
+    if (!kycUploadOptions.some((option) => option.value === kycUploadType)) {
+      setKycUploadType(kycUploadOptions[0]?.value || 'id_front');
+    }
+  }, [kycUploadOptions, kycUploadType]);
 
   const handleCopy = (texto: string) => {
     navigator.clipboard.writeText(texto).then(() => {
@@ -573,7 +580,6 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const paymentMethodOptions = extraMethods.length > 0
     ? [...extraMethods, ...PAYMENT_METHOD_OPTIONS]
     : PAYMENT_METHOD_OPTIONS;
-  const kycUploadOptions = client.clientType === 'JURIDICO' ? JURIDICO_KYC_UPLOAD_OPTIONS : NATURAL_KYC_UPLOAD_OPTIONS;
 
   const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -617,12 +623,6 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
       setIsSavingEdit(false);
     }
   };
-
-  useEffect(() => {
-    if (!kycUploadOptions.some((option) => option.value === kycUploadType)) {
-      setKycUploadType(kycUploadOptions[0]?.value || 'id_front');
-    }
-  }, [kycUploadOptions, kycUploadType]);
 
   return (
     <>
