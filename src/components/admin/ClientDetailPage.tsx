@@ -914,7 +914,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                 onClick={() => setIsOfacModalOpen(true)}
                 className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
               >
-                <Upload className="w-3.5 h-3.5" /> Subir OFAC
+                <Upload className="w-3.5 h-3.5" /> {client.ofacPdfUrl ? 'Editar OFAC' : 'Subir OFAC'}
               </button>
               <span className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${client.ofacPdfUrl ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ofacCfg.className}`}>
                 {client.ofacPdfUrl ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
@@ -954,6 +954,28 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                 <span>{latestOfac.checkedAt ? formatDateTime(latestOfac.checkedAt) : formatDateTime(latestOfac.createdAt)}</span>
                 <span className="text-emerald-600 font-bold">— {ofacCfg.label}</span>
               </div>
+            </div>
+          )}
+
+          {client.ofacPdfUrl && (
+            <div className="mt-5 space-y-2">
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Documento cargado</p>
+              <button
+                type="button"
+                onClick={handleViewOfacPdf}
+                className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group text-left"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0 group-hover:text-emerald-600 group-hover:border-emerald-200 transition-all">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-700 truncate">Documento OFAC (PDF)</p>
+                    <p className="text-[0.65rem] text-slate-400 font-medium">Cargado y disponible para revisión</p>
+                  </div>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 group-hover:text-emerald-600 transition-all" />
+              </button>
             </div>
           )}
         </div>
@@ -1485,7 +1507,9 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               <div className="relative flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-emerald-400/80">Documento OFAC</p>
-                  <h2 className="mt-0.5 text-lg sm:text-xl font-bold tracking-tight text-white">PDF de verificación</h2>
+                  <h2 className="mt-0.5 text-lg sm:text-xl font-bold tracking-tight text-white">
+                    {client.ofacPdfUrl ? 'Editar PDF de verificación' : 'Subir PDF de verificación'}
+                  </h2>
                 </div>
                 <button
                   type="button"
