@@ -1,15 +1,29 @@
 import React, { useState } from 'react';
 import { Search, Download, Filter, X } from 'lucide-react';
 
+type SearchScope = 'all' | 'client' | 'recipient';
+
 export default function SearchBar() {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [scope, setScope] = useState<SearchScope>('all');
+
+  const scopeOptions: Array<{ value: SearchScope; label: string }> = [
+    { value: 'all', label: 'Todo' },
+    { value: 'client', label: 'Clientes' },
+    { value: 'recipient', label: 'Destinatarios' }
+  ];
+
+  const placeholderByScope: Record<SearchScope, string> = {
+    all: 'Buscar cliente o destinatario...',
+    client: 'Buscar por nombre, email, teléfono o ID del cliente...',
+    recipient: 'Buscar por nombre, banco, teléfono, cuenta o ID del destinatario...'
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     window.dispatchEvent(new CustomEvent('clients:search', {
-      detail: { query: query.trim(), filters: activeFilters }
+      detail: { query: query.trim(), scope }
     }));
   };
 
@@ -17,21 +31,35 @@ export default function SearchBar() {
     window.dispatchEvent(new CustomEvent('clients:export'));
   };
 
-  const toggleFilter = (filter: string) => {
-    setActiveFilters(prev =>
-      prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
-    );
-  };
-
   const clearSearch = () => {
     setQuery('');
     window.dispatchEvent(new CustomEvent('clients:search', {
-      detail: { query: '', filters: activeFilters }
+      detail: { query: '', scope }
     }));
   };
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {scopeOptions.map((option) => {
+          const active = scope === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setScope(option.value)}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 ${
+                active
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-[0_6px_16px_rgba(79,70,229,0.25)]'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-stretch md:items-center w-full">
         <form onSubmit={handleSearch} className="flex-1 w-full max-w-full md:max-w-xl relative group flex items-center">
           <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${isFocused ? 'text-indigo-500' : 'text-slate-400'}`}>
@@ -43,7 +71,7 @@ export default function SearchBar() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder="Buscar por nombre, email, país o nivel..."
+            placeholder={placeholderByScope[scope]}
             className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 font-medium placeholder:text-slate-400 shadow-sm hover:bg-white hover:shadow-md"
           />
           {query && (

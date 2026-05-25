@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Trophy, Medal, Crown, Award, Gem, Star, ThumbsUp, Megaphone,
   Repeat, Coins, UserPlus, ShieldCheck, Clock, AlertCircle, FileText,
@@ -14,6 +14,7 @@ interface ApiClient {
   lastName: string | null;
   phone: string | null;
   email: string | null;
+  documentId?: string | null;
   preferredMethod: string | null;
   notes: string | null;
   kycStatus: string;
@@ -26,8 +27,20 @@ interface ApiClient {
     recipients: number;
     referrals: number;
   };
+  matchedRecipient?: {
+    id: string;
+    name: string;
+    bank: string;
+    accountNumber: string;
+    phone: string | null;
+    identification: string | null;
+  } | null;
+  matchedRecipientsCount?: number;
+  searchMatchScope?: 'client' | 'recipient' | 'both';
   transactions?: Array<{ amount: number; date: string }>;
 }
+
+type SearchScope = 'all' | 'client' | 'recipient';
 
 const LEVEL_THRESHOLDS = {
   BRONCE: {
@@ -104,10 +117,27 @@ export default function ClientTable({ limit }: Props) {
   const [clients, setClients] = useState<ApiClient[]>([]);
   const [filteredClients, setFilteredClients] = useState<ApiClient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchScope, setSearchScope] = useState<SearchScope>('all');
   const itemsPerPage = 10;
+  const searchRequestId = useRef(0);
+
+  const applyPresetFilter = useCallback((source: ApiClient[]) => {
+    if (typeof window === 'undefined') return source;
+    const params = new URLSearchParams(window.location.search);
+    const filtro = params.get('filtro');
+
+    if (filtro === 'kyc') {
+      return source.filter(c => c.kycStatus === 'PENDING' || c.kycStatus === 'PROCESSING');
+    }
+    if (filtro === 'ofac') {
+      return source.filter(c => c.ofacStatus === 'REVIEW');
+    }
+    return source;
+  }, []);
 
   const loadClients = useCallback(async () => {
     setLoading(true);
@@ -116,35 +146,18 @@ export default function ClientTable({ limit }: Props) {
         const data = await apiFetch('/api/clients');
         const all = limit ? data.slice(0, limit) : data;
         setClients(all);
-        setFilteredClients(all);
+        setFilteredClients(applyPresetFilter(all));
         setCurrentPage(1);
       } catch (err: any) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
-  }, [limit]);
+  }, [applyPresetFilter, limit]);
 
   useEffect(() => {
     loadClients();
   }, [loadClients]);
-
-  // Aplicar filtro desde URL (?filtro=kyc|ofac)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const filtro = params.get('filtro');
-    if (!filtro) return;
-
-    if (filtro === 'kyc') {
-      setFilteredClients(prev => prev.filter(c => c.kycStatus === 'PENDING' || c.kycStatus === 'PROCESSING'));
-      setSearchQuery('KYC Por revisar');
-    } else if (filtro === 'ofac') {
-      setFilteredClients(prev => prev.filter(c => c.ofacStatus === 'REVIEW'));
-      setSearchQuery('OFAC Review');
-    }
-    setCurrentPage(1);
-  }, [clients]);
 
   // Escuchar evento de refresh desde el formulario de creación
   useEffect(() => {
@@ -157,43 +170,48 @@ export default function ClientTable({ limit }: Props) {
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      const query = (detail?.query || '').toLowerCase().trim();
+      const query = String(detail?.query || '').trim();
+      const scope: SearchScope = detail?.scope === 'client' || detail?.scope === 'recipient' ? detail.scope : 'all';
       setSearchQuery(query);
+      setSearchScope(scope);
       setCurrentPage(1);
 
       if (!query) {
-        setFilteredClients(clients);
+        searchRequestId.current += 1;
+        setSearchLoading(false);
+        setError('');
+        setFilteredClients(applyPresetFilter(clients));
         return;
       }
 
-      const filtered = clients.filter(client => {
-        const fullName = `${client.firstName} ${client.lastName || ''}`.toLowerCase();
-        const email = (client.email || '').toLowerCase();
-        const phone = (client.phone || '').toLowerCase();
-        const country = (client.country || '').toLowerCase();
-        const methods = (client.preferredMethod || '').toLowerCase().split(',').map(m => m.trim()).filter(Boolean).join(' ');
-        const notes = (client.notes || '').toLowerCase();
-        const kyc = (client.kycStatus || '').toLowerCase();
-        const ofac = (client.ofacStatus || '').toLowerCase();
-        const level = getClientLevel(client.transactions);
-        const levelName = (level as any).name || '';
+      const requestId = ++searchRequestId.current;
+      setSearchLoading(true);
+      setError('');
 
-        return fullName.includes(query)
-          || email.includes(query)
-          || phone.includes(query)
-          || country.includes(query)
-          || methods.includes(query)
-          || notes.includes(query)
-          || kyc.includes(query)
-          || ofac.includes(query)
-          || levelName.toLowerCase().includes(query);
-      });
-
-      setFilteredClients(filtered);
+      void (async () => {
+        try {
+          const params = new URLSearchParams({
+            q: query,
+            scope,
+            limit: '100'
+          });
+          const data = await apiFetch(`/api/clients/search?${params.toString()}`);
+          if (searchRequestId.current !== requestId) return;
+          setFilteredClients(Array.isArray(data) ? data : []);
+        } catch (err: any) {
+          if (searchRequestId.current !== requestId) return;
+          setError(err.message || 'No se pudo completar la búsqueda');
+          setFilteredClients([]);
+        } finally {
+          if (searchRequestId.current === requestId) {
+            setSearchLoading(false);
+          }
+        }
+      })();
     };
     window.addEventListener('clients:search', handler);
     return () => window.removeEventListener('clients:search', handler);
-  }, [clients]);
+  }, [applyPresetFilter, clients]);
 
   // Escuchar evento de exportar CSV
   useEffect(() => {
@@ -245,6 +263,7 @@ export default function ClientTable({ limit }: Props) {
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedClients = filteredClients.slice(startIndex, startIndex + itemsPerPage);
+  const searchScopeLabel = searchScope === 'client' ? 'clientes' : searchScope === 'recipient' ? 'destinatarios' : 'clientes o destinatarios';
 
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
@@ -308,7 +327,7 @@ export default function ClientTable({ limit }: Props) {
           </div>
           <h3 className="text-lg font-bold text-slate-700 mb-1">No se encontraron resultados</h3>
           <p className="text-sm text-slate-400 font-medium">
-            {searchQuery ? `Ningún cliente coincide con "${searchQuery}"` : 'No hay clientes registrados'}
+            {searchQuery ? `No hubo coincidencias en ${searchScopeLabel} para "${searchQuery}"` : 'No hay clientes registrados'}
           </p>
         </div>
       </div>
@@ -317,6 +336,20 @@ export default function ClientTable({ limit }: Props) {
 
   return (
     <div className="space-y-4">
+      {searchQuery && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white rounded-2xl border border-slate-200/60 px-4 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+          <div className="text-sm text-slate-500 font-medium">
+            Buscando en <span className="font-bold text-slate-700 capitalize">{searchScopeLabel}</span>:
+            <span className="font-bold text-indigo-600"> {searchQuery}</span>
+          </div>
+          {searchLoading && (
+            <div className="text-xs font-bold uppercase tracking-wider text-indigo-500">
+              Buscando...
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] bg-white">
         <table className="w-full">
           <thead>
@@ -336,6 +369,11 @@ export default function ClientTable({ limit }: Props) {
               const level = getClientLevel(client.transactions);
               const badges = getSpecialBadges(client);
               const lastTx = getLastTransaction(client.transactions);
+              const showRecipientMatch = client.searchMatchScope === 'recipient' || client.searchMatchScope === 'both';
+              const matchedRecipientLabel = client.matchedRecipient
+                ? `${client.matchedRecipient.name} · ${client.matchedRecipient.bank}`
+                : '';
+              const extraMatchedRecipients = Math.max((client.matchedRecipientsCount || 0) - 1, 0);
 
               return (
                 <tr key={client.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -343,6 +381,13 @@ export default function ClientTable({ limit }: Props) {
                     <div className="font-bold text-[0.9rem] text-slate-800 tracking-tight">{fullName}</div>
                     <div className="text-[0.7rem] text-slate-500 font-semibold">{client.email || 'Sin correo asociado'}</div>
                     <div className="text-[0.7rem] text-slate-500 font-mono mt-0.5">{client.phone || '—'}</div>
+                    {showRecipientMatch && matchedRecipientLabel && (
+                      <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-cyan-200 bg-cyan-50 px-2 py-1 text-[0.65rem] font-bold text-cyan-700">
+                        <span>Destinatario:</span>
+                        <span className="text-cyan-800">{matchedRecipientLabel}</span>
+                        {extraMatchedRecipients > 0 && <span className="text-cyan-500">+{extraMatchedRecipients}</span>}
+                      </div>
+                    )}
                   </td>
                   <td className="py-4 px-3 align-top w-48">
                     <div className={`inline-flex items-center px-2 py-1 rounded-md text-[0.7rem] font-bold border ${(level as any).color}`}>
