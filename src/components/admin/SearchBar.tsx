@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Search, Download, Filter, X } from 'lucide-react';
 
 type SearchScope = 'all' | 'client' | 'recipient';
@@ -7,6 +7,7 @@ export default function SearchBar() {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [scope, setScope] = useState<SearchScope>('all');
+  const hasMounted = useRef(false);
 
   const scopeOptions: Array<{ value: SearchScope; label: string }> = [
     { value: 'all', label: 'Todo' },
@@ -20,11 +21,15 @@ export default function SearchBar() {
     recipient: 'Buscar por nombre, banco, teléfono, cuenta o ID del destinatario...'
   };
 
+  const dispatchSearch = (nextQuery: string, nextScope: SearchScope) => {
+    window.dispatchEvent(new CustomEvent('clients:search', {
+      detail: { query: nextQuery.trim(), scope: nextScope }
+    }));
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent('clients:search', {
-      detail: { query: query.trim(), scope }
-    }));
+    dispatchSearch(query, scope);
   };
 
   const handleExport = () => {
@@ -33,10 +38,22 @@ export default function SearchBar() {
 
   const clearSearch = () => {
     setQuery('');
-    window.dispatchEvent(new CustomEvent('clients:search', {
-      detail: { query: '', scope }
-    }));
+    dispatchSearch('', scope);
   };
+
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+
+    const delay = query.trim() ? 280 : 0;
+    const timeoutId = window.setTimeout(() => {
+      dispatchSearch(query, scope);
+    }, delay);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [query, scope]);
 
   return (
     <div className="space-y-3">
@@ -59,6 +76,12 @@ export default function SearchBar() {
           );
         })}
       </div>
+
+      {scope === 'recipient' && (
+        <p className="text-xs font-medium text-cyan-700">
+          La búsqueda mostrará el cliente dueño del destinatario que coincida.
+        </p>
+      )}
 
       <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-stretch md:items-center w-full">
         <form onSubmit={handleSearch} className="flex-1 w-full max-w-full md:max-w-xl relative group flex items-center">

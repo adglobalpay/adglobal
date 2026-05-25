@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft, Printer, Download, Phone, Mail, MapPin, Banknote,
-  CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload
+  CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload, Trash2
 } from 'lucide-react';
 import { apiFetch, getUser } from '../../lib/auth';
 
@@ -81,6 +81,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   const [estado, setEstado] = useState('');
   const [notas, setNotas] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   // Campos editables por operador
@@ -97,6 +98,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
     : (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
   const currentUser = getUser();
   const isAdminReviewer = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
+  const canDelete = isAdminReviewer;
 
   const canEdit = tx && (
     isAdminReviewer ||
@@ -185,6 +187,51 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
     }
   };
 
+  const clearTransactionsCache = () => {
+    if (typeof window === 'undefined') return;
+    const prefix = 'adglobal_transactions_cache:';
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < window.sessionStorage.length; i += 1) {
+      const key = window.sessionStorage.key(i);
+      if (key && key.startsWith(prefix)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => window.sessionStorage.removeItem(key));
+  };
+
+  const handleDelete = async () => {
+    if (!tx || !canDelete || deleting) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Eliminar la transacción #${tx.id.substring(0, 8).toUpperCase()}?\n\nEsta acción no se puede deshacer y solo debe usarse si estás completamente seguro.`
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await apiFetch(`/api/transactions/${tx.id}`, {
+        method: 'DELETE'
+      });
+      clearTransactionsCache();
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Transacción eliminada', description: 'La operación se eliminó correctamente.' }
+      }));
+      window.location.href = '/admin/transacciones';
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'No se pudo eliminar', description: err.message }
+      }));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto space-y-6">
@@ -238,8 +285,18 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
         <div className="flex gap-2 shrink-0">
           {canEdit && (
             <button onClick={() => setIsEditing(v => !v)}
+              disabled={deleting}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm ${isEditing ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>
               {isEditing ? 'Cancelar edición' : 'Editar'}
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting || saving}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl font-bold text-xs hover:bg-rose-100 transition-all shadow-sm disabled:opacity-70 disabled:hover:bg-rose-50"
+            >
+              <Trash2 className="w-4 h-4" /> {deleting ? 'Eliminando...' : 'Eliminar'}
             </button>
           )}
           <button onClick={() => window.print()} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all shadow-sm">
