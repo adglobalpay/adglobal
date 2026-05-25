@@ -141,9 +141,9 @@ const KYC_DOCUMENT_LABELS: Record<string, string> = {
   signature: 'Firma digital',
   articles_of_organization: 'Articles of Organization',
   ein_letter: 'EIN Letter (Carta del IRS)',
+  representante_id: 'Documento del dueno o representante',
   proof_address: 'Comprobante de domicilio',
-  company_cert: 'Certificado de empresa',
-  representante_id: 'ID del representante'
+  company_cert: 'Certificado de empresa'
 };
 
 const NATURAL_KYC_UPLOAD_OPTIONS = [
@@ -153,8 +153,10 @@ const NATURAL_KYC_UPLOAD_OPTIONS = [
 ];
 
 const JURIDICO_KYC_UPLOAD_OPTIONS = [
+  { value: 'selfie', label: 'Foto del dueno o representante' },
   { value: 'articles_of_organization', label: 'Articles of Organization' },
-  { value: 'ein_letter', label: 'EIN Letter (Carta del IRS)' }
+  { value: 'ein_letter', label: 'EIN Letter (Carta del IRS)' },
+  { value: 'representante_id', label: 'Documento del dueno o representante' }
 ];
 
 const CLIENT_TYPE_OPTIONS = [

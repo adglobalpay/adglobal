@@ -58,11 +58,12 @@ const DOC_LABELS: Record<string, string> = {
   id_front: 'Documento frente',
   id_back: 'Documento reverso',
   articles_of_organization: 'Articles of Organization',
-  ein_letter: 'EIN Letter'
+  ein_letter: 'EIN Letter',
+  representante_id: 'Documento del dueno o representante'
 };
 
 const NATURAL_REVIEW_DOC_TYPES = ['signature', 'selfie', 'id_front', 'id_back'] as const;
-const JURIDICO_REVIEW_DOC_TYPES = ['signature', 'articles_of_organization', 'ein_letter'] as const;
+const JURIDICO_REVIEW_DOC_TYPES = ['signature', 'selfie', 'articles_of_organization', 'ein_letter', 'representante_id'] as const;
 
 function formatDate(d: string | null) {
   if (!d) return '-';
