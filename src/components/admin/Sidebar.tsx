@@ -245,7 +245,7 @@ export default function Sidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-slate-800 text-sm" style={{ fontFamily: 'var(--font-heading)' }}>Clientes inactivos</h3>
-                <p className="text-xs text-slate-500 font-medium">Más de 15 días sin girar</p>
+                <p className="text-xs text-slate-500 font-medium">Sin giros completados o más de 15 días sin girar</p>
               </div>
               <span className="text-[0.65rem] font-bold text-rose-500 bg-rose-50 border border-rose-100 rounded-full px-2 py-1">
                 {inactiveClients.length}
