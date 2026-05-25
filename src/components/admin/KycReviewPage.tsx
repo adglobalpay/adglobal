@@ -575,7 +575,7 @@ export default function KycReviewPage() {
                         )}
 
                         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
-                          {REVIEW_DOC_TYPES.map((type) => {
+                          {getReviewDocTypes(historyItem).map((type) => {
                             const doc = historyItem.documents.find((item) => item.documentType === type);
                             return (
                               <div key={type} className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
