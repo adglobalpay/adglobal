@@ -592,7 +592,8 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName;
   const transaccionesValidas = client.transactions.filter(t => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
   const totalUsd = transaccionesValidas.reduce((sum, t) => sum + Number(t.ingresoUSD || 0), 0);
-  const totalTx = transaccionesValidas.length;
+  const totalTx = client._count?.transactions ?? client.transactions.length;
+  const totalRecipients = client._count?.recipients ?? client.recipients.length;
   const levelInfo = getLevelInfo(totalTx);
   const kycCfg = KYC_MAP[client.kycStatus] || KYC_MAP.PENDING;
   const ofacCfg = OFAC_MAP[client.ofacStatus] || OFAC_MAP.PENDING;
@@ -743,7 +744,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
           {[
             { label: 'Transacciones', value: totalTx.toString(), icon: <FileText className="w-5 h-5" />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
             { label: 'Total enviado', value: `$${totalUsd.toLocaleString()}`, icon: <Wallet className="w-5 h-5" />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Destinatarios', value: client.recipients.length.toString(), icon: <UserPlus className="w-5 h-5" />, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+            { label: 'Destinatarios', value: totalRecipients.toString(), icon: <UserPlus className="w-5 h-5" />, color: 'text-cyan-600', bg: 'bg-cyan-50' },
             { label: 'Referidos', value: (client._count?.referrals || client.referrals.length).toString(), icon: <ArrowRight className="w-5 h-5" />, color: 'text-amber-600', bg: 'bg-amber-50' }
           ].map((stat, i) => (
             <div key={i} className="bg-white rounded-2xl border border-slate-200/60 p-4 md:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] card-hover anim-fade-in-up" style={{ animationDelay: `${0.3 + i * 0.05}s` }}>
@@ -990,7 +991,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center"><UserPlus className="w-5 h-5" /></div>
             <div>
               <h2 className="text-base md:text-lg font-bold text-slate-800">Destinatarios</h2>
-              <p className="text-xs text-slate-400 font-medium">{client.recipients.length} registrados</p>
+              <p className="text-xs text-slate-400 font-medium">{totalRecipients} registrados</p>
             </div>
           </div>
           <a href={`/admin/clientes/destinatarios?id=${client.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-all">
