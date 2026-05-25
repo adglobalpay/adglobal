@@ -482,6 +482,32 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
     }
   };
 
+  const handleViewOfacPdf = async () => {
+    if (!client) return;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+      const res = await fetch(`${API_URL}/api/clients/${client.id}/ofac-pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        const err = contentType.includes('application/json')
+          ? await res.json().catch(() => ({ error: 'Error al abrir PDF OFAC' }))
+          : { error: 'Error al abrir PDF OFAC' };
+        throw new Error(err.error || 'Error al abrir PDF OFAC');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error al abrir PDF', description: err.message }
+      }));
+    }
+  };
+
   const handleDeleteClient = async () => {
     if (!client) return;
     if (!confirm('¿Está seguro de querer eliminar este cliente? Esta acción no se puede deshacer.')) return;
@@ -1481,14 +1507,13 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-slate-800 truncate">ofac.pdf</p>
-                        <a
-                          href={client.ofacPdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          type="button"
+                          onClick={handleViewOfacPdf}
                           className="text-xs text-indigo-600 font-bold hover:underline"
                         >
-                          Ver en S3
-                        </a>
+                          Ver PDF
+                        </button>
                       </div>
                     </div>
                   </div>
