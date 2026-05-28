@@ -91,6 +91,69 @@ function getClientFullName(client: LinkedClient | null | undefined) {
   return `${client.firstName} ${client.lastName || ''}`.trim();
 }
 
+function getStoredRecipientProfile(): (Partial<RecipientDetail> & { selectedAt?: number }) | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = sessionStorage.getItem('adglobal_selected_recipient_profile');
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed?.id || !parsed?.name) return null;
+
+    const selectedAt = Number(parsed.selectedAt || 0);
+    if (selectedAt && Date.now() - selectedAt > 10 * 60 * 1000) return null;
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function getInitialRecipientId(recipientIdProp: string) {
+  if (recipientIdProp) return recipientIdProp;
+  if (typeof window === 'undefined') return '';
+
+  const urlId = new URLSearchParams(window.location.search).get('id') || '';
+  if (urlId) return urlId;
+
+  return getStoredRecipientProfile()?.id || '';
+}
+
+function mergeSelectedRecipient(
+  data: RecipientDetail,
+  selected: (Partial<RecipientDetail> & { selectedAt?: number }) | null,
+  requestedId: string
+): RecipientDetail {
+  if (!selected?.id || selected.id !== requestedId) return data;
+
+  const apiReturnedRequestedRecipient = data.id === selected.id;
+
+  return {
+    ...data,
+    id: selected.id,
+    clientId: selected.clientId || data.clientId,
+    name: selected.name || data.name,
+    relationship: selected.relationship || data.relationship,
+    phone: typeof selected.phone !== 'undefined' ? selected.phone : data.phone,
+    bank: selected.bank || data.bank,
+    accountNumber: selected.accountNumber || data.accountNumber,
+    accountType: selected.accountType || data.accountType,
+    identification: typeof selected.identification !== 'undefined' ? selected.identification : data.identification,
+    notes: typeof selected.notes !== 'undefined' ? selected.notes : data.notes,
+    isActive: typeof selected.isActive === 'boolean' ? selected.isActive : data.isActive,
+    createdAt: selected.createdAt || data.createdAt,
+    updatedAt: selected.updatedAt || data.updatedAt,
+    client: selected.client || data.client,
+    linkedClients: selected.linkedClients && selected.linkedClients.length > 0 ? selected.linkedClients : data.linkedClients,
+    linkedClientsCount: selected.linkedClientsCount || data.linkedClientsCount,
+    groupedRecipientIds: selected.groupedRecipientIds && selected.groupedRecipientIds.length > 0 ? selected.groupedRecipientIds : data.groupedRecipientIds,
+    duplicateRecordsCount: selected.duplicateRecordsCount || data.duplicateRecordsCount,
+    _count: selected._count || data._count,
+    transactions: apiReturnedRequestedRecipient ? data.transactions : []
+  };
+}
+
 export default function RecipientDetailPage({ recipientId: recipientIdProp }: { recipientId: string }) {
   const [recipient, setRecipient] = useState<RecipientDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -100,7 +163,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const recipientId = recipientIdProp || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') || '' : '');
+  const [recipientId, setRecipientId] = useState(() => getInitialRecipientId(recipientIdProp));
 
   const [form, setForm] = useState({
     name: '',
@@ -125,13 +188,17 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     setError('');
     try {
       const data = await apiFetch(`/api/recipients/${recipientId}`);
-      setRecipient(data);
+      setRecipient(mergeSelectedRecipient(data, getStoredRecipientProfile(), recipientId));
     } catch (err: any) {
       setError(err.message || 'No se pudo cargar el destinatario');
     } finally {
       setLoading(false);
     }
   }, [recipientId]);
+
+  useEffect(() => {
+    setRecipientId(getInitialRecipientId(recipientIdProp));
+  }, [recipientIdProp]);
 
   useEffect(() => {
     loadRecipient();

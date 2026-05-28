@@ -148,6 +148,14 @@ const getLastTransaction = (transactions: Array<{date: string, amount: number}> 
   return sorted[0];
 };
 
+const rememberRecipientProfile = (recipient: RecipientDirectoryItem) => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem('adglobal_selected_recipient_profile', JSON.stringify({
+    ...recipient,
+    selectedAt: Date.now()
+  }));
+};
+
 interface Props {
   limit?: number;
 }
@@ -576,7 +584,11 @@ export default function ClientTable({ limit }: Props) {
                     </td>
                     <td className="py-4 pr-6 pl-3 align-top text-right">
                       <div className="flex flex-col items-end gap-2">
-                        <a href={`/admin/destinatarios/perfil?id=${recipient.id}`} className="inline-flex items-center gap-1 text-[0.75rem] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                        <a
+                          href={`/admin/destinatarios/perfil?id=${encodeURIComponent(recipient.id)}`}
+                          onClick={() => rememberRecipientProfile(recipient)}
+                          className="inline-flex items-center gap-1 text-[0.75rem] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
+                        >
                           Perfil <ChevronRight className="w-3 h-3" />
                         </a>
                         <div className="flex items-center gap-1.5 mt-1">
