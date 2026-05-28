@@ -111,6 +111,15 @@ function getStoredRecipientProfile(): (Partial<RecipientDetail> & { selectedAt?:
   }
 }
 
+function setStoredRecipientProfile(recipient: Partial<RecipientDetail>) {
+  if (typeof window === 'undefined' || !recipient?.id || !recipient?.name) return;
+
+  sessionStorage.setItem('adglobal_selected_recipient_profile', JSON.stringify({
+    ...recipient,
+    selectedAt: Date.now()
+  }));
+}
+
 function getInitialRecipientId(recipientIdProp: string) {
   if (recipientIdProp) return recipientIdProp;
   if (typeof window === 'undefined') return '';
@@ -129,6 +138,7 @@ function mergeSelectedRecipient(
   if (!selected?.id || selected.id !== requestedId) return data;
 
   const apiReturnedRequestedRecipient = data.id === selected.id;
+  if (apiReturnedRequestedRecipient) return data;
 
   return {
     ...data,
@@ -190,7 +200,9 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     setError('');
     try {
       const data = await apiFetch(`/api/recipients/${recipientId}`);
-      setRecipient(mergeSelectedRecipient(data, getStoredRecipientProfile(), recipientId));
+      const resolvedRecipient = mergeSelectedRecipient(data, getStoredRecipientProfile(), recipientId);
+      setRecipient(resolvedRecipient);
+      setStoredRecipientProfile(resolvedRecipient);
     } catch (err: any) {
       setError(err.message || 'No se pudo cargar el destinatario');
     } finally {
