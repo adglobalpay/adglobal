@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ArrowRight, Building2, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, FileText,
-  Link2, Mail, MapPin, Pencil, Phone, Plus, Save, Trash2, UserRound, Users, X
+  AlertTriangle, ArrowRight, Building2, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, ExternalLink, Eye, FileText,
+  Fingerprint, Link2, LoaderCircle, Mail, MapPin, Pencil, Phone, Plus, Save, Send, ShieldCheck, Trash2, Upload, UserRound, Users, X
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -45,9 +45,14 @@ interface RecipientDetail {
   accountType: string;
   identification: string | null;
   notes: string | null;
+  kycStatus: string;
+  ofacStatus: string;
+  ofacPdfUrl: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  kycRequests: KycRequest[];
+  ofacChecks: OfacCheck[];
   client: LinkedClient;
   linkedClients: LinkedClient[];
   linkedClientsCount: number;
@@ -57,6 +62,35 @@ interface RecipientDetail {
     transactions: number;
   };
   transactions: RecipientTransaction[];
+}
+
+interface KycDocument {
+  id: string;
+  documentType: string;
+  url: string | null;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+  status: string | null;
+  uploadedAt: string;
+}
+
+interface KycRequest {
+  id: string;
+  status: string;
+  token: string;
+  createdAt: string;
+  expiresAt: string | null;
+  completedAt: string | null;
+  documents: KycDocument[];
+}
+
+interface OfacCheck {
+  id: string;
+  status: string;
+  checkedAt: string | null;
+  notes: string | null;
+  createdAt: string;
+  checkedBy: { firstName: string; lastName: string | null } | null;
 }
 
 interface AccountTypeItem {
@@ -69,6 +103,35 @@ interface AccountTypeItem {
 
 const RELACIONES = ['Familiar', 'Hermano/a', 'Prima/o', 'Tío/a', 'Amigo/a', 'Colega', 'Cliente', 'Otro'];
 const HISTORY_PAGE_SIZE = 8;
+const KYC_MAP: Record<string, { label: string; className: string }> = {
+  VERIFIED: { label: 'Verificado', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  PENDING: { label: 'Por revisar', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  PROCESSING: { label: 'Por revisar', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  REJECTED: { label: 'Rechazado', className: 'bg-rose-50 text-rose-700 border-rose-200' }
+};
+
+const OFAC_MAP: Record<string, { label: string; className: string }> = {
+  OK: { label: 'Sin coincidencias', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  PENDING: { label: 'Pendiente', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  REVIEW: { label: 'En revisión', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  BLOCKED: { label: 'Bloqueado', className: 'bg-rose-50 text-rose-700 border-rose-200' }
+};
+
+const KYC_DOCUMENT_LABELS: Record<string, string> = {
+  id_front: 'Cédula / Pasaporte / DNI / Cédula (frente)',
+  id_back: 'Cédula / Pasaporte / DNI / Cédula (reverso)',
+  selfie: 'Foto de rostro',
+  signature: 'Firma digital',
+  articles_of_organization: 'Articles of Organization',
+  ein_letter: 'EIN Letter (Carta del IRS)',
+  representante_id: 'Documento del dueno o representante'
+};
+
+const RECIPIENT_KYC_UPLOAD_OPTIONS = [
+  { value: 'id_front', label: 'Cédula / Pasaporte / DNI / Cédula (frente)' },
+  { value: 'id_back', label: 'Cédula / Pasaporte / DNI / Cédula (reverso)' },
+  { value: 'selfie', label: 'Foto de rostro (selfie)' }
+];
 
 const TX_STATUS_MAP: Record<string, { label: string; className: string }> = {
   COMPLETED: { label: 'Completado', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
@@ -174,6 +237,12 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
+  const [isKycUploadOpen, setIsKycUploadOpen] = useState(false);
+  const [kycUploadType, setKycUploadType] = useState('id_front');
+  const [kycUploadFile, setKycUploadFile] = useState<File | null>(null);
+  const [isUploadingKycDoc, setIsUploadingKycDoc] = useState(false);
+  const [isOfacModalOpen, setIsOfacModalOpen] = useState(false);
+  const [isUploadingOfac, setIsUploadingOfac] = useState(false);
 
   const [recipientId, setRecipientId] = useState(() => getInitialRecipientId(recipientIdProp));
 
@@ -248,6 +317,12 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     }
   }, [historyPage, historyTotalPages]);
 
+  useEffect(() => {
+    if (!RECIPIENT_KYC_UPLOAD_OPTIONS.some((option) => option.value === kycUploadType)) {
+      setKycUploadType('id_front');
+    }
+  }, [kycUploadType]);
+
   const openEditModal = () => {
     if (!recipient) return;
     setForm({
@@ -293,6 +368,232 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
         detail: { type: 'success', message: 'Copiado', description: `${label} copiado al portapapeles.` }
       }));
     });
+  };
+
+  const getKycLink = (token: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://adglobalpay.com';
+    return `${origin}/kyc/?token=${token}`;
+  };
+
+  const handleGenerateKyc = async () => {
+    if (!recipient) return;
+    try {
+      const kyc = await apiFetch('/api/kyc', {
+        method: 'POST',
+        body: JSON.stringify({ recipientId: recipient.id })
+      });
+      const link = getKycLink(kyc.token);
+      await navigator.clipboard.writeText(link).catch(() => undefined);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: 'KYC generado',
+          description: 'Se creó el link KYC del destinatario y quedó copiado al portapapeles.'
+        }
+      }));
+      await loadRecipient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    }
+  };
+
+  const handleCopyKycLink = async () => {
+    if (!recipient) return;
+    let token = recipient.kycRequests[0]?.token;
+    if (!token) {
+      try {
+        const kyc = await apiFetch('/api/kyc', {
+          method: 'POST',
+          body: JSON.stringify({ recipientId: recipient.id })
+        });
+        token = kyc.token;
+        await loadRecipient();
+      } catch (err: any) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'error', message: 'Error', description: err.message }
+        }));
+        return;
+      }
+    }
+    const link = getKycLink(token);
+    navigator.clipboard.writeText(link).then(() => {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Link copiado', description: 'El link KYC fue copiado al portapapeles.' }
+      }));
+    });
+  };
+
+  const handleUploadKycDoc = async () => {
+    const latestKyc = recipient?.kycRequests[0];
+    if (!recipient || !latestKyc || !kycUploadFile) return;
+    setIsUploadingKycDoc(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+      const formData = new FormData();
+      formData.append('file', kycUploadFile);
+      formData.append('documentType', kycUploadType);
+      const res = await fetch(`${API_URL}/api/kyc/${latestKyc.id}/upload`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Error al subir' }));
+        throw new Error(err.error || 'Error al subir documento');
+      }
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Documento subido', description: 'El documento KYC fue guardado correctamente.' }
+      }));
+      setIsKycUploadOpen(false);
+      setKycUploadFile(null);
+      await loadRecipient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    } finally {
+      setIsUploadingKycDoc(false);
+    }
+  };
+
+  const handleDownloadKycPdf = async () => {
+    if (!recipient) return;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+      const res = await fetch(`${API_URL}/api/recipients/${recipient.id}/kyc.pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        if (contentType.includes('text/html')) {
+          throw new Error('El backend no reconoce esta ruta. Asegurate de que este desplegada la ultima version del backend.');
+        }
+        const err = await res.json().catch(() => ({ error: 'Error al generar PDF' }));
+        throw new Error(err.error || 'Error al generar PDF');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kyc-${recipient.id.substring(0, 8).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'PDF descargado', description: 'Documentos KYC descargados correctamente.' }
+      }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error al descargar PDF', description: err.message }
+      }));
+    }
+  };
+
+  const handleMarkOfacOk = async () => {
+    if (!recipient) return;
+    try {
+      await apiFetch('/api/ofac', {
+        method: 'POST',
+        body: JSON.stringify({ recipientId: recipient.id, status: 'OK' })
+      });
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'OFAC verificado', description: 'Destinatario marcado sin coincidencias.' }
+      }));
+      await loadRecipient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    }
+  };
+
+  const handleUploadOfacPdf = async (file: File) => {
+    if (!recipient) return;
+    setIsUploadingOfac(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+      const res = await fetch(`${API_URL}/api/recipients/${recipient.id}/ofac-pdf`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Error al subir PDF');
+      }
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'PDF subido', description: 'Documento OFAC guardado correctamente.' }
+      }));
+      try {
+        await apiFetch(`/api/recipients/${recipient.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ ofacStatus: 'OK' })
+        });
+      } catch {}
+      await loadRecipient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error al subir PDF', description: err.message }
+      }));
+    } finally {
+      setIsUploadingOfac(false);
+    }
+  };
+
+  const handleDeleteOfacPdf = async () => {
+    if (!recipient) return;
+    if (!confirm('¿Eliminar el PDF de OFAC?')) return;
+    try {
+      await apiFetch(`/api/recipients/${recipient.id}/ofac-pdf`, { method: 'DELETE' });
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'PDF eliminado', description: 'Documento OFAC eliminado correctamente.' }
+      }));
+      try {
+        await apiFetch(`/api/recipients/${recipient.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ ofacStatus: 'PENDING' })
+        });
+      } catch {}
+      await loadRecipient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    }
+  };
+
+  const handleViewOfacPdf = async () => {
+    if (!recipient) return;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
+      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+      const res = await fetch(`${API_URL}/api/recipients/${recipient.id}/ofac-pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        const err = contentType.includes('application/json')
+          ? await res.json().catch(() => ({ error: 'Error al abrir PDF OFAC' }))
+          : { error: 'Error al abrir PDF OFAC' };
+        throw new Error(err.error || 'Error al abrir PDF OFAC');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error al abrir PDF', description: err.message }
+      }));
+    }
   };
 
   const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -365,6 +666,10 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
   const primaryClientName = getClientFullName(recipient.client);
   const duplicateNotice = recipient.duplicateRecordsCount > 1;
   const primaryTransactionClientId = recipient.client?.id || recipient.linkedClients[0]?.id || '';
+  const kycCfg = KYC_MAP[recipient.kycStatus] || KYC_MAP.PENDING;
+  const ofacCfg = OFAC_MAP[recipient.ofacStatus] || OFAC_MAP.PENDING;
+  const latestKyc = recipient.kycRequests[0];
+  const latestOfac = recipient.ofacChecks[0];
 
   return (
     <>
@@ -472,6 +777,202 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
               <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1 tracking-tight">{stat.value}</p>
             </div>
           ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 anim-fade-in-up stagger-4">
+          <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><Eye className="w-5 h-5" /></div>
+                <div>
+                  <h2 className="text-base md:text-lg font-bold text-slate-800">Verificación KYC</h2>
+                  <p className="text-xs text-slate-400 font-medium">Identidad del destinatario</p>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={handleGenerateKyc} className="btn-interactive px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
+                  <Send className="w-3.5 h-3.5" /> Generar link
+                </button>
+                {latestKyc && (
+                  <>
+                    <a
+                      href={`/admin/kyc?kycId=${latestKyc.id}`}
+                      className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
+                    >
+                      <Fingerprint className="w-3.5 h-3.5" /> Ver KYC
+                    </a>
+                    <button
+                      onClick={() => setIsKycUploadOpen(true)}
+                      className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
+                    >
+                      <Upload className="w-3.5 h-3.5" /> Subir doc
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={handleDownloadKycPdf}
+                  className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
+                >
+                  <FileText className="w-3.5 h-3.5" /> Descargar PDF
+                </button>
+              </div>
+            </div>
+
+            {latestKyc && (
+              <div className="mb-5 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-indigo-400 mb-2">Link de verificación KYC</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-indigo-200 text-sm font-mono text-slate-700 truncate">
+                    {getKycLink(latestKyc.token)}
+                  </code>
+                  <button onClick={handleCopyKycLink} className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all flex items-center gap-1.5 shrink-0">
+                    <Copy className="w-3.5 h-3.5" /> Copiar
+                  </button>
+                </div>
+                <p className="text-[0.65rem] text-indigo-400 font-medium mt-2">Comparte este link con el destinatario para que complete su verificación.</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1">Estado</p>
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border ${kycCfg.className}`}>
+                  {recipient.kycStatus === 'VERIFIED' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                  {kycCfg.label}
+                </span>
+              </div>
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1">Fecha</p>
+                <p className="text-sm font-bold text-slate-700">{latestKyc ? formatDateTime(latestKyc.createdAt) : '—'}</p>
+              </div>
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1">Método</p>
+                <p className="text-sm font-bold text-slate-700">{latestKyc ? 'Manual' : '—'}</p>
+              </div>
+            </div>
+
+            {latestKyc && latestKyc.documents.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Documentos cargados</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {latestKyc.documents.map((doc) => (
+                    <a
+                      key={doc.id}
+                      href={doc.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-700 truncate">{KYC_DOCUMENT_LABELS[doc.documentType] || doc.documentType}</p>
+                          <p className="text-[0.65rem] text-slate-400 font-medium">{doc.status || 'Cargado'}</p>
+                        </div>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 group-hover:text-indigo-600 transition-all" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 card-hover">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><ShieldCheck className="w-5 h-5" /></div>
+                <div>
+                  <h2 className="text-base md:text-lg font-bold text-slate-800">Verificación OFAC</h2>
+                  <p className="text-xs text-slate-400 font-medium">Listas de sanciones</p>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <a
+                  href="https://sanctionssearch.ofac.treas.gov"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> OFAC
+                </a>
+                <button
+                  onClick={handleMarkOfacOk}
+                  className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Marcar OK
+                </button>
+                <button
+                  onClick={() => setIsOfacModalOpen(true)}
+                  className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" /> {recipient.ofacPdfUrl ? 'Editar OFAC' : 'Subir OFAC'}
+                </button>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${recipient.ofacPdfUrl ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ofacCfg.className}`}>
+                  {recipient.ofacPdfUrl ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                  {recipient.ofacPdfUrl ? 'Verificado' : ofacCfg.label}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 mb-4 space-y-3">
+              <div>
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Nombre para búsqueda</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-slate-200 text-sm font-mono text-slate-700">{recipient.name}</code>
+                  <button onClick={() => handleCopy(recipient.name, 'Nombre')} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5 shrink-0">
+                    <Copy className="w-3.5 h-3.5" /> Copiar
+                  </button>
+                </div>
+              </div>
+              {recipient.identification && (
+                <div>
+                  <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Cédula / ID</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-slate-200 text-sm font-mono text-slate-700">{recipient.identification}</code>
+                    <button onClick={() => handleCopy(recipient.identification!, 'Documento')} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5 shrink-0">
+                      <Copy className="w-3.5 h-3.5" /> Copiar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {latestOfac && (
+              <div>
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-2">Última verificación</p>
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                  <span>{latestOfac.checkedAt ? formatDateTime(latestOfac.checkedAt) : formatDateTime(latestOfac.createdAt)}</span>
+                  <span className="text-emerald-600 font-bold">— {ofacCfg.label}</span>
+                </div>
+              </div>
+            )}
+
+            {recipient.ofacPdfUrl && (
+              <div className="mt-5 space-y-2">
+                <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400">Documento cargado</p>
+                <button
+                  type="button"
+                  onClick={handleViewOfacPdf}
+                  className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group text-left"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0 group-hover:text-emerald-600 group-hover:border-emerald-200 transition-all">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-700 truncate">Documento OFAC (PDF)</p>
+                      <p className="text-[0.65rem] text-slate-400 font-medium">Cargado y disponible para revisión</p>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 group-hover:text-emerald-600 transition-all" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-6">
@@ -848,6 +1349,221 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isKycUploadOpen && recipient && (
+        <div className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:items-center" role="dialog" aria-modal="true">
+          <button type="button" aria-label="Cerrar modal" className="fixed inset-0 bg-slate-950/60 backdrop-blur-lg" onClick={() => { setIsKycUploadOpen(false); setKycUploadFile(null); }} />
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_24px_80px_-20px_rgba(2,6,23,0.35)] transition-all duration-200">
+            <div className="relative bg-slate-900 px-5 py-6 sm:px-8 sm:py-7">
+              <div className="absolute inset-0 opacity-40">
+                <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
+                <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-cyan-500/10 blur-3xl" />
+              </div>
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-indigo-400/80">Documento KYC</p>
+                  <h2 className="mt-0.5 text-lg sm:text-xl font-bold tracking-tight text-white">Subir documento manual</h2>
+                </div>
+                <button type="button" onClick={() => { setIsKycUploadOpen(false); setKycUploadFile(null); }} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-400 transition-all hover:bg-slate-700 hover:text-white ring-1 ring-white/10">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5 sm:p-8 space-y-5">
+              <label className="block">
+                <span className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Tipo de documento</span>
+                <select
+                  value={kycUploadType}
+                  onChange={(e) => setKycUploadType(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-400"
+                >
+                  {RECIPIENT_KYC_UPLOAD_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+
+              {kycUploadFile ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500 mb-2">Archivo seleccionado</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-800 truncate">{kycUploadFile.name}</p>
+                      <p className="text-xs text-slate-400 font-medium">{(kycUploadFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-8 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/30"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files[0];
+                    if (file) setKycUploadFile(file);
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                    <Upload className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">Arrastra una imagen aquí</p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">o</p>
+                  <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-[0.98]">
+                    Seleccionar archivo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setKycUploadFile(file);
+                        e.currentTarget.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {isUploadingKycDoc && (
+                <div className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Subiendo...
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setIsKycUploadOpen(false); setKycUploadFile(null); }}
+                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUploadKycDoc}
+                  disabled={!kycUploadFile || isUploadingKycDoc}
+                  className="flex-1 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                >
+                  Subir documento
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOfacModalOpen && recipient && (
+        <div className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:items-center" role="dialog" aria-modal="true">
+          <button type="button" aria-label="Cerrar modal" className="fixed inset-0 bg-slate-950/60 backdrop-blur-lg" onClick={() => setIsOfacModalOpen(false)} />
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_24px_80px_-20px_rgba(2,6,23,0.35)] transition-all duration-200">
+            <div className="relative bg-slate-900 px-5 py-6 sm:px-8 sm:py-7">
+              <div className="absolute inset-0 opacity-40">
+                <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl" />
+                <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-cyan-500/10 blur-3xl" />
+              </div>
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-emerald-400/80">Documento OFAC</p>
+                  <h2 className="mt-0.5 text-lg sm:text-xl font-bold tracking-tight text-white">
+                    {recipient.ofacPdfUrl ? 'Editar PDF de verificación' : 'Subir PDF de verificación'}
+                  </h2>
+                </div>
+                <button type="button" onClick={() => setIsOfacModalOpen(false)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-400 transition-all hover:bg-slate-700 hover:text-white ring-1 ring-white/10">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5 sm:p-8 space-y-5">
+              {recipient.ofacPdfUrl ? (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                    <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500 mb-2">Archivo actual</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">ofac.pdf</p>
+                        <button type="button" onClick={handleViewOfacPdf} className="text-xs text-indigo-600 font-bold hover:underline">
+                          Ver PDF
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-[0.98]">
+                      <Upload className="h-4 w-4" />
+                      Reemplazar
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadOfacPdf(file);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                    <button
+                      onClick={handleDeleteOfacPdf}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-600 transition-all hover:bg-rose-100 hover:text-rose-700 active:scale-[0.98]"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div
+                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-8 text-center transition-all hover:border-emerald-300 hover:bg-emerald-50/30"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files[0];
+                      if (file && file.type === 'application/pdf') {
+                        handleUploadOfacPdf(file);
+                      } else {
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                          detail: { type: 'warning', message: 'Formato no válido', description: 'Solo se permiten archivos PDF.' }
+                        }));
+                      }
+                    }}
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-700">Arrastra un PDF aquí</p>
+                    <p className="text-xs text-slate-400 font-medium mt-1">o</p>
+                    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-[0.98]">
+                      Seleccionar archivo
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadOfacPdf(file);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+              {isUploadingOfac && (
+                <div className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Subiendo...
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
