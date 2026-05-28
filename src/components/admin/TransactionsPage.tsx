@@ -6,6 +6,12 @@ import {
   ChevronFirst, ChevronLast, FileText
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
+import {
+  isExcludedTransactionStatus,
+  isFailedTransactionStatus,
+  isPendingReviewTransactionStatus,
+  normalizeTransactionStatus
+} from '../../lib/transactionStatus';
 
 interface Transaction {
   id: string;
@@ -82,12 +88,12 @@ const ESTADOS_MAP: Record<string, { label: string; className: string; icon: Reac
     icon: <CheckCircle2 className="w-3 h-3" />
   },
   PROCESSING: {
-    label: 'Procesando',
-    className: 'bg-amber-50 text-amber-700 border-amber-200',
-    icon: <Clock className="w-3 h-3" />
+    label: 'Pendiente de revisión',
+    className: 'bg-blue-50 text-blue-700 border-blue-200',
+    icon: <PauseCircle className="w-3 h-3" />
   },
   PENDING: {
-    label: 'Pendiente',
+    label: 'Pendiente de revisión',
     className: 'bg-blue-50 text-blue-700 border-blue-200',
     icon: <PauseCircle className="w-3 h-3" />
   },
@@ -97,7 +103,7 @@ const ESTADOS_MAP: Record<string, { label: string; className: string; icon: Reac
     icon: <XCircle className="w-3 h-3" />
   },
   REJECTED: {
-    label: 'Rechazado',
+    label: 'Fallido',
     className: 'bg-red-50 text-red-700 border-red-200',
     icon: <XCircle className="w-3 h-3" />
   },
@@ -219,9 +225,11 @@ export default function TransactionsPage() {
     // Filtro de estado
     if (estadoFilter) {
       if (estadoFilter === ADMIN_PENDING_FILTER) {
-        result = result.filter(t => t.estado === 'PENDING' || t.estado === 'PROCESSING');
+        result = result.filter(t => isPendingReviewTransactionStatus(t.estado));
+      } else if (estadoFilter === 'FAILED') {
+        result = result.filter(t => isFailedTransactionStatus(t.estado));
       } else {
-        result = result.filter(t => t.estado === estadoFilter);
+        result = result.filter(t => normalizeTransactionStatus(t.estado) === estadoFilter);
       }
     }
 
@@ -246,13 +254,13 @@ export default function TransactionsPage() {
   const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
 
   const kpis = useMemo(() => {
-    const validas = filtered.filter(t => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
+    const validas = filtered.filter(t => !isExcludedTransactionStatus(t.estado));
     const totalIngreso = validas.reduce((s, t) => s + Number(t.ingresoUSD || 0), 0);
     const totalSalida = validas.reduce((s, t) => s + Number(t.salidaUSDT || 0), 0);
     const tasaSum = validas.reduce((s, t) => s + Number(t.tasa || 0), 0);
     const promedioTasa = validas.length > 0 ? (tasaSum / validas.length) : 0;
     const promedioMonto = validas.length > 0 ? (totalIngreso / validas.length) : 0;
-    const pendientes = validas.filter(t => t.estado === 'PENDING' || t.estado === 'PROCESSING').length;
+    const pendientes = validas.filter(t => isPendingReviewTransactionStatus(t.estado)).length;
     const validadoAdmin = validas.reduce((s, t) => {
       const profit = t.profitUSD !== null && t.profitUSD !== undefined
         ? Number(t.profitUSD)
@@ -501,13 +509,10 @@ export default function TransactionsPage() {
             <div className="flex gap-1.5 flex-wrap">
               {[
                 { key: '', label: 'Todos', dot: 'bg-slate-400' },
-                { key: ADMIN_PENDING_FILTER, label: 'Por revisar', dot: 'bg-amber-400' },
-                { key: 'PENDING', label: 'Pendiente', dot: 'bg-blue-400' },
-                { key: 'PROCESSING', label: 'Procesando', dot: 'bg-amber-500' },
+                { key: ADMIN_PENDING_FILTER, label: 'Pendiente de revisión', dot: 'bg-blue-400' },
                 { key: 'COMPLETED', label: 'Completado', dot: 'bg-emerald-400' },
-                { key: 'FAILED', label: 'Fallida', dot: 'bg-red-500' },
-                { key: 'CANCELLED', label: 'Cancelada', dot: 'bg-slate-500' },
-                { key: 'REJECTED', label: 'Rechazada', dot: 'bg-rose-500' }
+                { key: 'FAILED', label: 'Fallido', dot: 'bg-red-500' },
+                { key: 'CANCELLED', label: 'Cancelado', dot: 'bg-slate-500' }
               ].map((s) => (
                 <button
                   key={s.key}

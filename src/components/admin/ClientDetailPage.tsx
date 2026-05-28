@@ -5,6 +5,7 @@ import {
   AlertTriangle, Trash2, Pencil, Save, LoaderCircle, X, Fingerprint
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
+import { isExcludedTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
 
 interface Recipient {
   id: string;
@@ -127,10 +128,10 @@ const OFAC_MAP: Record<string, { label: string; className: string }> = {
 
 const TX_ESTADO_MAP: Record<string, { label: string; className: string }> = {
   COMPLETED: { label: 'Completado', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  PROCESSING: { label: 'Procesando', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  PENDING: { label: 'Pendiente', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  PROCESSING: { label: 'Pendiente de revisión', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  PENDING: { label: 'Pendiente de revisión', className: 'bg-blue-50 text-blue-700 border-blue-200' },
   FAILED: { label: 'Fallido', className: 'bg-rose-50 text-rose-700 border-rose-200' },
-  REJECTED: { label: 'Rechazado', className: 'bg-rose-50 text-rose-700 border-rose-200' },
+  REJECTED: { label: 'Fallido', className: 'bg-rose-50 text-rose-700 border-rose-200' },
   CANCELLED: { label: 'Cancelado', className: 'bg-slate-100 text-slate-600 border-slate-200' }
 };
 
@@ -590,7 +591,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   }
 
   const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName;
-  const transaccionesValidas = client.transactions.filter(t => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
+  const transaccionesValidas = client.transactions.filter(t => !isExcludedTransactionStatus(t.estado));
   const totalUsd = transaccionesValidas.reduce((sum, t) => sum + Number(t.ingresoUSD || 0), 0);
   const totalTx = client._count?.transactions ?? client.transactions.length;
   const totalRecipients = client._count?.recipients ?? client.recipients.length;
@@ -1085,7 +1086,8 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             </thead>
             <tbody className="divide-y divide-slate-50">
               {client.transactions.map((tx, idx) => {
-                const txCfg = TX_ESTADO_MAP[tx.estado] || TX_ESTADO_MAP.PENDING;
+                const normalizedStatus = normalizeTransactionStatus(tx.estado);
+                const txCfg = TX_ESTADO_MAP[normalizedStatus] || TX_ESTADO_MAP.PENDING;
                 return (
                   <tr key={tx.id} className="table-row-anim group" style={{ animationDelay: `${idx * 50}ms` }}>
                     <td className="py-3 pl-4 md:pl-6 pr-3 text-sm font-semibold text-slate-700">{formatDate(tx.fecha)}</td>
@@ -1094,7 +1096,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                     <td className="py-3 px-3 text-sm text-slate-500 font-mono">Bs. {Number(tx.montoVES).toLocaleString()}</td>
                     <td className="py-3 px-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[0.6rem] font-bold uppercase tracking-wider border gap-1 ${txCfg.className}`}>
-                        {tx.estado === 'COMPLETED' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                        {normalizedStatus === 'COMPLETED' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                         {txCfg.label}
                       </span>
                     </td>

@@ -5,6 +5,7 @@ import {
   BellRing, ChevronDown, Check
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
+import { isExcludedTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
 
 interface DashboardStats {
   totalClients: number;
@@ -51,10 +52,10 @@ const PERIOD_OPTIONS: Array<{ key: DashboardPeriod; label: string }> = [
 
 const ESTADOS_MAP: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
   COMPLETED: { label: 'Completado', className: 'bg-emerald-50 text-emerald-700 border-emerald-100 group-hover:bg-emerald-100', icon: <CheckCircle2 className="w-3 h-3" /> },
-  PROCESSING: { label: 'Procesando', className: 'bg-amber-50 text-amber-700 border-amber-100 group-hover:bg-amber-100', icon: <Clock className="w-3 h-3" /> },
-  PENDING: { label: 'Pendiente', className: 'bg-indigo-50 text-indigo-700 border-indigo-100 group-hover:bg-indigo-100', icon: <PauseCircle className="w-3 h-3" /> },
+  PROCESSING: { label: 'Pendiente de revisión', className: 'bg-indigo-50 text-indigo-700 border-indigo-100 group-hover:bg-indigo-100', icon: <PauseCircle className="w-3 h-3" /> },
+  PENDING: { label: 'Pendiente de revisión', className: 'bg-indigo-50 text-indigo-700 border-indigo-100 group-hover:bg-indigo-100', icon: <PauseCircle className="w-3 h-3" /> },
   FAILED: { label: 'Fallido', className: 'bg-red-50 text-red-700 border-red-100 group-hover:bg-red-100', icon: <AlertTriangle className="w-3 h-3" /> },
-  REJECTED: { label: 'Rechazado', className: 'bg-red-50 text-red-700 border-red-100 group-hover:bg-red-100', icon: <AlertTriangle className="w-3 h-3" /> }
+  REJECTED: { label: 'Fallido', className: 'bg-red-50 text-red-700 border-red-100 group-hover:bg-red-100', icon: <AlertTriangle className="w-3 h-3" /> }
 };
 
 function formatDateShort(d: string) {
@@ -115,7 +116,7 @@ export default function DashboardContent() {
         });
 
         const txs = allTxData.data || [];
-        const txsValidas = txs.filter((t: Transaction) => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
+        const txsValidas = txs.filter((t: Transaction) => !isExcludedTransactionStatus(t.estado));
         const actividad = semana.map(d => {
           const diaStr = toLocalDateStr(d);
           const diaTxs = txsValidas.filter((t: Transaction) => {
@@ -168,7 +169,7 @@ export default function DashboardContent() {
     const tasaCosto = Number(stats?.costRate || 0);
     const meta = Number(stats?.operatorTarget || 0);
     const txsValidas = allTransactions.filter((transaction) => {
-      if (['FAILED', 'REJECTED', 'CANCELLED'].includes(transaction.estado)) {
+      if (isExcludedTransactionStatus(transaction.estado)) {
         return false;
       }
 
@@ -463,7 +464,8 @@ export default function DashboardContent() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {recentTx.map((tx, idx) => {
-                  const cfg = ESTADOS_MAP[tx.estado] || { label: tx.estado, className: 'bg-slate-100 text-slate-700 border-slate-200 group-hover:bg-slate-100', icon: null };
+                  const normalizedStatus = normalizeTransactionStatus(tx.estado);
+                  const cfg = ESTADOS_MAP[normalizedStatus] || { label: normalizedStatus, className: 'bg-slate-100 text-slate-700 border-slate-200 group-hover:bg-slate-100', icon: null };
                   return (
                     <tr key={tx.id} className="table-row-anim group" style={{ animationDelay: `${idx * 50}ms` }}>
                       <td className="py-4 pl-3 text-[0.8rem] text-slate-500 font-semibold">{formatDateShort(tx.fecha)}</td>

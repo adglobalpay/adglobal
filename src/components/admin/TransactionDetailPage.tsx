@@ -4,6 +4,7 @@ import {
   CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload, Trash2
 } from 'lucide-react';
 import { apiFetch, getUser } from '../../lib/auth';
+import { isPendingReviewTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
 
 interface TransactionDetail {
   id: string;
@@ -72,11 +73,11 @@ interface TransactionDetail {
 
 const ESTADO_CONFIG: Record<string, { bg: string; text: string; border: string; label: string; icon: React.ReactNode }> = {
   PENDING: {
-    bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Pendiente',
+    bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Pendiente de revisión',
     icon: <Clock className="w-3 h-3" />
   },
   PROCESSING: {
-    bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Procesando',
+    bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Pendiente de revisión',
     icon: <Clock className="w-3 h-3" />
   },
   COMPLETED: {
@@ -88,7 +89,7 @@ const ESTADO_CONFIG: Record<string, { bg: string; text: string; border: string; 
     icon: <XCircle className="w-3 h-3" />
   },
   REJECTED: {
-    bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', label: 'Rechazado',
+    bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', label: 'Fallido',
     icon: <XCircle className="w-3 h-3" />
   },
   CANCELLED: {
@@ -136,7 +137,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
   const canEdit = tx && (
     isAdminReviewer ||
-    (currentUser?.role === 'OPERATOR' && tx.creadoPor?.id === currentUser?.id && (tx.estado === 'PENDING' || tx.estado === 'PROCESSING'))
+    (currentUser?.role === 'OPERATOR' && tx.creadoPor?.id === currentUser?.id && isPendingReviewTransactionStatus(tx.estado))
   );
 
   const loadTx = useCallback(async () => {
@@ -152,7 +153,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
     try {
       const data = await apiFetch(`/api/transactions/${txId}`);
       setTx(data);
-      setEstado(data.estado);
+      setEstado(normalizeTransactionStatus(data.estado));
       setNotas(data.notasAdmin || '');
       setEditIngresoUSD(String(data.ingresoUSD ?? ''));
       setEditSalidaUSDT(String(data.salidaUSDT ?? ''));
@@ -291,7 +292,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
     );
   }
 
-  const est = ESTADO_CONFIG[tx.estado] || ESTADO_CONFIG.PENDING;
+  const est = ESTADO_CONFIG[normalizeTransactionStatus(tx.estado)] || ESTADO_CONFIG.PENDING;
   const fechaStr = new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const multipleGroup = getMultipleGroupHeadline(tx);
 
@@ -373,7 +374,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
             {multipleGroup.siblings.map((related) => {
-              const relatedState = ESTADO_CONFIG[related.estado] || ESTADO_CONFIG.PENDING;
+              const relatedState = ESTADO_CONFIG[normalizeTransactionStatus(related.estado)] || ESTADO_CONFIG.PENDING;
               const isCurrent = related.id === tx.id;
 
               return (
@@ -677,11 +678,9 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
               <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Cambiar estado</label>
               <select value={estado} onChange={e => setEstado(e.target.value)} disabled={!isAdminReviewer}
                 className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm disabled:cursor-not-allowed disabled:opacity-60">
-                <option value="PENDING">Pendiente revisión</option>
-                <option value="PROCESSING">En verificación</option>
+                <option value="PENDING">Pendiente de revisión</option>
                 <option value="COMPLETED">Completado</option>
                 <option value="FAILED">Fallido</option>
-                <option value="REJECTED">Rechazado</option>
                 <option value="CANCELLED">Cancelado</option>
               </select>
             </div>
@@ -702,7 +701,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
             {!isAdminReviewer && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-                <p className="text-xs font-bold text-amber-700">Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador creador, puedes corregir montos, comprobantes y notas mientras esté pendiente o en proceso.</p>
+                <p className="text-xs font-bold text-amber-700">Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador creador, puedes corregir montos, comprobantes y notas mientras esté pendiente de revisión.</p>
               </div>
             )}
 

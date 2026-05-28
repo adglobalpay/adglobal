@@ -4,6 +4,7 @@ import {
   Users, CreditCard, Target, ArrowRight, Loader2
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
+import { isExcludedTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
 
 interface Transaction {
   id: string;
@@ -101,7 +102,7 @@ export default function ReportsDashboard() {
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter(t => new Date(t.fecha) >= cutoffDate)
-      .filter(t => !['FAILED','REJECTED','CANCELLED'].includes(t.estado));
+      .filter(t => !isExcludedTransactionStatus(t.estado));
   }, [transactions, cutoffDate]);
 
   const reporteGeneral = useMemo(() => {
@@ -194,7 +195,7 @@ export default function ReportsDashboard() {
       t.salidaUSDT || 0,
       t.tasa || 0,
       t.montoVES || 0,
-      t.estado,
+      normalizeTransactionStatus(t.estado),
       t.recipient?.name || ''
     ]);
     downloadCSV(`transacciones_${period}d.csv`, headers, rows);
@@ -462,7 +463,9 @@ export default function ReportsDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredTransactions.slice(0, 10).map((tx, idx) => (
+              {filteredTransactions.slice(0, 10).map((tx, idx) => {
+                const normalizedStatus = normalizeTransactionStatus(tx.estado);
+                return (
                 <tr key={tx.id} className="table-row-anim group" style={{ animationDelay: `${idx * 50}ms` }}>
                   <td className="py-3 md:py-4 pl-2 md:pl-3 text-[0.8rem] text-slate-500 font-semibold">{formatDateFull(tx.fecha)}</td>
                   <td className="py-3 md:py-4 font-bold text-slate-800 text-sm md:text-[0.9rem] tracking-tight group-hover:text-indigo-600 transition-colors">
@@ -473,16 +476,17 @@ export default function ReportsDashboard() {
                   <td className="py-3 md:py-4 text-[0.8rem] font-semibold text-slate-500 bg-slate-50 rounded my-2 px-2 py-1 inline-block transition-all hover:bg-slate-100">{tx.tasa || 0}</td>
                   <td className="py-3 md:py-4">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider border ${
-                      tx.estado === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      tx.estado === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                      tx.estado === 'PROCESSING' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      normalizedStatus === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      normalizedStatus === 'PENDING' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      normalizedStatus === 'FAILED' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                      normalizedStatus === 'CANCELLED' ? 'bg-slate-100 text-slate-700 border-slate-200' :
                       'bg-slate-100 text-slate-700 border-slate-200'
                     }`}>
-                      {tx.estado}
+                      {normalizedStatus === 'PENDING' ? 'Pendiente de revisión' : normalizedStatus === 'FAILED' ? 'Fallido' : normalizedStatus === 'CANCELLED' ? 'Cancelado' : 'Completado'}
                     </span>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

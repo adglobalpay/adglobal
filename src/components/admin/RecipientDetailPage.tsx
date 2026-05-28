@@ -4,6 +4,7 @@ import {
   Fingerprint, Link2, LoaderCircle, Mail, MapPin, Pencil, Phone, Plus, Save, Send, ShieldCheck, Trash2, Upload, UserRound, Users, X
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
+import { normalizeTransactionStatus } from '../../lib/transactionStatus';
 
 interface LinkedClient {
   id: string;
@@ -135,10 +136,10 @@ const RECIPIENT_KYC_UPLOAD_OPTIONS = [
 
 const TX_STATUS_MAP: Record<string, { label: string; className: string }> = {
   COMPLETED: { label: 'Completado', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  PROCESSING: { label: 'Procesando', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  PENDING: { label: 'Pendiente', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  PROCESSING: { label: 'Pendiente de revisión', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  PENDING: { label: 'Pendiente de revisión', className: 'bg-blue-50 text-blue-700 border-blue-200' },
   FAILED: { label: 'Fallido', className: 'bg-rose-50 text-rose-700 border-rose-200' },
-  REJECTED: { label: 'Rechazado', className: 'bg-rose-50 text-rose-700 border-rose-200' },
+  REJECTED: { label: 'Fallido', className: 'bg-rose-50 text-rose-700 border-rose-200' },
   CANCELLED: { label: 'Cancelado', className: 'bg-slate-100 text-slate-600 border-slate-200' }
 };
 
@@ -1118,7 +1119,8 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {paginatedTransactions.map((tx) => {
-                  const txStatus = TX_STATUS_MAP[tx.estado] || TX_STATUS_MAP.PENDING;
+                  const normalizedStatus = normalizeTransactionStatus(tx.estado);
+                  const txStatus = TX_STATUS_MAP[normalizedStatus] || TX_STATUS_MAP.PENDING;
                   const txClientName = tx.client ? `${tx.client.firstName} ${tx.client.lastName || ''}`.trim() : '—';
 
                   return (
@@ -1130,7 +1132,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                       <td className="py-3 px-3 text-sm text-slate-500 font-mono">Bs. {Number(tx.montoVES).toLocaleString()}</td>
                       <td className="py-3 px-3">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.6rem] font-bold uppercase tracking-wider border ${txStatus.className}`}>
-                          {tx.estado === 'COMPLETED' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                          {normalizedStatus === 'COMPLETED' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                           {txStatus.label}
                         </span>
                       </td>
