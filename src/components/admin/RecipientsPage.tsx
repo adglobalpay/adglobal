@@ -447,6 +447,10 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
             )}
 
             <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end gap-3">
+              <a href={`/admin/destinatarios/perfil?id=${dest.id}`}
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg transition-all">
+                Ficha <ArrowRight className="w-3.5 h-3.5" />
+              </a>
               <a href={`/admin/transacciones/nueva?clienteId=${clientId}&destinatarioId=${dest.id}`}
                 className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg transition-all">
                 <Plus className="w-3.5 h-3.5" /> Enviar

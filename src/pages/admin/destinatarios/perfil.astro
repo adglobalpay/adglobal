@@ -1,0 +1,10 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import RecipientDetailPage from '../../../components/admin/RecipientDetailPage';
+
+const recipientId = Astro.url.searchParams.get('id') || '';
+---
+
+<AdminLayout>
+  <RecipientDetailPage client:load recipientId={recipientId} />
+</AdminLayout>

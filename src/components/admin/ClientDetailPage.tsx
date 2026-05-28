@@ -1012,6 +1012,9 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                     <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-white rounded text-[0.6rem] font-black uppercase tracking-wider text-slate-500 border border-slate-200">{dest.relationship}</span>
                   </div>
                 </div>
+                <a href={`/admin/destinatarios/perfil?id=${dest.id}`} className="inline-flex items-center gap-1 text-[0.7rem] font-bold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg border border-slate-200 transition-all shrink-0">
+                  Ficha <ArrowRight className="w-3 h-3" />
+                </a>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 {dest.phone && (

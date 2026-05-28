@@ -56,6 +56,18 @@ interface RecipientDirectoryItem {
   _count?: {
     transactions: number;
   };
+  linkedClients?: Array<{
+    id: string;
+    firstName: string;
+    lastName: string | null;
+    email: string | null;
+    phone: string | null;
+    documentId: string | null;
+    country: string;
+  }>;
+  linkedClientsCount?: number;
+  duplicateRecordsCount?: number;
+  groupedRecipientIds?: string[];
   client: {
     id: string;
     firstName: string;
@@ -306,11 +318,13 @@ export default function ClientTable({ limit }: Props) {
           return;
         }
 
-        const headers = ['ID Destinatario', 'Destinatario', 'Cliente vinculado', 'Telefono destinatario', 'Banco', 'Cuenta', 'Tipo', 'Identificacion', 'Relacion', 'Transacciones'];
+        const headers = ['ID Destinatario', 'Destinatario', 'Clientes vinculados', 'Telefono destinatario', 'Banco', 'Cuenta', 'Tipo', 'Identificacion', 'Relacion', 'Transacciones'];
         const rows = recipientRows.map((recipient) => [
           recipient.id,
           recipient.name,
-          `${recipient.client.firstName} ${recipient.client.lastName || ''}`.trim(),
+          (recipient.linkedClients && recipient.linkedClients.length > 0
+            ? recipient.linkedClients.map((client) => `${client.firstName} ${client.lastName || ''}`.trim()).join(' | ')
+            : `${recipient.client.firstName} ${recipient.client.lastName || ''}`.trim()),
           recipient.phone || '',
           recipient.bank,
           recipient.accountNumber,
@@ -481,7 +495,7 @@ export default function ClientTable({ limit }: Props) {
       {searchScope === 'recipient' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-2xl border border-cyan-200/80 bg-cyan-50 px-4 py-3 shadow-[0_2px_12px_rgba(8,145,178,0.08)]">
           <div className="text-sm font-medium text-cyan-800">
-            Mostrando destinatarios con su cliente vinculado.
+            Mostrando destinatarios únicos con sus clientes vinculados.
           </div>
           <div className="text-xs font-bold uppercase tracking-wider text-cyan-600">
             {totalItems} destinatario{totalItems === 1 ? '' : 's'}
@@ -495,7 +509,7 @@ export default function ClientTable({ limit }: Props) {
             <thead>
               <tr className="text-left text-slate-400 text-[0.65rem] font-bold uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
                 <th className="py-4 pl-6 pr-3">Destinatario</th>
-                <th className="py-4 px-3">Cliente vinculado</th>
+                <th className="py-4 px-3">Clientes vinculados</th>
                 <th className="py-4 px-3">Banco</th>
                 <th className="py-4 px-3">Cuenta</th>
                 <th className="py-4 px-3">Detalle</th>
@@ -505,19 +519,38 @@ export default function ClientTable({ limit }: Props) {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {paginatedRecipients.map((recipient) => {
-                const linkedClientName = `${recipient.client.firstName} ${recipient.client.lastName || ''}`.trim();
+                const linkedClients = recipient.linkedClients && recipient.linkedClients.length > 0
+                  ? recipient.linkedClients
+                  : [recipient.client];
+                const primaryClient = recipient.client;
+                const primaryClientName = `${primaryClient.firstName} ${primaryClient.lastName || ''}`.trim();
+                const extraClientsCount = Math.max((recipient.linkedClientsCount || linkedClients.length) - 1, 0);
                 return (
                   <tr key={recipient.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="py-4 pl-6 pr-3 align-top">
-                      <div className="font-bold text-[0.9rem] text-slate-800 tracking-tight">{recipient.name}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="font-bold text-[0.9rem] text-slate-800 tracking-tight">{recipient.name}</div>
+                        {(recipient.duplicateRecordsCount || 1) > 1 && (
+                          <span className="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-amber-700">
+                            {recipient.duplicateRecordsCount} registros
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[0.7rem] text-slate-500 font-semibold">{recipient.phone || 'Sin teléfono asociado'}</div>
                       <div className="text-[0.7rem] text-slate-500 font-mono mt-0.5">{recipient.identification || '—'}</div>
                     </td>
                     <td className="py-4 px-3 align-top">
-                      <div className="font-bold text-[0.85rem] text-slate-800">{linkedClientName}</div>
-                      <div className="text-[0.7rem] text-slate-500 font-semibold">{recipient.client.email || 'Sin correo asociado'}</div>
-                      <div className="mt-1 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-slate-600">
-                        {recipient.client.country}
+                      <div className="font-bold text-[0.85rem] text-slate-800">{primaryClientName}</div>
+                      <div className="text-[0.7rem] text-slate-500 font-semibold">{primaryClient.email || 'Sin correo asociado'}</div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-slate-600">
+                          {primaryClient.country}
+                        </span>
+                        {extraClientsCount > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-md border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-cyan-700">
+                            +{extraClientsCount} cliente{extraClientsCount === 1 ? '' : 's'}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-3 align-top">
@@ -543,17 +576,17 @@ export default function ClientTable({ limit }: Props) {
                     </td>
                     <td className="py-4 pr-6 pl-3 align-top text-right">
                       <div className="flex flex-col items-end gap-2">
-                        <a href={`/admin/clientes/perfil?id=${recipient.client.id}`} className="inline-flex items-center gap-1 text-[0.75rem] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
-                          Cliente <ChevronRight className="w-3 h-3" />
+                        <a href={`/admin/destinatarios/perfil?id=${recipient.id}`} className="inline-flex items-center gap-1 text-[0.75rem] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                          Perfil <ChevronRight className="w-3 h-3" />
                         </a>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <a href={`/admin/clientes/destinatarios?id=${recipient.client.id}`} className="w-7 h-7 inline-flex items-center justify-center rounded-md bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors border border-slate-200" title="Ver destinatarios del cliente">
+                          <a href={`/admin/clientes/perfil?id=${primaryClient.id}`} className="w-7 h-7 inline-flex items-center justify-center rounded-md bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors border border-slate-200" title="Ver cliente principal">
                             <Users className="w-3.5 h-3.5" />
                           </a>
                           <a href={`/admin/transacciones?destinatario=${recipient.id}`} className="w-7 h-7 inline-flex items-center justify-center rounded-md bg-cyan-50 text-cyan-600 hover:bg-cyan-100 hover:text-cyan-700 transition-colors border border-cyan-200" title="Historial del destinatario">
                             <FileText className="w-3.5 h-3.5" />
                           </a>
-                          <a href={`/admin/transacciones/nueva?clienteId=${recipient.client.id}&destinatarioId=${recipient.id}`} className="w-7 h-7 inline-flex items-center justify-center rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 transition-colors border border-emerald-200" title="Nueva transacción">
+                          <a href={`/admin/transacciones/nueva?clienteId=${primaryClient.id}&destinatarioId=${recipient.id}`} className="w-7 h-7 inline-flex items-center justify-center rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 transition-colors border border-emerald-200" title="Nueva transacción">
                             <Plus className="w-4 h-4" />
                           </a>
                         </div>
