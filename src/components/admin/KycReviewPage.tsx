@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CalendarClock, CheckCircle2, ExternalLink, FileCheck2, FileText, Fingerprint, History, RefreshCw,
-  ShieldAlert, XCircle
+  Search, ShieldAlert, XCircle
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -117,6 +117,7 @@ export default function KycReviewPage() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('PROCESSING');
   const [reviewing, setReviewing] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadKyc = useCallback(async (preferredId?: string) => {
     setLoading(true);
@@ -151,9 +152,19 @@ export default function KycReviewPage() {
   }, [loadKyc]);
 
   const filtered = useMemo(() => {
-    if (filter === 'ALL') return requests;
-    return requests.filter((request) => normalizeKycStatus(request.status) === filter);
-  }, [requests, filter]);
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const filteredByStatus = filter === 'ALL'
+      ? requests
+      : requests.filter((request) => normalizeKycStatus(request.status) === filter);
+
+    if (!normalizedQuery) return filteredByStatus;
+
+    return filteredByStatus.filter((request) => {
+      const name = clientName(request).toLowerCase();
+      const email = (request.client.email || '').toLowerCase();
+      return name.includes(normalizedQuery) || email.includes(normalizedQuery);
+    });
+  }, [requests, filter, searchQuery]);
 
   const selected = useMemo(() => {
     return filtered.find((request) => request.id === selectedId) || filtered[0] || null;
@@ -389,6 +400,16 @@ export default function KycReviewPage() {
         <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
           <div className="p-4 border-b border-slate-100">
             <p className="text-[0.7rem] font-black uppercase tracking-wider text-slate-400">Solicitudes</p>
+            <div className="relative mt-3 group">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Buscar por nombre o correo..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/10"
+              />
+            </div>
           </div>
           <div className="divide-y divide-slate-100 max-h-[620px] overflow-y-auto">
             {filtered.map((request) => {
