@@ -20,6 +20,29 @@ interface TransactionDetail {
   adminComision: number | null;
   notasAdmin: string | null;
   fechaVerificacion: string | null;
+  multipleGroupId?: string | null;
+  multipleGroupIndex?: number | null;
+  multipleGroup?: {
+    key: string;
+    displayId: string;
+    count: number;
+    index: number | null;
+    isMultiple: boolean;
+    source: 'explicit' | 'proof';
+    relatedTransactions: Array<{
+      id: string;
+      fecha: string;
+      estado: string;
+      ingresoUSD: number;
+      montoVES: number;
+      recipient: {
+        id: string;
+        name: string;
+        bank: string;
+      } | null;
+      index: number | null;
+    }>;
+  } | null;
   verificador: { firstName: string; lastName: string | null } | null;
   creadoPor: { id: string; firstName: string; lastName: string | null } | null;
   client: {
@@ -73,6 +96,17 @@ const ESTADO_CONFIG: Record<string, { bg: string; text: string; border: string; 
     icon: <AlertTriangle className="w-3 h-3" />
   }
 };
+
+function getMultipleGroupHeadline(tx: TransactionDetail) {
+  if (!tx.multipleGroup?.isMultiple) return null;
+
+  return {
+    displayId: tx.multipleGroup.displayId,
+    count: tx.multipleGroup.count,
+    index: tx.multipleGroup.index,
+    siblings: tx.multipleGroup.relatedTransactions
+  };
+}
 
 export default function TransactionDetailPage({ txId: txIdProp }: { txId: string }) {
   const [tx, setTx] = useState<TransactionDetail | null>(null);
@@ -259,6 +293,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
   const est = ESTADO_CONFIG[tx.estado] || ESTADO_CONFIG.PENDING;
   const fechaStr = new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const multipleGroup = getMultipleGroupHeadline(tx);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -279,6 +314,12 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${est.bg} ${est.text} ${est.border}`}>
               {est.icon} {est.label}
             </span>
+            {multipleGroup && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-[0.14em] border border-amber-200 bg-amber-50 text-amber-700">
+                <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                Múltiple
+              </span>
+            )}
           </div>
           <p className="text-sm text-slate-500 font-medium">{fechaStr} · Método: <span className="font-bold text-slate-700">{tx.metodo}</span></p>
         </div>
@@ -308,6 +349,69 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
           </button>
         </div>
       </div>
+
+      {multipleGroup && (
+        <div className="rounded-2xl md:rounded-3xl border border-amber-200 bg-[linear-gradient(180deg,rgba(255,251,235,0.96)_0%,rgba(255,255,255,1)_100%)] p-5 md:p-6 shadow-[0_20px_40px_-28px_rgba(180,83,9,0.28),0_10px_20px_-18px_rgba(180,83,9,0.18),inset_0_1px_0_rgba(255,255,255,0.92)]">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-amber-500">Operación múltiple</p>
+              <h2 className="mt-1 text-lg md:text-xl font-extrabold text-slate-800">
+                Este ingreso fue dividido en {multipleGroup.count} egresos
+              </h2>
+              <p className="mt-2 text-sm font-medium text-slate-600">
+                Grupo <span className="font-mono font-bold text-amber-700">{multipleGroup.displayId}</span>
+                {multipleGroup.index ? ` · Parte ${multipleGroup.index} de ${multipleGroup.count}` : ''}
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-white/80 px-4 py-3 shadow-sm">
+              <div className="text-right">
+                <p className="text-[0.6rem] font-black uppercase tracking-[0.16em] text-slate-400">Transacciones ligadas</p>
+                <p className="text-2xl font-extrabold text-amber-700">{multipleGroup.count}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {multipleGroup.siblings.map((related) => {
+              const relatedState = ESTADO_CONFIG[related.estado] || ESTADO_CONFIG.PENDING;
+              const isCurrent = related.id === tx.id;
+
+              return (
+                <a
+                  key={related.id}
+                  href={`/admin/transacciones/detalle?id=${encodeURIComponent(related.id)}`}
+                  className={`rounded-2xl border px-4 py-3 transition-all ${
+                    isCurrent
+                      ? 'border-amber-300 bg-amber-50 shadow-[0_8px_22px_-18px_rgba(180,83,9,0.4)]'
+                      : 'border-slate-200 bg-white/90 hover:border-amber-200 hover:bg-amber-50/40'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-400">
+                        {related.index ? `Parte ${related.index}` : 'Relacionado'}
+                      </p>
+                      <p className="mt-1 text-sm font-bold text-slate-800">
+                        {related.recipient?.name || 'Destinatario sin nombre'}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-slate-500">
+                        {related.recipient?.bank || 'Banco no disponible'} · Bs. {Number(related.montoVES || 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${relatedState.bg} ${relatedState.text} ${relatedState.border}`}>
+                      {relatedState.icon} {relatedState.label}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs font-semibold text-slate-500">
+                    <span className="font-mono">{multipleGroup.displayId}</span>
+                    <span>${Number(related.ingresoUSD || 0).toFixed(2)} USD</span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Remitente / Destinatario */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 anim-fade-in-up stagger-3">

@@ -22,6 +22,16 @@ interface Transaction {
   fechaVerificacion?: string | null;
   comprobantePago: string | null;
   comprobanteAdmin: string | null;
+  multipleGroupId?: string | null;
+  multipleGroupIndex?: number | null;
+  multipleGroup?: {
+    key: string;
+    displayId: string;
+    count: number;
+    index: number | null;
+    isMultiple: boolean;
+    source: 'explicit' | 'proof';
+  } | null;
   client?: { id: string; firstName: string; lastName: string | null; email: string };
   recipient?: { name: string; bank: string };
 }
@@ -108,6 +118,16 @@ function formatMethod(method: string) {
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+function getMultipleGroupLabel(tx: Transaction) {
+  if (!tx.multipleGroup?.isMultiple) return null;
+  const part = tx.multipleGroup.index ? `${tx.multipleGroup.index}/${tx.multipleGroup.count}` : `${tx.multipleGroup.count} tx`;
+  return {
+    id: tx.multipleGroup.displayId,
+    part,
+    count: tx.multipleGroup.count
+  };
 }
 
 function downloadCSV(filename: string, headers: string[], rows: (string | number)[][]) {
@@ -529,16 +549,29 @@ export default function TransactionsPage() {
                 const cfg = ESTADOS_MAP[tx.estado] || { label: tx.estado, className: 'bg-slate-100 text-slate-700 border-slate-200', icon: null };
                 const clienteNombre = tx.client ? `${tx.client.firstName} ${tx.client.lastName || ''}`.trim() : '—';
                 const hasDoc = tx.comprobantePago || tx.comprobanteAdmin;
+                const multipleGroup = getMultipleGroupLabel(tx);
 
                 return (
                   <tr key={tx.id} className="table-row-anim group" style={{ animationDelay: `${idx * 50}ms` }}>
                     <td className="py-3 md:py-4 pl-4 md:pl-6 pr-3 align-top">
                       <div className="font-semibold text-[0.8rem] text-slate-600">{formatDate(tx.fecha)}</div>
                       <div className="text-[0.65rem] font-mono text-slate-400 mt-0.5">#{tx.id.substring(0, 8).toUpperCase()}</div>
+                      {multipleGroup && (
+                        <div className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-amber-700">
+                          <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                          Múltiple
+                          <span className="font-mono tracking-normal text-amber-800">{multipleGroup.part}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 md:py-4 px-3 align-top">
                       <div className="font-bold text-[0.9rem] text-slate-800 tracking-tight group-hover:text-indigo-600 transition-colors">{clienteNombre}</div>
                       <div className="text-[0.7rem] text-slate-500 font-semibold mt-0.5">{tx.client?.email || '—'}</div>
+                      {multipleGroup && (
+                        <div className="mt-2 text-[0.68rem] font-mono font-bold text-amber-700">
+                          {multipleGroup.id}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 md:py-4 px-3 align-top">
                       <div className="font-bold font-mono text-[0.9rem] text-emerald-600">

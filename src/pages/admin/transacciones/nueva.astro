@@ -1709,6 +1709,11 @@ import {
 
       var token = localStorage.getItem('adglobal_token');
       var destinatarios = estado.destinatarios || [];
+      var multipleGroupId = destinatarios.length > 1
+        ? ((window.crypto && typeof window.crypto.randomUUID === 'function')
+            ? window.crypto.randomUUID()
+            : 'mul-' + Date.now() + '-' + Math.random().toString(16).slice(2, 10))
+        : null;
       for (var i = 0; i < destinatarios.length; i++) {
         var destinatario = destinatarios[i];
         var detalle = obtenerDetalleDestinatario(destinatario.id);
@@ -1733,6 +1738,11 @@ import {
           profitUSD: ingresoAsignado - salida,
           estado: 'PENDING'
         };
+
+        if (multipleGroupId) {
+          payload.multipleGroupId = multipleGroupId;
+          payload.multipleGroupIndex = i + 1;
+        }
 
         if (comprobantePagoUrl) payload.comprobantePago = comprobantePagoUrl;
         if (comprobanteEgresoUrl) payload.comprobanteAdmin = comprobanteEgresoUrl;
