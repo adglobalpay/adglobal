@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ArrowRight, Building2, CalendarDays, CheckCircle2, Clock, Copy, FileText,
+  ArrowRight, Building2, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, FileText,
   Link2, Mail, MapPin, Pencil, Phone, Plus, Save, Trash2, UserRound, Users, X
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
@@ -68,6 +68,7 @@ interface AccountTypeItem {
 }
 
 const RELACIONES = ['Familiar', 'Hermano/a', 'Prima/o', 'Tío/a', 'Amigo/a', 'Colega', 'Cliente', 'Otro'];
+const HISTORY_PAGE_SIZE = 8;
 
 const TX_STATUS_MAP: Record<string, { label: string; className: string }> = {
   COMPLETED: { label: 'Completado', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
@@ -162,6 +163,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
   const [accountTypes, setAccountTypes] = useState<AccountTypeItem[]>([]);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
 
   const [recipientId, setRecipientId] = useState(() => getInitialRecipientId(recipientIdProp));
 
@@ -214,6 +216,25 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     () => accountTypes.filter((type) => type.isActive !== false).map((type) => type.label),
     [accountTypes]
   );
+  const historyTotalPages = useMemo(
+    () => Math.max(1, Math.ceil((recipient?.transactions.length || 0) / HISTORY_PAGE_SIZE)),
+    [recipient?.transactions.length]
+  );
+  const paginatedTransactions = useMemo(() => {
+    if (!recipient) return [];
+    const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
+    return recipient.transactions.slice(start, start + HISTORY_PAGE_SIZE);
+  }, [historyPage, recipient]);
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [recipient?.id]);
+
+  useEffect(() => {
+    if (historyPage > historyTotalPages) {
+      setHistoryPage(historyTotalPages);
+    }
+  }, [historyPage, historyTotalPages]);
 
   const openEditModal = () => {
     if (!recipient) return;
@@ -453,7 +474,8 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
+            <div className="max-h-[34rem] overflow-y-auto pr-1 md:pr-2">
+              <div className="grid grid-cols-1 gap-3">
               {recipient.linkedClients.map((client) => {
                 const isPrimaryOwner = client.id === recipient.clientId;
                 const fullName = getClientFullName(client);
@@ -508,6 +530,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                   </div>
                 );
               })}
+              </div>
             </div>
           </section>
 
@@ -559,7 +582,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
               <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><FileText className="w-5 h-5" /></div>
               <div>
                 <h2 className="text-base md:text-lg font-bold text-slate-800">Historial consolidado</h2>
-                <p className="text-xs text-slate-400 font-medium">{recipient.transactions.length} movimientos recientes de esta ficha</p>
+                <p className="text-xs text-slate-400 font-medium">{recipient.transactions.length} movimientos de esta ficha</p>
               </div>
             </div>
             <a href={`/admin/transacciones?destinatario=${recipient.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-all">
@@ -581,7 +604,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {recipient.transactions.map((tx) => {
+                {paginatedTransactions.map((tx) => {
                   const txStatus = TX_STATUS_MAP[tx.estado] || TX_STATUS_MAP.PENDING;
                   const txClientName = tx.client ? `${tx.client.firstName} ${tx.client.lastName || ''}`.trim() : '—';
 
@@ -606,7 +629,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                     </tr>
                   );
                 })}
-                {recipient.transactions.length === 0 && (
+                {paginatedTransactions.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-6 py-10 text-center text-sm font-medium text-slate-400">
                       Todavía no hay transacciones para este destinatario.
@@ -616,6 +639,57 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
               </tbody>
             </table>
           </div>
+
+          {recipient.transactions.length > 0 && (
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-medium text-slate-400">
+                Mostrando {(historyPage - 1) * HISTORY_PAGE_SIZE + 1}-
+                {Math.min(historyPage * HISTORY_PAGE_SIZE, recipient.transactions.length)} de {recipient.transactions.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setHistoryPage((page) => Math.max(1, page - 1))}
+                  disabled={historyPage === 1}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Página anterior"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: historyTotalPages }, (_, index) => index + 1)
+                    .filter((page) => historyTotalPages <= 5 || page === 1 || page === historyTotalPages || Math.abs(page - historyPage) <= 1)
+                    .map((page, index, pages) => (
+                      <React.Fragment key={page}>
+                        {index > 0 && pages[index - 1] !== page - 1 && (
+                          <span className="px-1 text-slate-300">…</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setHistoryPage(page)}
+                          className={`inline-flex min-w-[2.25rem] items-center justify-center rounded-lg px-3 py-2 text-xs font-bold transition-all ${
+                            page === historyPage
+                              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                              : 'border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </React.Fragment>
+                    ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHistoryPage((page) => Math.min(historyTotalPages, page + 1))}
+                  disabled={historyPage === historyTotalPages}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Página siguiente"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 
