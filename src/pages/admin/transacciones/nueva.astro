@@ -685,14 +685,19 @@ import {
 
     if (!box || !title || !message || !reasons || !profileLink || !estado.cliente) return;
 
+    var entityType = errorData.entityType === 'RECIPIENT' ? 'RECIPIENT' : 'CLIENT';
+    var entityLabel = entityType === 'RECIPIENT' ? 'destinatario' : 'cliente';
+
     title.textContent = errorData.kycRequestCreated
-      ? 'Se generó una solicitud KYC para este cliente'
-      : 'El cliente ya tiene KYC pendiente o en proceso';
-    message.textContent = errorData.error || 'El cliente debe completar KYC antes de registrar este giro.';
+      ? 'Se generó una solicitud KYC para este ' + entityLabel
+      : 'El ' + entityLabel + ' ya tiene KYC pendiente o en proceso';
+    message.textContent = errorData.error || ('El ' + entityLabel + ' debe completar KYC antes de registrar este giro.');
     reasons.innerHTML = (errorData.reasons || []).map(function(reason) {
       return '<li class="flex items-start gap-2"><span class="mt-1 h-2 w-2 rounded-full bg-amber-400 shrink-0"></span><span>' + reason + '</span></li>';
     }).join('');
-    profileLink.href = '/admin/clientes/perfil?id=' + encodeURIComponent(estado.cliente.id);
+    profileLink.href = entityType === 'RECIPIENT'
+      ? '/admin/destinatarios/perfil?id=' + encodeURIComponent(errorData.entityId || '')
+      : '/admin/clientes/perfil?id=' + encodeURIComponent(errorData.entityId || estado.cliente.id);
     box.classList.remove('hidden');
   }
 

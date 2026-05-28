@@ -1414,12 +1414,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             });
           })
           .then(function(data) {
-            var fullName = [data.client && data.client.firstName, data.client && data.client.lastName].filter(Boolean).join(' ');
+            var fullName = (data.subject && data.subject.name)
+              || [data.client && data.client.firstName, data.client && data.client.lastName].filter(Boolean).join(' ');
             var clientName = document.getElementById('clientName');
             var clientEmail = document.getElementById('clientEmail');
-            if (clientName) clientName.textContent = fullName || 'Cliente AD Global Pay';
-            if (clientEmail) clientEmail.textContent = (data.client && data.client.email) || 'Solicitud de verificación';
-            configureKycFlow(data.client && data.client.clientType);
+            if (clientName) clientName.textContent = fullName || (data.entityType === 'RECIPIENT' ? 'Destinatario AD Global Pay' : 'Cliente AD Global Pay');
+            if (clientEmail) clientEmail.textContent = (data.subject && data.subject.email) || (data.ownerClient && data.ownerClient.email) || 'Solicitud de verificación';
+            configureKycFlow(data.subject && data.subject.clientType);
             if (loadingEl) loadingEl.classList.add('hidden');
             if (progressBar) progressBar.classList.remove('hidden');
 

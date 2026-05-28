@@ -32,7 +32,15 @@ interface KycRequest {
   createdAt: string;
   completedAt: string | null;
   expiresAt: string | null;
+  entityType: 'CLIENT' | 'RECIPIENT';
   webhookData?: KycWebhookData | null;
+  subject: {
+    id: string;
+    name: string;
+    email: string | null;
+    kycStatus: string;
+    clientType: 'NATURAL' | 'JURIDICO';
+  };
   client: {
     id: string;
     firstName: string;
@@ -40,7 +48,24 @@ interface KycRequest {
     email: string | null;
     kycStatus: string;
     clientType: 'NATURAL' | 'JURIDICO';
-  };
+  } | null;
+  recipient: {
+    id: string;
+    name: string;
+    phone: string | null;
+    bank: string;
+    accountNumber: string;
+    accountType: string;
+    identification: string | null;
+    relationship: string;
+    kycStatus: string;
+  } | null;
+  ownerClient: {
+    id: string;
+    firstName: string;
+    lastName: string | null;
+    email: string | null;
+  } | null;
   documents: KycDocument[];
 }
 
@@ -77,7 +102,7 @@ function formatDate(d: string | null) {
 }
 
 function clientName(request: KycRequest) {
-  return `${request.client.firstName} ${request.client.lastName || ''}`.trim();
+  return request.subject.name;
 }
 
 function normalizeKycStatus(status: string) {
@@ -107,7 +132,19 @@ function getSubmittedDate(request: KycRequest) {
 }
 
 function getReviewDocTypes(request: KycRequest) {
-  return request.client.clientType === 'JURIDICO' ? JURIDICO_REVIEW_DOC_TYPES : NATURAL_REVIEW_DOC_TYPES;
+  if (request.entityType === 'RECIPIENT') return NATURAL_REVIEW_DOC_TYPES;
+  return request.subject.clientType === 'JURIDICO' ? JURIDICO_REVIEW_DOC_TYPES : NATURAL_REVIEW_DOC_TYPES;
+}
+
+function getSecondaryContact(request: KycRequest) {
+  if (request.subject.email) return request.subject.email;
+  if (request.entityType === 'RECIPIENT') return request.recipient?.phone || request.ownerClient?.email || 'Sin email';
+  return 'Sin email';
+}
+
+function getOwnerClientName(request: KycRequest) {
+  if (!request.ownerClient) return '';
+  return `${request.ownerClient.firstName} ${request.ownerClient.lastName || ''}`.trim();
 }
 
 export default function KycReviewPage() {
@@ -115,6 +152,7 @@ export default function KycReviewPage() {
   const [selectedId, setSelectedId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [entityFilter, setEntityFilter] = useState<'CLIENT' | 'RECIPIENT'>('CLIENT');
   const [filter, setFilter] = useState('PROCESSING');
   const [reviewing, setReviewing] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,6 +170,7 @@ export default function KycReviewPage() {
       if (urlKycId) {
         const found = (data || []).find((r: KycRequest) => r.id === urlKycId);
         if (found) {
+          setEntityFilter(found.entityType);
           setFilter('ALL');
           setSelectedId(preferredId || found.id);
         } else {
@@ -151,20 +190,26 @@ export default function KycReviewPage() {
     loadKyc();
   }, [loadKyc]);
 
+  const requestsByEntity = useMemo(() => {
+    return requests.filter((request) => request.entityType === entityFilter);
+  }, [requests, entityFilter]);
+
   const filtered = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     const filteredByStatus = filter === 'ALL'
-      ? requests
-      : requests.filter((request) => normalizeKycStatus(request.status) === filter);
+      ? requestsByEntity
+      : requestsByEntity.filter((request) => normalizeKycStatus(request.status) === filter);
 
     if (!normalizedQuery) return filteredByStatus;
 
     return filteredByStatus.filter((request) => {
       const name = clientName(request).toLowerCase();
-      const email = (request.client.email || '').toLowerCase();
-      return name.includes(normalizedQuery) || email.includes(normalizedQuery);
+      const email = (request.subject.email || '').toLowerCase();
+      const owner = getOwnerClientName(request).toLowerCase();
+      const ownerEmail = (request.ownerClient?.email || '').toLowerCase();
+      return name.includes(normalizedQuery) || email.includes(normalizedQuery) || owner.includes(normalizedQuery) || ownerEmail.includes(normalizedQuery);
     });
-  }, [requests, filter, searchQuery]);
+  }, [requestsByEntity, filter, searchQuery]);
 
   const selected = useMemo(() => {
     return filtered.find((request) => request.id === selectedId) || filtered[0] || null;
@@ -172,17 +217,23 @@ export default function KycReviewPage() {
 
   const selectedHistory = useMemo(() => {
     if (!selected) return [];
-    return [...requests]
-      .filter((request) => request.client.id === selected.client.id)
+    return [...requestsByEntity]
+      .filter((request) => request.subject.id === selected.subject.id)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [requests, selected]);
+  }, [requestsByEntity, selected]);
 
   const stats = useMemo(() => ({
-    processing: requests.filter((request) => getDisplayStatus(request) === 'PROCESSING').length,
-    verified: requests.filter((request) => request.status === 'VERIFIED').length,
-    rejected: requests.filter((request) => request.status === 'REJECTED').length,
-    total: requests.length
-  }), [requests]);
+    processing: requestsByEntity.filter((request) => getDisplayStatus(request) === 'PROCESSING').length,
+    verified: requestsByEntity.filter((request) => request.status === 'VERIFIED').length,
+    rejected: requestsByEntity.filter((request) => request.status === 'REJECTED').length,
+    total: requestsByEntity.length
+  }), [requestsByEntity]);
+
+  useEffect(() => {
+    if (!filtered.some((request) => request.id === selectedId)) {
+      setSelectedId(filtered[0]?.id || '');
+    }
+  }, [filtered, selectedId]);
 
   const reviewRequest = async (status: 'VERIFIED' | 'REJECTED') => {
     if (!selected) return;
@@ -231,7 +282,9 @@ export default function KycReviewPage() {
     try {
       const kyc = await apiFetch('/api/kyc', {
         method: 'POST',
-        body: JSON.stringify({ clientId: selected.client.id })
+        body: JSON.stringify(selected.entityType === 'RECIPIENT'
+          ? { recipientId: selected.subject.id }
+          : { clientId: selected.subject.id })
       });
 
       const link = getKycLink(kyc.token);
@@ -242,17 +295,17 @@ export default function KycReviewPage() {
         // Clipboard can be blocked by the browser; the correction flow should continue anyway.
       }
 
-      if (selected.client.email) {
+      if (selected.entityType === 'CLIENT' && selected.client?.email) {
         try {
           await apiFetch('/api/kyc/send-email', {
             method: 'POST',
-            body: JSON.stringify({ clientId: selected.client.id, token: kyc.token, link })
+            body: JSON.stringify({ clientId: selected.subject.id, token: kyc.token, link })
           });
           window.dispatchEvent(new CustomEvent('show-toast', {
             detail: {
               type: 'success',
               message: 'Corrección KYC enviada',
-              description: `Se envió un nuevo link de actualización a ${selected.client.email}.`
+              description: `Se envió un nuevo link de actualización a ${selected.subject.email}.`
             }
           }));
         } catch (emailErr: any) {
@@ -269,7 +322,9 @@ export default function KycReviewPage() {
           detail: {
             type: 'info',
             message: 'Link generado',
-            description: 'El cliente no tiene email. El nuevo link KYC quedó copiado al portapapeles.'
+            description: selected.entityType === 'RECIPIENT'
+              ? 'El destinatario no tiene email registrado. El nuevo link KYC quedó copiado al portapapeles.'
+              : 'La entidad no tiene email. El nuevo link KYC quedó copiado al portapapeles.'
           }
         }));
       }
@@ -290,7 +345,10 @@ export default function KycReviewPage() {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
       const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
-      const res = await fetch(`${API_URL}/api/clients/${selected.client.id}/kyc.pdf`, {
+      const pdfPath = selected.entityType === 'RECIPIENT'
+        ? `/api/recipients/${selected.subject.id}/kyc.pdf`
+        : `/api/clients/${selected.subject.id}/kyc.pdf`;
+      const res = await fetch(`${API_URL}${pdfPath}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       const contentType = res.headers.get('content-type') || '';
@@ -305,7 +363,7 @@ export default function KycReviewPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `kyc-${selected.client.id.substring(0, 8).toUpperCase()}.pdf`;
+      a.download = `kyc-${selected.subject.id.substring(0, 8).toUpperCase()}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -350,7 +408,7 @@ export default function KycReviewPage() {
             </div>
             Revisión KYC
           </h1>
-          <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Verifica manualmente firmas y los documentos requeridos según el tipo de cliente: natural o jurídico.</p>
+          <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Verifica manualmente firmas y documentos de clientes y destinatarios. Los destinatarios usan validación natural al alcanzar el umbral operativo.</p>
         </div>
         <button
           onClick={loadKyc}
@@ -374,6 +432,23 @@ export default function KycReviewPage() {
             <p className="text-[0.65rem] font-black uppercase tracking-wider text-slate-400">{stat.label}</p>
             <p className="text-2xl font-extrabold text-slate-800 font-mono">{stat.value}</p>
           </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          ['CLIENT', 'Clientes'],
+          ['RECIPIENT', 'Destinatarios']
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setEntityFilter(key as 'CLIENT' | 'RECIPIENT')}
+            className={`px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${
+              entityFilter === key ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            {label}
+          </button>
         ))}
       </div>
 
@@ -406,7 +481,7 @@ export default function KycReviewPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar por nombre o correo..."
+                placeholder={entityFilter === 'RECIPIENT' ? 'Buscar destinatario o cliente vinculado...' : 'Buscar por nombre o correo...'}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/10"
               />
             </div>
@@ -424,7 +499,12 @@ export default function KycReviewPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-slate-800 truncate">{clientName(request)}</p>
-                      <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{request.client.email || 'Sin email'}</p>
+                      <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{getSecondaryContact(request)}</p>
+                      {request.entityType === 'RECIPIENT' && (
+                        <p className="text-[0.68rem] text-cyan-700 font-bold uppercase tracking-wider mt-1">
+                          Cliente vinculado: {getOwnerClientName(request) || 'Sin cliente'}
+                        </p>
+                      )}
                     </div>
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-bold border whitespace-nowrap ${cfg.className}`}>
                       {cfg.icon} {cfg.label}
@@ -461,8 +541,19 @@ export default function KycReviewPage() {
                       {STATUS_MAP[getDisplayStatus(selected)]?.icon} {STATUS_MAP[getDisplayStatus(selected)]?.label || getDisplayStatus(selected)}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500 font-medium mt-1">{selected.client.email || 'Sin email registrado'}</p>
-                  <p className="text-xs text-cyan-700 font-bold mt-2 uppercase tracking-wider">{selected.client.clientType === 'JURIDICO' ? 'Cliente jurídico' : 'Cliente natural'}</p>
+                  <p className="text-sm text-slate-500 font-medium mt-1">{getSecondaryContact(selected) || 'Sin email registrado'}</p>
+                  <p className="text-xs text-cyan-700 font-bold mt-2 uppercase tracking-wider">
+                    {selected.entityType === 'RECIPIENT'
+                      ? `Destinatario ${selected.recipient?.relationship || 'natural'}`
+                      : selected.subject.clientType === 'JURIDICO'
+                        ? 'Cliente jurídico'
+                        : 'Cliente natural'}
+                  </p>
+                  {selected.entityType === 'RECIPIENT' && selected.ownerClient && (
+                    <p className="text-xs text-slate-500 font-semibold mt-2">
+                      Cliente vinculado: {getOwnerClientName(selected)}{selected.ownerClient.email ? ` · ${selected.ownerClient.email}` : ''}
+                    </p>
+                  )}
                   <p className="text-xs text-slate-400 font-semibold mt-2">Enviado: {formatDate(selected.completedAt || selected.createdAt)}</p>
                 </div>
                 <div className="flex gap-2">
@@ -633,7 +724,7 @@ export default function KycReviewPage() {
             <div className="h-full min-h-[420px] flex flex-col items-center justify-center text-center text-slate-400">
               <Fingerprint className="w-12 h-12 mb-3" />
               <p className="font-bold text-slate-500">Selecciona una solicitud</p>
-              <p className="text-sm font-medium mt-1">Aquí verás la firma, selfie y el documento por frente y reverso.</p>
+              <p className="text-sm font-medium mt-1">Aquí verás la firma, selfie y los documentos de la entidad seleccionada.</p>
             </div>
           )}
         </div>
