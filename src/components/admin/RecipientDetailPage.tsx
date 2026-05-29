@@ -400,6 +400,41 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     }
   };
 
+  const handleSendKyc = async () => {
+    if (!recipient) return;
+    try {
+      const kyc = await apiFetch('/api/kyc', {
+        method: 'POST',
+        body: JSON.stringify({ recipientId: recipient.id })
+      });
+      const link = getKycLink(kyc.token);
+      if (recipient.client?.email) {
+        try {
+          await apiFetch('/api/kyc/send-email', {
+            method: 'POST',
+            body: JSON.stringify({ recipientId: recipient.id, token: kyc.token, link })
+          });
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { type: 'success', message: 'KYC enviado', description: `Solicitud enviada a ${recipient.client.email}` }
+          }));
+        } catch (emailErr: any) {
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { type: 'warning', message: 'Email no enviado', description: `${emailErr.message}. El link fue generado, copialo manualmente.` }
+          }));
+        }
+      } else {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'info', message: 'Link generado', description: 'El cliente principal no tiene email. Copia y comparte el link manualmente.' }
+        }));
+      }
+      await loadRecipient();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error', description: err.message }
+      }));
+    }
+  };
+
   const handleCopyKycLink = async () => {
     if (!recipient) return;
     let token = recipient.kycRequests?.[0]?.token;
@@ -424,6 +459,46 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
         detail: { type: 'success', message: 'Link copiado', description: 'El link KYC fue copiado al portapapeles.' }
       }));
     });
+  };
+
+  const handleViewKyc = async () => {
+    if (!recipient) return;
+    let kycId = recipient.kycRequests?.[0]?.id;
+    if (!kycId) {
+      try {
+        const kyc = await apiFetch('/api/kyc', {
+          method: 'POST',
+          body: JSON.stringify({ recipientId: recipient.id })
+        });
+        kycId = kyc.id;
+        await loadRecipient();
+      } catch (err: any) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'error', message: 'Error', description: err.message }
+        }));
+        return;
+      }
+    }
+    window.location.href = `/admin/kyc?kycId=${kycId}`;
+  };
+
+  const handleOpenKycUpload = async () => {
+    if (!recipient) return;
+    if (!recipient.kycRequests?.[0]) {
+      try {
+        await apiFetch('/api/kyc', {
+          method: 'POST',
+          body: JSON.stringify({ recipientId: recipient.id })
+        });
+        await loadRecipient();
+      } catch (err: any) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'error', message: 'Error', description: err.message }
+        }));
+        return;
+      }
+    }
+    setIsKycUploadOpen(true);
   };
 
   const handleUploadKycDoc = async () => {
@@ -791,25 +866,27 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <button onClick={handleGenerateKyc} className="btn-interactive px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
-                  <Send className="w-3.5 h-3.5" /> Generar link
+                <button onClick={handleSendKyc} className="btn-interactive px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
+                  <Send className="w-3.5 h-3.5" /> Enviar link
                 </button>
-                {latestKyc && (
-                  <>
-                    <a
-                      href={`/admin/kyc?kycId=${latestKyc.id}`}
-                      className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
-                    >
-                      <Fingerprint className="w-3.5 h-3.5" /> Ver KYC
-                    </a>
-                    <button
-                      onClick={() => setIsKycUploadOpen(true)}
-                      className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
-                    >
-                      <Upload className="w-3.5 h-3.5" /> Subir doc
-                    </button>
-                  </>
-                )}
+                <a
+                  href={latestKyc ? `/admin/kyc?kycId=${latestKyc.id}` : '#'}
+                  onClick={(e) => {
+                    if (!latestKyc) {
+                      e.preventDefault();
+                      handleViewKyc();
+                    }
+                  }}
+                  className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
+                >
+                  <Fingerprint className="w-3.5 h-3.5" /> Ver KYC
+                </a>
+                <button
+                  onClick={handleOpenKycUpload}
+                  className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Subir doc
+                </button>
                 <button
                   onClick={handleDownloadKycPdf}
                   className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
@@ -819,20 +896,18 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
               </div>
             </div>
 
-            {latestKyc && (
-              <div className="mb-5 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                <p className="text-[0.6rem] font-black uppercase tracking-wider text-indigo-400 mb-2">Link de verificación KYC</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-indigo-200 text-sm font-mono text-slate-700 truncate">
-                    {getKycLink(latestKyc.token)}
-                  </code>
-                  <button onClick={handleCopyKycLink} className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all flex items-center gap-1.5 shrink-0">
-                    <Copy className="w-3.5 h-3.5" /> Copiar
-                  </button>
-                </div>
-                <p className="text-[0.65rem] text-indigo-400 font-medium mt-2">Comparte este link con el destinatario para que complete su verificación.</p>
+            <div className="mb-5 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-indigo-400 mb-2">Link de verificación KYC</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-indigo-200 text-sm font-mono text-slate-700 truncate">
+                  {latestKyc ? getKycLink(latestKyc.token) : 'No hay solicitud KYC activa. Presiona "Enviar link" para generar uno.'}
+                </code>
+                <button onClick={handleCopyKycLink} className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all flex items-center gap-1.5 shrink-0">
+                  <Copy className="w-3.5 h-3.5" /> Copiar
+                </button>
               </div>
-            )}
+              <p className="text-[0.65rem] text-indigo-400 font-medium mt-2">Comparte este link con el destinatario para que complete su verificación.</p>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
