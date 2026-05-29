@@ -500,9 +500,9 @@ export default function KycReviewPage() {
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-slate-800 truncate">{clientName(request)}</p>
                       <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{getSecondaryContact(request)}</p>
-                      {request.entityType === 'RECIPIENT' && (
+                      {request.entityType === 'RECIPIENT' && request.recipient?.email && (
                         <p className="text-[0.68rem] text-cyan-700 font-bold uppercase tracking-wider mt-1">
-                          Cliente vinculado: {getOwnerClientName(request) || 'Sin cliente'}
+                          {request.recipient.email}
                         </p>
                       )}
                     </div>
@@ -549,11 +549,6 @@ export default function KycReviewPage() {
                         ? 'Cliente jurídico'
                         : 'Cliente natural'}
                   </p>
-                  {selected.entityType === 'RECIPIENT' && selected.ownerClient && (
-                    <p className="text-xs text-slate-500 font-semibold mt-2">
-                      Cliente vinculado: {getOwnerClientName(selected)}{selected.ownerClient.email ? ` · ${selected.ownerClient.email}` : ''}
-                    </p>
-                  )}
                   <p className="text-xs text-slate-400 font-semibold mt-2">Enviado: {formatDate(selected.completedAt || selected.createdAt)}</p>
                 </div>
                 <div className="flex gap-2">
