@@ -859,20 +859,18 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
               </div>
             </div>
 
-            {latestKyc && (
-              <div className="mb-5 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                <p className="text-[0.6rem] font-black uppercase tracking-wider text-indigo-400 mb-2">Link de verificación KYC</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-indigo-200 text-sm font-mono text-slate-700 truncate">
-                    {getKycLink(latestKyc.token)}
-                  </code>
-                  <button onClick={handleCopyKycLink} className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all flex items-center gap-1.5 shrink-0">
-                    <Copy className="w-3.5 h-3.5" /> Copiar
-                  </button>
-                </div>
-                <p className="text-[0.65rem] text-indigo-400 font-medium mt-2">Comparte este link con el destinatario para que complete su verificación.</p>
+            <div className="mb-5 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-indigo-400 mb-2">Link de verificación KYC</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-indigo-200 text-sm font-mono text-slate-700 truncate">
+                  {latestKyc ? getKycLink(latestKyc.token) : 'No hay link activo. Presiona "Copiar" para generar uno.'}
+                </code>
+                <button onClick={handleCopyKycLink} className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all flex items-center gap-1.5 shrink-0">
+                  <Copy className="w-3.5 h-3.5" /> Copiar
+                </button>
               </div>
-            )}
+              <p className="text-[0.65rem] text-indigo-400 font-medium mt-2">Comparte este link con el destinatario para que complete su verificación.</p>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
