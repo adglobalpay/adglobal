@@ -4,7 +4,7 @@ import {
   CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload, Trash2
 } from 'lucide-react';
 import { apiFetch, getUser } from '../../lib/auth';
-import { isPendingReviewTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
+import { isFailedTransactionStatus, isPendingReviewTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
 
 interface TransactionDetail {
   id: string;
@@ -134,11 +134,12 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   const currentUser = getUser();
   const isAdminReviewer = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
   const canDelete = isAdminReviewer;
-
-  const canEdit = tx && (
-    isAdminReviewer ||
-    (currentUser?.role === 'OPERATOR' && tx.creadoPor?.id === currentUser?.id && isPendingReviewTransactionStatus(tx.estado))
+  const isOperatorOwner = Boolean(tx && currentUser?.role === 'OPERATOR' && tx.creadoPor?.id === currentUser?.id);
+  const canEditLimitedOperatorFields = Boolean(
+    tx && isOperatorOwner && (isPendingReviewTransactionStatus(tx.estado) || isFailedTransactionStatus(tx.estado))
   );
+  const canEdit = Boolean(tx && (isAdminReviewer || canEditLimitedOperatorFields));
+  const canSave = isAdminReviewer || (isEditing && canEditLimitedOperatorFields);
 
   const loadTx = useCallback(async () => {
     if (!txId) {
@@ -175,7 +176,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   }, [loadTx]);
 
   const handleSave = async () => {
-    if (!canEdit) {
+    if (!canSave) {
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'warning', message: 'Acceso restringido', description: 'No tienes permisos para editar esta transacción.' }
       }));
@@ -197,11 +198,13 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
         body.ingresoUSD = editIngresoUSD ? parseFloat(editIngresoUSD) : undefined;
         body.salidaUSDT = editSalidaUSDT ? parseFloat(editSalidaUSDT) : undefined;
         body.tasa = editTasa ? parseFloat(editTasa) : undefined;
-        body.montoVES = editMontoVES ? parseFloat(editMontoVES) : undefined;
         body.metodo = editMetodo || undefined;
         body.comprobantePago = editComprobantePago || null;
         body.comprobanteAdmin = editComprobanteAdmin || null;
-        body.notasAdmin = notas;
+
+        if (isAdminReviewer) {
+          body.montoVES = editMontoVES ? parseFloat(editMontoVES) : undefined;
+        }
       }
 
       await apiFetch(`/api/transactions/${txId}`, {
@@ -499,7 +502,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
             <FileText className="w-5 h-5" />
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Ingreso USD</p>
-          {isEditing ? (
+          {isEditing && (isAdminReviewer || canEditLimitedOperatorFields) ? (
             <input type="number" step="0.01" value={editIngresoUSD} onChange={e => setEditIngresoUSD(e.target.value)}
               className="w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
           ) : (
@@ -513,7 +516,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
             <FileText className="w-5 h-5" />
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Salida USDT</p>
-          {isEditing ? (
+          {isEditing && (isAdminReviewer || canEditLimitedOperatorFields) ? (
             <input type="number" step="0.01" value={editSalidaUSDT} onChange={e => setEditSalidaUSDT(e.target.value)}
               className="w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
           ) : (
@@ -527,7 +530,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
             <FileText className="w-5 h-5" />
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Monto enviado (Bs)</p>
-          {isEditing ? (
+          {isEditing && isAdminReviewer ? (
             <input type="number" step="0.01" value={editMontoVES} onChange={e => setEditMontoVES(e.target.value)}
               className="w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
           ) : (
@@ -541,7 +544,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
             <FileText className="w-5 h-5" />
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Tasa de cambio</p>
-          {isEditing ? (
+          {isEditing && (isAdminReviewer || canEditLimitedOperatorFields) ? (
             <>
               <input type="number" step="0.01" value={editTasa} onChange={e => setEditTasa(e.target.value)}
                 className="w-full mt-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
@@ -613,7 +616,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
                 <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0"><FileText className="w-4 h-4" /></div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-slate-700">Comprobante de pago</p>
-                  {isEditing ? (
+                  {isEditing && (isAdminReviewer || canEditLimitedOperatorFields) ? (
                     <input type="text" value={editComprobantePago} onChange={e => setEditComprobantePago(e.target.value)}
                       placeholder="URL del comprobante"
                       className="w-full mt-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-500" />
@@ -622,7 +625,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
                   )}
                 </div>
               </div>
-              {!isEditing && (
+              {!(isEditing && (isAdminReviewer || canEditLimitedOperatorFields)) && (
                 tx.comprobantePago ? (
                   <a href={tx.comprobantePago} target="_blank" rel="noopener noreferrer"
                     className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100 shrink-0">Ver</a>
@@ -638,7 +641,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
                 <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0"><FileText className="w-4 h-4" /></div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-slate-700">Comprobante administrativo</p>
-                  {isEditing ? (
+                  {isEditing && (isAdminReviewer || canEditLimitedOperatorFields) ? (
                     <input type="text" value={editComprobanteAdmin} onChange={e => setEditComprobanteAdmin(e.target.value)}
                       placeholder="URL del comprobante"
                       className="w-full mt-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-500" />
@@ -647,7 +650,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
                   )}
                 </div>
               </div>
-              {!isEditing && (
+              {!(isEditing && (isAdminReviewer || canEditLimitedOperatorFields)) && (
                 tx.comprobanteAdmin ? (
                   <a href={tx.comprobanteAdmin} target="_blank" rel="noopener noreferrer"
                     className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100 shrink-0">Ver</a>
@@ -687,7 +690,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
             <div>
               <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Notas de verificación</label>
-              <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3} disabled={!canEdit}
+              <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3} disabled={!isAdminReviewer}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium resize-none disabled:cursor-not-allowed disabled:opacity-60"
                 placeholder="Agregar notas sobre la verificación..." />
             </div>
@@ -701,7 +704,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
             {!isAdminReviewer && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-                <p className="text-xs font-bold text-amber-700">Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador creador, puedes corregir montos, comprobantes y notas mientras esté pendiente de revisión.</p>
+                <p className="text-xs font-bold text-amber-700">Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador creador, puedes corregir ingreso, salida, tasa, método y comprobantes mientras esté pendiente de revisión o fallida.</p>
               </div>
             )}
 
@@ -716,7 +719,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
             )}
 
             <div className="flex gap-2 pt-1">
-              <button onClick={handleSave} disabled={saving || !canEdit || (!isAdminReviewer && !isEditing)}
+              <button onClick={handleSave} disabled={saving || !canSave}
                 className="btn-interactive flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-1.5 disabled:opacity-60">
                 <Save className="w-3.5 h-3.5" /> {saving ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Guardar verificación')}
               </button>
