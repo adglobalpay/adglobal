@@ -11,6 +11,7 @@ interface Recipient {
   name: string;
   relationship: string;
   phone: string | null;
+  email: string | null;
   bank: string;
   accountNumber: string;
   accountType: string;
@@ -135,6 +136,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
     name: '',
     relationship: 'Familiar',
     phone: '',
+    email: '',
     bank: '',
     accountNumber: '',
     accountType: '',
@@ -148,6 +150,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
       name: '',
       relationship: 'Familiar',
       phone: '',
+      email: '',
       bank: '',
       accountNumber: '',
       accountType: defaultAccountType,
@@ -163,6 +166,7 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
       name: recipient.name,
       relationship: recipient.relationship,
       phone: recipient.phone || '',
+      email: recipient.email || '',
       bank: recipient.bank,
       accountNumber: recipient.accountNumber,
       accountType: recipient.accountType,
@@ -420,6 +424,12 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
                   <p className="font-mono font-semibold text-slate-700 text-[0.8rem]">{dest.phone}</p>
                 </div>
               )}
+              {dest.email && (
+                <div>
+                  <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-0.5">Correo</p>
+                  <p className="font-semibold text-slate-700 text-[0.8rem] truncate">{dest.email}</p>
+                </div>
+              )}
               <div>
                 <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-0.5">Banco</p>
                 <p className="font-semibold text-slate-700 text-[0.8rem]">{dest.bank}</p>
@@ -501,6 +511,11 @@ export default function RecipientsPage({ clientId: clientIdProp }: { clientId: s
                     <input type="text" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium" placeholder="+58 412 1234567" />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-[0.6rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Correo</label>
+                  <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium" placeholder="destinatario@email.com" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>

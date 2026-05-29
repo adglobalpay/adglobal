@@ -12,6 +12,7 @@ interface Recipient {
   name: string;
   relationship: string;
   phone: string | null;
+  email: string | null;
   bank: string;
   accountNumber: string;
   accountType: string;

@@ -41,6 +41,7 @@ interface RecipientDetail {
   name: string;
   relationship: string;
   phone: string | null;
+  email: string | null;
   bank: string;
   accountNumber: string;
   accountType: string;
@@ -251,6 +252,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     name: '',
     relationship: 'Familiar',
     phone: '',
+    email: '',
     bank: '',
     accountNumber: '',
     accountType: '',
@@ -330,6 +332,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
       name: recipient.name,
       relationship: recipient.relationship,
       phone: recipient.phone || '',
+      email: recipient.email || '',
       bank: recipient.bank,
       accountNumber: recipient.accountNumber,
       accountType: recipient.accountType,
@@ -408,14 +411,15 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
         body: JSON.stringify({ recipientId: recipient.id })
       });
       const link = getKycLink(kyc.token);
-      if (recipient.client?.email) {
+      const targetEmail = recipient.email || recipient.client?.email;
+      if (targetEmail) {
         try {
           await apiFetch('/api/kyc/send-email', {
             method: 'POST',
             body: JSON.stringify({ recipientId: recipient.id, token: kyc.token, link })
           });
           window.dispatchEvent(new CustomEvent('show-toast', {
-            detail: { type: 'success', message: 'KYC enviado', description: `Solicitud enviada a ${recipient.client.email}` }
+            detail: { type: 'success', message: 'KYC enviado', description: `Solicitud enviada a ${targetEmail}` }
           }));
         } catch (emailErr: any) {
           window.dispatchEvent(new CustomEvent('show-toast', {
@@ -1305,6 +1309,16 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                     required
                     value={form.phone}
                     onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition-all focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Correo</span>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition-all focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15"
                   />
                 </label>
