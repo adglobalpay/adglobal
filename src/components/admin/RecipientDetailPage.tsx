@@ -1263,7 +1263,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                     {recipient.name.charAt(0)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-cyan-300/80">Editar destinatario</p>
+                    <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-cyan-300/80">Editar destinatario (v2)</p>
                     <h2 className="mt-0.5 text-lg sm:text-2xl font-bold tracking-tight text-white">{recipient.name}</h2>
                     <p className="mt-1 max-w-lg text-xs sm:text-sm font-medium text-slate-400 leading-relaxed">
                       Ajusta los datos bancarios y de contacto del destinatario principal de esta ficha.
