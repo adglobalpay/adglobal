@@ -402,7 +402,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
 
   const handleCopyKycLink = async () => {
     if (!recipient) return;
-    let token = recipient.kycRequests[0]?.token;
+    let token = recipient.kycRequests?.[0]?.token;
     if (!token) {
       try {
         const kyc = await apiFetch('/api/kyc', {
@@ -427,7 +427,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
   };
 
   const handleUploadKycDoc = async () => {
-    const latestKyc = recipient?.kycRequests[0];
+    const latestKyc = recipient?.kycRequests?.[0];
     if (!recipient || !latestKyc || !kycUploadFile) return;
     setIsUploadingKycDoc(true);
     try {
@@ -666,11 +666,11 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
 
   const primaryClientName = getClientFullName(recipient.client);
   const duplicateNotice = recipient.duplicateRecordsCount > 1;
-  const primaryTransactionClientId = recipient.client?.id || recipient.linkedClients[0]?.id || '';
+  const primaryTransactionClientId = recipient.client?.id || recipient.linkedClients?.[0]?.id || '';
   const kycCfg = KYC_MAP[recipient.kycStatus] || KYC_MAP.PENDING;
   const ofacCfg = OFAC_MAP[recipient.ofacStatus] || OFAC_MAP.PENDING;
-  const latestKyc = recipient.kycRequests[0];
-  const latestOfac = recipient.ofacChecks[0];
+  const latestKyc = recipient.kycRequests?.[0];
+  const latestOfac = recipient.ofacChecks?.[0];
 
   return (
     <>
@@ -990,7 +990,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
 
             <div className="max-h-[34rem] overflow-y-auto pr-1 md:pr-2">
               <div className="grid grid-cols-1 gap-3">
-              {recipient.linkedClients.map((client) => {
+              {(recipient.linkedClients || []).map((client) => {
                 const isPrimaryOwner = client.id === recipient.clientId;
                 const fullName = getClientFullName(client);
 
