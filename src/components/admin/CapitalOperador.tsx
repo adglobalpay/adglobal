@@ -35,7 +35,7 @@ export default function CapitalOperador() {
   const [capital, setCapital] = useState<CapitalData>({
     binanceBalance: 0,
     fiatAvailable: 0,
-    lastUpdate: new Date().toLocaleTimeString()
+    lastUpdate: ''
   });
   const [showDetails, setShowDetails] = useState(false);
   const [showHistory, setShowHistory] = useState(false);

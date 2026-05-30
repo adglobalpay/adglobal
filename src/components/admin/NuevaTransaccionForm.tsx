@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface FormData {
   fecha: string;
@@ -16,7 +16,7 @@ interface FormData {
 
 export default function NuevaTransaccionForm() {
   const [form, setForm] = useState<FormData>({
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: '',
     remitente_nombre: '',
     remitente_telefono: '',
     destinatario_nombre: '',
@@ -28,6 +28,10 @@ export default function NuevaTransaccionForm() {
     monto_ves: 0,
     metodo: 'USDT'
   });
+
+  useEffect(() => {
+    setForm(prev => ({ ...prev, fecha: new Date().toISOString().split('T')[0] }));
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

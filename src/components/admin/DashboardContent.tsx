@@ -228,7 +228,10 @@ export default function DashboardContent() {
     return list;
   }, [stats]);
 
-  const fechaHoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const [fechaHoy, setFechaHoy] = useState('');
+  useEffect(() => {
+    setFechaHoy(new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+  }, []);
   const selectedPeriodLabel = PERIOD_OPTIONS.find((option) => option.key === selectedPeriod)?.label || 'Mensual';
   const maxVolumen = Math.max(...activity.map(a => a.volumen), 1);
 
