@@ -535,24 +535,6 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     }
   };
 
-  const handleMarkOfacOk = async () => {
-    if (!recipient) return;
-    try {
-      await apiFetch('/api/ofac', {
-        method: 'POST',
-        body: JSON.stringify({ recipientId: recipient.id, status: 'OK' })
-      });
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'success', message: 'OFAC verificado', description: 'Destinatario marcado sin coincidencias.' }
-      }));
-      await loadRecipient();
-    } catch (err: any) {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'error', message: 'Error', description: err.message }
-      }));
-    }
-  };
-
   const handleUploadOfacPdf = async (file: File) => {
     if (!recipient) return;
     setIsUploadingOfac(true);
@@ -580,6 +562,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
         });
       } catch {}
       await loadRecipient();
+      setIsOfacModalOpen(false);
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'error', message: 'Error al subir PDF', description: err.message }
@@ -628,7 +611,13 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
@@ -938,20 +927,14 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                   <ExternalLink className="w-3.5 h-3.5" /> OFAC
                 </a>
                 <button
-                  onClick={handleMarkOfacOk}
-                  className="px-3 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Marcar OK
-                </button>
-                <button
                   onClick={() => setIsOfacModalOpen(true)}
                   className="px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg font-bold text-xs hover:bg-indigo-50 transition-all flex items-center gap-1.5"
                 >
                   <Upload className="w-3.5 h-3.5" /> {recipient.ofacPdfUrl ? 'Editar OFAC' : 'Subir OFAC'}
                 </button>
-                <span className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${recipient.ofacPdfUrl ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ofacCfg.className}`}>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${recipient.ofacPdfUrl ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
                   {recipient.ofacPdfUrl ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
-                  {recipient.ofacPdfUrl ? 'Verificado' : ofacCfg.label}
+                  {recipient.ofacPdfUrl ? 'Verificado' : 'Falta OFAC'}
                 </span>
               </div>
             </div>
