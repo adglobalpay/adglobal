@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ArrowLeftRight, Download, Filter, Search, CheckCircle2, Clock,
-  PauseCircle, XCircle, Paperclip, ExternalLink, Plus, ArrowDownToLine,
+  PauseCircle, XCircle, ExternalLink, Plus, ArrowDownToLine,
   ArrowUpFromLine, ArrowRight, AlertCircle, ChevronLeft, ChevronRight,
-  ChevronFirst, ChevronLast, FileText
+  ChevronFirst, ChevronLast
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 import {
@@ -301,36 +301,6 @@ export default function TransactionsPage() {
     if (p >= 1 && p <= totalPages) setCurrentPage(p);
   };
 
-  const handleDownloadPdf = async (tx: Transaction) => {
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('adglobal_token') : null;
-      const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
-      const res = await fetch(`${API_URL}/api/transactions/${tx.id}/comprobantes.pdf`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Error al generar PDF' }));
-        throw new Error(err.error || 'Error al generar PDF');
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `comprobantes-${tx.id.substring(0, 8).toUpperCase()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'success', message: 'PDF descargado', description: 'Comprobantes descargados correctamente.' }
-      }));
-    } catch (err: any) {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'error', message: 'Error al descargar PDF', description: err.message }
-      }));
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -545,7 +515,7 @@ export default function TransactionsPage() {
                 <th className="py-3 md:py-4 px-3">Tasa</th>
                 <th className="py-3 md:py-4 px-3">Logística</th>
                 <th className="py-3 md:py-4 px-3">Estado</th>
-                <th className="py-3 md:py-4 px-3">Doc</th>
+                <th className="py-3 md:py-4 px-3">Profit</th>
                 <th className="py-3 md:py-4 pr-4 md:pr-6 pl-3 text-right">Acción</th>
               </tr>
             </thead>
@@ -553,7 +523,6 @@ export default function TransactionsPage() {
               {paginated.map((tx, idx) => {
                 const cfg = ESTADOS_MAP[tx.estado] || { label: tx.estado, className: 'bg-slate-100 text-slate-700 border-slate-200', icon: null };
                 const clienteNombre = tx.client ? `${tx.client.firstName} ${tx.client.lastName || ''}`.trim() : '—';
-                const hasDoc = tx.comprobantePago || tx.comprobanteAdmin;
                 const multipleGroup = getMultipleGroupLabel(tx);
 
                 return (
@@ -606,28 +575,18 @@ export default function TransactionsPage() {
                       </span>
                     </td>
                     <td className="py-3 md:py-4 px-3 align-top">
-                      {hasDoc ? (
-                        <div className="flex items-center gap-1.5">
-                          <a
-                            href={tx.comprobantePago || tx.comprobanteAdmin || '#'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-500 hover:text-indigo-600 flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-                            title="Ver comprobante"
-                          >
-                            <Paperclip className="w-4 h-4 pointer-events-none group-hover:-rotate-12 transition-transform" />
-                          </a>
-                          <button
-                            onClick={() => handleDownloadPdf(tx)}
-                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-500 hover:text-emerald-600 flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-                            title="Descargar PDF con comprobantes"
-                          >
-                            <FileText className="w-4 h-4 pointer-events-none transition-transform" />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-300 text-sm font-black">—</span>
-                      )}
+                      {(() => {
+                        const profit = tx.profitUSD !== null && tx.profitUSD !== undefined
+                          ? Number(tx.profitUSD)
+                          : Number(tx.ingresoUSD || 0) - Number(tx.salidaUSDT || 0);
+                        return profit > 0 ? (
+                          <div className="font-bold font-mono text-[0.9rem] text-emerald-600">
+                            ${profit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          </div>
+                        ) : (
+                          <span className="text-slate-300 text-sm font-black">—</span>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 md:py-4 pr-4 md:pr-6 pl-3 align-top text-right">
                       <a

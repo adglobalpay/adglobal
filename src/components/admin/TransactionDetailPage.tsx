@@ -134,9 +134,8 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   const currentUser = getUser();
   const isAdminReviewer = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
   const canDelete = isAdminReviewer;
-  const isOperatorOwner = Boolean(tx && currentUser?.role === 'OPERATOR' && tx.creadoPor?.id === currentUser?.id);
   const canEditLimitedOperatorFields = Boolean(
-    tx && isOperatorOwner && (isPendingReviewTransactionStatus(tx.estado) || isFailedTransactionStatus(tx.estado))
+    tx && currentUser?.role === 'OPERATOR' && (isPendingReviewTransactionStatus(tx.estado) || isFailedTransactionStatus(tx.estado))
   );
   const canEdit = Boolean(tx && (isAdminReviewer || canEditLimitedOperatorFields));
   const canSave = isAdminReviewer || (isEditing && canEditLimitedOperatorFields);
@@ -707,7 +706,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
                 <p className="text-xs font-bold text-amber-700">
                   {tx && isCompletedTransactionStatus(tx.estado)
                     ? 'Esta transacción está completada y no puede ser editada por operadores. Solo un usuario con rol ADMIN o SUPER_ADMIN puede modificarla.'
-                    : 'Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador creador, puedes corregir ingreso, salida, tasa, método y comprobantes mientras esté pendiente de revisión o fallida.'}
+                    : 'Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador, puedes corregir ingreso, salida, tasa, método y comprobantes mientras esté pendiente de revisión o fallida.'}
                 </p>
               </div>
             )}
