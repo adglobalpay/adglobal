@@ -4,7 +4,7 @@ import {
   CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload, Trash2
 } from 'lucide-react';
 import { apiFetch, getUser } from '../../lib/auth';
-import { isFailedTransactionStatus, isPendingReviewTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
+import { isCompletedTransactionStatus, isFailedTransactionStatus, isPendingReviewTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
 
 interface TransactionDetail {
   id: string;
@@ -704,7 +704,11 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
             {!isAdminReviewer && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-                <p className="text-xs font-bold text-amber-700">Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador creador, puedes corregir ingreso, salida, tasa, método y comprobantes mientras esté pendiente de revisión o fallida.</p>
+                <p className="text-xs font-bold text-amber-700">
+                  {tx && isCompletedTransactionStatus(tx.estado)
+                    ? 'Esta transacción está completada y no puede ser editada por operadores. Solo un usuario con rol ADMIN o SUPER_ADMIN puede modificarla.'
+                    : 'Solo un usuario con rol ADMIN o SUPER_ADMIN puede validar o cambiar el estado de esta operación. Como operador creador, puedes corregir ingreso, salida, tasa, método y comprobantes mientras esté pendiente de revisión o fallida.'}
+                </p>
               </div>
             )}
 

@@ -27,3 +27,8 @@ export function isExcludedTransactionStatus(status: string | null | undefined) {
   const normalized = String(status || '').trim().toUpperCase();
   return normalized === 'FAILED' || normalized === 'REJECTED' || normalized === 'CANCELLED';
 }
+
+export function isCompletedTransactionStatus(status: string | null | undefined) {
+  const normalized = String(status || '').trim().toUpperCase();
+  return normalized === 'COMPLETED';
+}
