@@ -250,12 +250,12 @@ export default function DashboardContent() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-200 pb-6 anim-fade-in">
+      <div className="relative z-[200] flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-200 pb-6 anim-fade-in">
         <div>
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
           <p className="text-slate-500 mt-2 font-medium">Bienvenido de nuevo, {userName}. Aquí está el resumen de tu negocio.</p>
         </div>
-        <div ref={periodMenuRef} className="relative z-[100] anim-fade-in stagger-1">
+        <div ref={periodMenuRef} className="relative z-[210] anim-fade-in stagger-1">
           <button
             type="button"
             onClick={() => setIsPeriodMenuOpen((open) => !open)}
@@ -271,7 +271,7 @@ export default function DashboardContent() {
           </button>
 
           {isPeriodMenuOpen && (
-            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-[100]">
+            <div className="absolute right-0 z-[220] mt-3 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)]">
               {PERIOD_OPTIONS.map((option) => (
                 <button
                   key={option.key}
