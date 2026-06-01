@@ -82,6 +82,8 @@ export default function DashboardContent() {
   const [userName, setUserName] = useState('Admin');
   const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>('monthly');
   const [isPeriodMenuOpen, setIsPeriodMenuOpen] = useState(false);
+  const [periodMenuPos, setPeriodMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const periodButtonRef = useRef<HTMLButtonElement | null>(null);
   const periodMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -142,7 +144,7 @@ export default function DashboardContent() {
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
-      if (!periodMenuRef.current?.contains(event.target as Node)) {
+      if (!periodMenuRef.current?.contains(event.target as Node) && !periodButtonRef.current?.contains(event.target as Node)) {
         setIsPeriodMenuOpen(false);
       }
     }
@@ -161,6 +163,23 @@ export default function DashboardContent() {
       document.removeEventListener('keydown', handleEscape);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isPeriodMenuOpen || !periodButtonRef.current) return;
+    function recalc() {
+      const rect = periodButtonRef.current?.getBoundingClientRect();
+      if (rect) {
+        setPeriodMenuPos({
+          top: rect.bottom + 12,
+          left: rect.right - 224,
+          width: rect.width,
+        });
+      }
+    }
+    recalc();
+    window.addEventListener('resize', recalc);
+    return () => window.removeEventListener('resize', recalc);
+  }, [isPeriodMenuOpen]);
 
   const profit = useMemo(() => {
     const now = new Date();
@@ -255,10 +274,21 @@ export default function DashboardContent() {
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
           <p className="text-slate-500 mt-2 font-medium">Bienvenido de nuevo, {userName}. Aquí está el resumen de tu negocio.</p>
         </div>
-        <div ref={periodMenuRef} className="relative z-50 anim-fade-in stagger-1">
+        <div ref={periodMenuRef} className="relative anim-fade-in stagger-1">
           <button
+            ref={periodButtonRef}
             type="button"
-            onClick={() => setIsPeriodMenuOpen((open) => !open)}
+            onClick={() => {
+              if (!isPeriodMenuOpen && periodButtonRef.current) {
+                const rect = periodButtonRef.current.getBoundingClientRect();
+                setPeriodMenuPos({
+                  top: rect.bottom + 12,
+                  left: rect.right - 224,
+                  width: rect.width,
+                });
+              }
+              setIsPeriodMenuOpen((open) => !open);
+            }}
             className="text-left md:text-right bg-white px-5 py-3 rounded-2xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all duration-300 min-w-[280px]"
           >
             <div className="flex items-center justify-between gap-4">
@@ -270,8 +300,11 @@ export default function DashboardContent() {
             </div>
           </button>
 
-          {isPeriodMenuOpen && (
-            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-50">
+          {isPeriodMenuOpen && periodMenuPos && (
+            <div
+              className="fixed rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-[9999]"
+              style={{ top: periodMenuPos.top, left: periodMenuPos.left, width: periodMenuPos.width }}
+            >
               {PERIOD_OPTIONS.map((option) => (
                 <button
                   key={option.key}
