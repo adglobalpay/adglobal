@@ -300,10 +300,14 @@ export default function DashboardContent() {
             </div>
           </button>
 
-          {isPeriodMenuOpen && periodMenuPos && (
+          {isPeriodMenuOpen && (
             <div
               className="fixed rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-[9999]"
-              style={{ top: periodMenuPos.top, left: periodMenuPos.left, width: periodMenuPos.width }}
+              style={
+                periodMenuPos
+                  ? { top: periodMenuPos.top, left: periodMenuPos.left, width: periodMenuPos.width }
+                  : { top: 0, left: 0, width: 224, opacity: 0 }
+              }
             >
               {PERIOD_OPTIONS.map((option) => (
                 <button
