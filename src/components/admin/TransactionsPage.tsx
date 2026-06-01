@@ -38,7 +38,7 @@ interface Transaction {
     isMultiple: boolean;
     source: 'explicit' | 'proof';
   } | null;
-  client?: { id: string; firstName: string; lastName: string | null; email: string };
+  client?: { id: string; firstName: string; lastName: string | null; email: string; kycStatus?: string; ofacStatus?: string };
   recipient?: { name: string; bank: string };
 }
 
@@ -515,6 +515,7 @@ export default function TransactionsPage() {
                 <th className="py-3 md:py-4 px-3">Tasa</th>
                 <th className="py-3 md:py-4 px-3">Logística</th>
                 <th className="py-3 md:py-4 px-3">Estado</th>
+                <th className="py-3 md:py-4 px-3 text-center">KYC / OFAC</th>
                 <th className="py-3 md:py-4 px-3">Profit</th>
                 <th className="py-3 md:py-4 pr-4 md:pr-6 pl-3 text-right">Acción</th>
               </tr>
@@ -573,6 +574,16 @@ export default function TransactionsPage() {
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[0.65rem] font-bold uppercase tracking-wider border gap-1 transition-all hover:opacity-80 ${cfg.className}`}>
                         {cfg.icon} {cfg.label}
                       </span>
+                    </td>
+                    <td className="py-3 md:py-4 px-3 align-top">
+                      <div className="flex flex-col gap-1 items-center">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-bold uppercase tracking-wider border ${tx.client?.kycStatus === 'VERIFIED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                          KYC
+                        </span>
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-bold uppercase tracking-wider border ${tx.client?.ofacStatus === 'OK' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : tx.client?.ofacStatus === 'BLOCKED' || tx.client?.ofacStatus === 'REVIEW' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                          OFAC
+                        </span>
+                      </div>
                     </td>
                     <td className="py-3 md:py-4 px-3 align-top">
                       {(() => {

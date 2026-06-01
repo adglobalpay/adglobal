@@ -255,7 +255,7 @@ export default function DashboardContent() {
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
           <p className="text-slate-500 mt-2 font-medium">Bienvenido de nuevo, {userName}. Aquí está el resumen de tu negocio.</p>
         </div>
-        <div ref={periodMenuRef} className="relative anim-fade-in stagger-1">
+        <div ref={periodMenuRef} className="relative z-50 anim-fade-in stagger-1">
           <button
             type="button"
             onClick={() => setIsPeriodMenuOpen((open) => !open)}
@@ -271,7 +271,7 @@ export default function DashboardContent() {
           </button>
 
           {isPeriodMenuOpen && (
-            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-20">
+            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-50">
               {PERIOD_OPTIONS.map((option) => (
                 <button
                   key={option.key}
