@@ -168,7 +168,7 @@ export default function TransactionsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
-  const [periodoFilter, setPeriodoFilter] = useState('all');
+  const [periodoFilter, setPeriodoFilter] = useState('month');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -216,10 +216,27 @@ export default function TransactionsPage() {
 
     // Filtro de período
     if (periodoFilter !== 'all') {
-      const days = parseInt(periodoFilter);
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
-      result = result.filter(t => new Date(t.fecha) >= cutoff);
+      const now = new Date();
+      if (periodoFilter === 'month') {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        result = result.filter(t => {
+          const d = new Date(t.fecha);
+          return d >= monthStart && d <= monthEnd;
+        });
+      } else if (periodoFilter === 'last_month') {
+        const lmStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        result = result.filter(t => {
+          const d = new Date(t.fecha);
+          return d >= lmStart && d <= lmEnd;
+        });
+      } else {
+        const days = parseInt(periodoFilter);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        result = result.filter(t => new Date(t.fecha) >= cutoff);
+      }
     }
 
     // Filtro de estado
@@ -424,9 +441,11 @@ export default function TransactionsPage() {
       <div className="flex items-center justify-between anim-fade-in stagger-5">
         <div className="inline-flex items-center gap-1 rounded-xl bg-white border border-slate-200 p-1 shadow-sm">
           {[
-            { key: 'all', label: 'Todos' },
+            { key: 'month', label: 'Mes' },
             { key: '1', label: 'Hoy' },
-            { key: '7', label: 'Semana' }
+            { key: '7', label: 'Semana' },
+            { key: 'last_month', label: 'Mes pasado' },
+            { key: 'all', label: 'Todos' }
           ].map((p) => (
             <button
               key={p.key}
