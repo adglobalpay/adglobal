@@ -82,8 +82,6 @@ export default function DashboardContent() {
   const [userName, setUserName] = useState('Admin');
   const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>('monthly');
   const [isPeriodMenuOpen, setIsPeriodMenuOpen] = useState(false);
-  const [periodMenuPos, setPeriodMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
-  const periodButtonRef = useRef<HTMLButtonElement | null>(null);
   const periodMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -144,7 +142,7 @@ export default function DashboardContent() {
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
-      if (!periodMenuRef.current?.contains(event.target as Node) && !periodButtonRef.current?.contains(event.target as Node)) {
+      if (!periodMenuRef.current?.contains(event.target as Node)) {
         setIsPeriodMenuOpen(false);
       }
     }
@@ -163,23 +161,6 @@ export default function DashboardContent() {
       document.removeEventListener('keydown', handleEscape);
     };
   }, []);
-
-  useEffect(() => {
-    if (!isPeriodMenuOpen || !periodButtonRef.current) return;
-    function recalc() {
-      const rect = periodButtonRef.current?.getBoundingClientRect();
-      if (rect) {
-        setPeriodMenuPos({
-          top: rect.bottom + 12,
-          left: rect.right - 224,
-          width: rect.width,
-        });
-      }
-    }
-    recalc();
-    window.addEventListener('resize', recalc);
-    return () => window.removeEventListener('resize', recalc);
-  }, [isPeriodMenuOpen]);
 
   const profit = useMemo(() => {
     const now = new Date();
@@ -274,21 +255,10 @@ export default function DashboardContent() {
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
           <p className="text-slate-500 mt-2 font-medium">Bienvenido de nuevo, {userName}. Aquí está el resumen de tu negocio.</p>
         </div>
-        <div ref={periodMenuRef} className="relative anim-fade-in stagger-1">
+        <div ref={periodMenuRef} className="relative z-50 anim-fade-in stagger-1">
           <button
-            ref={periodButtonRef}
             type="button"
-            onClick={() => {
-              if (!isPeriodMenuOpen && periodButtonRef.current) {
-                const rect = periodButtonRef.current.getBoundingClientRect();
-                setPeriodMenuPos({
-                  top: rect.bottom + 12,
-                  left: rect.right - 224,
-                  width: rect.width,
-                });
-              }
-              setIsPeriodMenuOpen((open) => !open);
-            }}
+            onClick={() => setIsPeriodMenuOpen((open) => !open)}
             className="text-left md:text-right bg-white px-5 py-3 rounded-2xl border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all duration-300 min-w-[280px]"
           >
             <div className="flex items-center justify-between gap-4">
@@ -301,14 +271,7 @@ export default function DashboardContent() {
           </button>
 
           {isPeriodMenuOpen && (
-            <div
-              className="fixed rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-[9999]"
-              style={
-                periodMenuPos
-                  ? { top: periodMenuPos.top, left: periodMenuPos.left, width: periodMenuPos.width }
-                  : { top: 0, left: 0, width: 224, opacity: 0 }
-              }
-            >
+            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.16)] z-50">
               {PERIOD_OPTIONS.map((option) => (
                 <button
                   key={option.key}
@@ -334,7 +297,7 @@ export default function DashboardContent() {
 
       {/* Profit Global */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-indigo-900/50 relative overflow-hidden group card-hover anim-fade-in stagger-2">
+        <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-indigo-900/50 relative group card-hover anim-fade-in stagger-2">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-700"></div>
           <div className="flex justify-between items-center mb-6 relative z-10">
             <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest flex items-center gap-2"><Globe className="w-4 h-4" /> Profit Global</p>
@@ -365,7 +328,7 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-900 via-slate-900 to-emerald-950 text-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-emerald-900/50 relative overflow-hidden group card-hover anim-fade-in stagger-3">
+        <div className="bg-gradient-to-br from-emerald-900 via-slate-900 to-emerald-950 text-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-emerald-900/50 relative group card-hover anim-fade-in stagger-3">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none group-hover:bg-emerald-500/20 transition-all duration-700"></div>
           <div className="flex justify-between items-center mb-6 relative z-10">
             <p className="text-emerald-200 text-xs font-bold uppercase tracking-widest flex items-center gap-2"><BarChart3 className="w-4 h-4" /> Profit Operador</p>
