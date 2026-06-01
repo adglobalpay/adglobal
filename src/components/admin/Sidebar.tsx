@@ -1,20 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import CapitalOperador from './CapitalOperador';
 import { apiFetch } from '../../lib/auth';
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  Settings, 
-  BellRing, 
-  MessageCircle, 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  Settings,
+  BellRing,
+  MessageCircle,
   PartyPopper,
   Fingerprint,
   BadgeDollarSign,
   X,
   Menu,
   LogOut,
-  ExternalLink
+  ExternalLink,
+  Eye,
+  CheckCircle2
 } from 'lucide-react';
 
 interface NavItem {
@@ -70,6 +72,10 @@ export default function Sidebar() {
   const [isMobile, setIsMobile] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [pendingKycCount, setPendingKycCount] = useState(0);
+  const [pendingKycRequests, setPendingKycRequests] = useState<any[]>([]);
+  const [pendingKycLoading, setPendingKycLoading] = useState(false);
+  const [pendingKycError, setPendingKycError] = useState('');
+  const [showKycNotifications, setShowKycNotifications] = useState(false);
 
   const loadInactiveClients = useCallback(async () => {
     setInactiveLoading(true);
@@ -87,13 +93,20 @@ export default function Sidebar() {
   }, []);
 
   const loadPendingKyc = useCallback(async () => {
+    setPendingKycLoading(true);
+    setPendingKycError('');
     try {
       const data = await apiFetch('/api/kyc');
       const requests = Array.isArray(data) ? data : [];
-      const pending = requests.filter((r: any) => r.status === 'PENDING' || r.status === 'PROCESSING').length;
-      setPendingKycCount(pending);
-    } catch (e) {
+      const pending = requests.filter((r: any) => r.status === 'PENDING' || r.status === 'PROCESSING');
+      setPendingKycCount(pending.length);
+      setPendingKycRequests(pending);
+    } catch (e: any) {
       setPendingKycCount(0);
+      setPendingKycRequests([]);
+      setPendingKycError(e?.message || 'Error al cargar KYC');
+    } finally {
+      setPendingKycLoading(false);
     }
   }, []);
 
@@ -235,12 +248,19 @@ export default function Sidebar() {
                       </span>
                     </button>
                   ) : (
-                    <span
-                      className="relative ml-2 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[0.65rem] font-bold rounded-full h-5 px-2 flex items-center justify-center animate-pulse"
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowKycNotifications(!showKycNotifications);
+                      }}
+                      className="relative focus:outline-none ml-2"
                       title="KYC pendientes por revisar"
                     >
-                      {item.badge}
-                    </span>
+                      <span className="bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[0.65rem] font-bold rounded-full h-5 px-2 flex items-center justify-center animate-pulse">
+                        {item.badge}
+                      </span>
+                    </button>
                   )
                 ) : null}
               </a>
@@ -356,8 +376,100 @@ export default function Sidebar() {
           </div>
         )}
 
+        {/* KYC Notifications Panel */}
+        {showKycNotifications && (
+          <div
+            className={`absolute bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] border border-slate-200/60 z-50 overflow-hidden transform origin-bottom-left anim-modal ${
+              isMobile ? 'left-4 right-4 bottom-20 w-auto' : 'left-64 bottom-24 ml-4 w-96'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center gap-3">
+              <div className="p-2 bg-amber-100 text-amber-500 rounded-xl">
+                <Fingerprint size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-slate-800 text-sm" style={{ fontFamily: 'var(--font-heading)' }}>KYC por revisar</h3>
+                <p className="text-xs text-slate-500 font-medium">Solicitudes de clientes y destinatarios pendientes</p>
+              </div>
+              <span className="text-[0.65rem] font-bold text-amber-500 bg-amber-50 border border-amber-100 rounded-full px-2 py-1">
+                {pendingKycCount}
+              </span>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              {pendingKycLoading ? (
+                <div className="p-10 text-center text-slate-400 flex flex-col items-center gap-3 anim-fade-in">
+                  <Fingerprint size={30} className="text-slate-300 animate-pulse" />
+                  <span className="text-sm font-medium">Cargando solicitudes KYC...</span>
+                </div>
+              ) : pendingKycError ? (
+                <div className="p-8 text-center text-amber-500 flex flex-col items-center gap-3 anim-fade-in">
+                  <Fingerprint size={30} className="text-amber-300" />
+                  <span className="text-sm font-semibold">{pendingKycError}</span>
+                  <button
+                    type="button"
+                    onClick={() => void loadPendingKyc()}
+                    className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 hover:bg-amber-100 transition-colors"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ) : pendingKycRequests.length > 0 ? (
+                pendingKycRequests.map((req, idx) => (
+                  <div
+                    key={req.id}
+                    className="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-all duration-200 group"
+                    style={{
+                      animationDelay: `${idx * 80}ms`,
+                      opacity: 0,
+                      animation: `fadeInUp 0.4s ease-out ${idx * 80}ms forwards`
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <a
+                          href={`/admin/kyc?kycId=${req.id}`}
+                          className="font-semibold text-slate-800 text-sm hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
+                        >
+                          {req.client ? `${req.client.firstName} ${req.client.lastName || ''}`.trim() : req.recipient?.name || 'Desconocido'}
+                          <ExternalLink size={12} className="text-slate-300" />
+                        </a>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-[0.65rem] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border ${req.entityType === 'CLIENT' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-cyan-50 text-cyan-600 border-cyan-200'}`}>
+                            {req.entityType === 'CLIENT' ? 'CLIENTE' : 'DESTINATARIO'}
+                          </span>
+                          <span className="text-[0.65rem] text-slate-400 font-medium">
+                            {new Date(req.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <a
+                      href={`/admin/kyc?kycId=${req.id}`}
+                      className="flex items-center justify-center gap-2 text-xs font-semibold text-indigo-600 hover:text-white hover:bg-indigo-500 mt-2 p-2.5 bg-indigo-50 rounded-xl transition-all duration-300 border border-indigo-100 w-full group/kyc"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = `/admin/kyc?kycId=${req.id}`;
+                      }}
+                    >
+                      <Eye size={14} className="group-hover/kyc:scale-110 transition-transform" />
+                      <span>Revisar KYC</span>
+                    </a>
+                  </div>
+                ))
+              ) : (
+                <div className="p-10 text-center text-slate-400 flex flex-col items-center gap-3 anim-fade-in">
+                  <CheckCircle2 size={32} className="text-slate-300" />
+                  <span className="text-sm font-medium">No hay KYC pendientes</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* User Profile */}
-        <div 
+        <div
           className="p-3 lg:p-4 border-t border-white/5 bg-slate-950/80 backdrop-blur-sm m-3 rounded-xl border transition-all duration-300 hover:border-white/10 hover:bg-slate-900/80 cursor-pointer group shrink-0"
           style={{ 
             opacity: isLoaded ? 1 : 0,
