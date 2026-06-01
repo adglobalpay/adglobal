@@ -69,6 +69,7 @@ export default function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [pendingKycCount, setPendingKycCount] = useState(0);
 
   const loadInactiveClients = useCallback(async () => {
     setInactiveLoading(true);
@@ -85,10 +86,22 @@ export default function Sidebar() {
     }
   }, []);
 
+  const loadPendingKyc = useCallback(async () => {
+    try {
+      const data = await apiFetch('/api/kyc');
+      const requests = Array.isArray(data) ? data : [];
+      const pending = requests.filter((r: any) => r.status === 'PENDING' || r.status === 'PROCESSING').length;
+      setPendingKycCount(pending);
+    } catch (e) {
+      setPendingKycCount(0);
+    }
+  }, []);
+
   useEffect(() => {
     setCurrentPath(window.location.pathname);
 
     void loadInactiveClients();
+    void loadPendingKyc();
 
     // Load user from localStorage
     try {
@@ -118,7 +131,7 @@ export default function Sidebar() {
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
     { name: 'Clientes', path: '/admin/clientes', icon: <Users size={20} />, badge: inactiveClients.length },
     { name: 'Transacciones', path: '/admin/transacciones', icon: <BadgeDollarSign size={20} /> },
-    { name: 'KYC', path: '/admin/kyc', icon: <Fingerprint size={20} /> },
+    { name: 'KYC', path: '/admin/kyc', icon: <Fingerprint size={20} />, badge: pendingKycCount },
     { name: 'Reportes', path: '/admin/reportes', icon: <FileText size={20} /> },
     { name: 'Configuración', path: '/admin/config', icon: <Settings size={20} /> },
   ];
@@ -207,19 +220,28 @@ export default function Sidebar() {
                   <span className="text-sm font-medium">{item.name}</span>
                 </div>
                 {item.badge ? (
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setShowNotifications(!showNotifications);
-                    }}
-                    className="relative focus:outline-none ml-2"
-                    title="Clientes inactivos"
-                  >
-                    <span className="bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[0.65rem] font-bold rounded-full h-5 px-2 flex items-center justify-center animate-pulse">
+                  item.name === 'Clientes' ? (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowNotifications(!showNotifications);
+                      }}
+                      className="relative focus:outline-none ml-2"
+                      title="Clientes inactivos"
+                    >
+                      <span className="bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[0.65rem] font-bold rounded-full h-5 px-2 flex items-center justify-center animate-pulse">
+                        {item.badge}
+                      </span>
+                    </button>
+                  ) : (
+                    <span
+                      className="relative ml-2 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[0.65rem] font-bold rounded-full h-5 px-2 flex items-center justify-center animate-pulse"
+                      title="KYC pendientes por revisar"
+                    >
                       {item.badge}
                     </span>
-                  </button>
+                  )
                 ) : null}
               </a>
             );
