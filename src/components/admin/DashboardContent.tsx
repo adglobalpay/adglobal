@@ -25,6 +25,7 @@ interface DashboardStats {
   operatorTarget: number;
   operatingCost: number;
   operatorProfit: number;
+  weeklyActivity?: WeeklyActivityItem[];
 }
 
 interface Transaction {
@@ -41,6 +42,7 @@ interface Transaction {
   recipient: { bank: string } | null;
 }
 
+type WeeklyActivityItem = { dia: string; cantidad: number; volumen: number };
 type DashboardPeriod = 'today' | 'yesterday' | 'weekly' | 'monthly';
 
 const PERIOD_OPTIONS: Array<{ key: DashboardPeriod; label: string }> = [
@@ -129,7 +131,13 @@ export default function DashboardContent() {
             volumen: diaTxs.reduce((s: number, t: Transaction) => s + Number(t.ingresoUSD || 0), 0)
           };
         });
-        setActivity(actividad);
+        setActivity(Array.isArray(statsData?.weeklyActivity)
+          ? statsData.weeklyActivity.map((item: WeeklyActivityItem) => ({
+              dia: item.dia,
+              cantidad: Number(item.cantidad || 0),
+              volumen: Number(item.volumen || 0)
+            }))
+          : actividad);
       } catch (err) {
         console.error('Dashboard load error:', err);
       } finally {
@@ -395,10 +403,13 @@ export default function DashboardContent() {
               <div></div>
             </div>
             {activity.map((dia, idx) => (
-              <div key={idx} className="flex-1 flex flex-col items-center group relative z-10 w-full">
+              <div key={idx} className="flex-1 h-full min-w-0 flex flex-col items-center group relative z-10 w-full">
                 <div className="w-full flex justify-center h-full items-end pb-2">
                   <div className="w-[85%] max-w-[48px] bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t-xl hover:from-indigo-400 hover:to-cyan-400 transition-all duration-500 cursor-pointer relative shadow-[0_4px_12px_rgba(99,102,241,0.2)] group-hover:shadow-[0_8px_24px_rgba(99,102,241,0.3)] group-hover:scale-y-[1.05] origin-bottom"
-                    style={{ height: `${(dia.volumen / Math.max(maxVolumen, 1)) * 100}%` }}>
+                    style={{
+                      height: `${(dia.volumen / Math.max(maxVolumen, 1)) * 100}%`,
+                      minHeight: dia.volumen > 0 ? '4px' : '0px'
+                    }}>
                     <div className="opacity-0 group-hover:opacity-100 absolute -top-14 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-bold rounded-xl py-2 px-3 whitespace-nowrap shadow-xl transition-all z-20 pointer-events-none">
                       ${dia.volumen.toLocaleString()}
                       <span className="block text-[0.65rem] text-slate-400 font-medium mt-0.5">{dia.cantidad} ops</span>
