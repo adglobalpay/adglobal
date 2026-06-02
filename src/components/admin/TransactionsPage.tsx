@@ -444,21 +444,25 @@ export default function TransactionsPage() {
             <div className="text-emerald-500"><CheckCircle2 className="w-5 h-5" /></div>
           </div>
 
-          <div className="mt-auto flex flex-col items-end">
-            <div className="space-y-0.5 text-right mb-3">
-              <p className="text-xs font-semibold text-slate-500">
-                <span className="text-emerald-600 font-extrabold">$</span>{kpis.validadoAdmin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-slate-400 font-medium">admin profit</span>
-              </p>
-              <p className="text-xs font-semibold text-slate-500">
-                <span className="text-rose-500 font-extrabold">-$</span>{kpis.costoOperativo.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-slate-400 font-medium">costo operativo</span>
-              </p>
-            </div>
+          <div className="mt-auto">
+            <p className="text-2xl md:text-3xl font-extrabold font-mono text-slate-900 tracking-tight">
+              <span className="text-emerald-500 text-lg md:text-xl mr-1">$</span>{kpis.profitGlobal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-emerald-600 text-xs font-bold mt-1">PROFIT GLOBAL</p>
 
-            <div className="text-right">
-              <p className="text-3xl md:text-4xl font-extrabold font-mono text-slate-900 tracking-tight">
-                <span className="text-emerald-600 text-xl md:text-2xl mr-1">$</span>{kpis.profitGlobal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <p className="text-[0.6rem] font-bold uppercase tracking-widest text-slate-400 mt-1">Profit Global</p>
+            <div className="relative z-10 mt-4 grid max-w-xs grid-cols-2 gap-4">
+              <div>
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Admin profit</p>
+                <p className="mt-1 text-sm font-extrabold text-slate-700">
+                  <span className="text-emerald-600">$</span>{kpis.validadoAdmin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Costo operativo</p>
+                <p className="mt-1 text-sm font-extrabold text-rose-500">
+                  -${kpis.costoOperativo.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
             </div>
           </div>
         </div>
