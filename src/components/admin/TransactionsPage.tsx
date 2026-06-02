@@ -171,6 +171,7 @@ export default function TransactionsPage() {
   const [periodoFilter, setPeriodoFilter] = useState('month');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [costRate, setCostRate] = useState(2.9);
 
   const loadData = useCallback(async (options: { showLoader?: boolean; resetPage?: boolean } = {}) => {
     const { showLoader = true, resetPage = true } = options;
@@ -206,6 +207,15 @@ export default function TransactionsPage() {
     if (hasFreshInitialCache) return;
     loadData({ showLoader: !initialCache, resetPage: false });
   }, [hasFreshInitialCache, initialCache, loadData]);
+
+  useEffect(() => {
+    apiFetch('/api/config')
+      .then((config: any) => {
+        const rate = parseFloat(config['profit.tasa_costo']);
+        if (!isNaN(rate)) setCostRate(rate);
+      })
+      .catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     let result = [...transactions];
@@ -284,8 +294,11 @@ export default function TransactionsPage() {
         : Number(t.ingresoUSD || 0) - Number(t.salidaUSDT || 0);
       return s + (t.verificadorId ? profit : 0);
     }, 0);
-    return { totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, validadoAdmin };
-  }, [filtered]);
+    const volumen = validas.reduce((s, t) => s + Number(t.ingresoUSD || 0), 0);
+    const costoOperativo = volumen * (costRate / 100);
+    const profitGlobal = validadoAdmin - costoOperativo;
+    return { totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, validadoAdmin, costoOperativo, profitGlobal };
+  }, [filtered, costRate]);
 
   const handleExport = () => {
     if (filtered.length === 0) {
@@ -425,15 +438,29 @@ export default function TransactionsPage() {
           <p className="text-amber-600 text-xs font-bold mt-2">Toca para ver lo pendiente por revisar</p>
         </button>
 
-        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-4">
+        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-4 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-1">
             <p className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest">Admin</p>
             <div className="text-emerald-500"><CheckCircle2 className="w-5 h-5" /></div>
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold font-mono text-slate-800 tracking-tight">
-            <span className="text-emerald-500 text-lg md:text-xl mr-1">$</span>{kpis.validadoAdmin.toLocaleString()}
-          </p>
-          <p className="text-emerald-600 text-xs font-bold mt-2">Profit validado por admin</p>
+
+          <div className="mt-auto flex flex-col items-end">
+            <div className="space-y-0.5 text-right mb-3">
+              <p className="text-xs font-semibold text-slate-500">
+                <span className="text-emerald-600 font-extrabold">$</span>{kpis.validadoAdmin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-slate-400 font-medium">admin profit</span>
+              </p>
+              <p className="text-xs font-semibold text-slate-500">
+                <span className="text-rose-500 font-extrabold">-$</span>{kpis.costoOperativo.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-slate-400 font-medium">costo operativo</span>
+              </p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-3xl md:text-4xl font-extrabold font-mono text-slate-900 tracking-tight">
+                <span className="text-emerald-600 text-xl md:text-2xl mr-1">$</span>{kpis.profitGlobal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-[0.6rem] font-bold uppercase tracking-widest text-slate-400 mt-1">Profit Global</p>
+            </div>
+          </div>
         </div>
       </div>
 
