@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart3, Download, Globe, Trophy, FileText, TrendingUp,
-  Users, CreditCard, Target, ArrowRight, Loader2
+  Users, CreditCard, Target, ArrowRight, Loader2, Activity
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 import { isExcludedTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
@@ -389,6 +389,14 @@ export default function ReportsDashboard() {
           </div>
         )}
       </div>
+
+      {/* Actividad diaria */}
+      <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-10 gap-3">
+          <h2 className="text-lg md:text-xl text-slate-800 font-extrabold tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-heading)' }}>
+            <div className="p-2 bg-slate-50 text-slate-600 rounded-lg transition-transform hover:scale-110 duration-300">
+              <Activity className="w-4 h-4 md:w-5 md:h-5" />
+            </div>
             Actividad diaria
           </h2>
           <button
