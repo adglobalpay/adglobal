@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart3, Download, Globe, Trophy, FileText, TrendingUp,
-  Users, CreditCard, Target, ArrowRight, Loader2
+  Users, CreditCard, Target, ArrowRight, Loader2, Activity
 } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 import { isExcludedTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
@@ -65,7 +65,29 @@ export default function ReportsDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [period, setPeriod] = useState('all');
+  const [period, setPeriod] = useState('mes');
+
+  const getDaysBack = (p: string) => {
+    switch (p) {
+      case 'hoy': return 0;
+      case 'ayer': return 1;
+      case 'semana': return 7;
+      case 'mes': return 30;
+      case 'all': return 0;
+      default: return 30;
+    }
+  };
+
+  const getLabel = (p: string) => {
+    switch (p) {
+      case 'hoy': return 'Hoy';
+      case 'ayer': return 'Ayer';
+      case 'semana': return 'Semana';
+      case 'mes': return 'Mes';
+      case 'all': return 'Todo';
+      default: return 'Mes';
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -90,9 +112,14 @@ export default function ReportsDashboard() {
     loadData();
   }, []);
 
-  const daysBack = period === 'all' ? 0 : parseInt(period);
+  const daysBack = getDaysBack(period);
   const cutoffDate = useMemo(() => {
     if (period === 'all') return new Date('2000-01-01');
+    if (daysBack === 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    }
     const d = new Date();
     d.setDate(d.getDate() - daysBack);
     d.setHours(0, 0, 0, 0);
@@ -124,14 +151,22 @@ export default function ReportsDashboard() {
 
   const transaccionesPorDia = useMemo(() => {
     const map: Record<string, { fecha: string; cantidad: number; volumen: number }> = {};
-    for (let i = daysBack - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().split('T')[0];
-      map[key] = { fecha: key, cantidad: 0, volumen: 0 };
+    if (daysBack === 0) {
+      const now = new Date();
+      const month = now.toISOString().slice(0, 7);
+      map[month] = { fecha: month, cantidad: 0, volumen: 0 };
+    } else {
+      for (let i = daysBack - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        map[key] = { fecha: key, cantidad: 0, volumen: 0 };
+      }
     }
     filteredTransactions.forEach(t => {
-      const key = new Date(t.fecha).toISOString().split('T')[0];
+      const key = daysBack === 0
+        ? new Date(t.fecha).toISOString().slice(0, 7)
+        : new Date(t.fecha).toISOString().split('T')[0];
       if (map[key]) {
         map[key].cantidad += 1;
         map[key].volumen += t.ingresoUSD || 0;
@@ -168,21 +203,21 @@ export default function ReportsDashboard() {
   const handleExportActividad = () => {
     const headers = ['Fecha', 'Cantidad', 'Volumen USD'];
     const rows = transaccionesPorDia.map(d => [d.fecha, d.cantidad, d.volumen]);
-    downloadCSV(`actividad_diaria_${period}d.csv`, headers, rows);
+    downloadCSV(`actividad_diaria_${getLabel(period)}.csv`, headers, rows);
     showToast('success', 'CSV exportado', 'Actividad diaria descargada.');
   };
 
   const handleExportDestino = () => {
     const headers = ['Destino', 'Volumen USD', 'Porcentaje'];
     const rows = volumenPorDestino.map(d => [d.pais, d.volumen, `${d.porcentaje}%`]);
-    downloadCSV(`volumen_destino_${period}d.csv`, headers, rows);
+    downloadCSV(`volumen_destino_${getLabel(period)}.csv`, headers, rows);
     showToast('success', 'CSV exportado', 'Volumen por destino descargado.');
   };
 
   const handleExportTopClientes = () => {
     const headers = ['Cliente', 'Transacciones', 'Volumen USD'];
     const rows = topClientes.map(c => [c.nombre, c.transacciones, Math.round(c.volumen)]);
-    downloadCSV(`top_clientes_${period}d.csv`, headers, rows);
+    downloadCSV(`top_clientes_${getLabel(period)}.csv`, headers, rows);
     showToast('success', 'CSV exportado', 'Top clientes descargado.');
   };
 
@@ -198,7 +233,7 @@ export default function ReportsDashboard() {
       normalizeTransactionStatus(t.estado),
       t.recipient?.name || ''
     ]);
-    downloadCSV(`transacciones_${period}d.csv`, headers, rows);
+    downloadCSV(`transacciones_${getLabel(period)}.csv`, headers, rows);
     showToast('success', 'CSV exportado', `${filteredTransactions.length} transacciones descargadas.`);
   };
 
@@ -208,7 +243,7 @@ export default function ReportsDashboard() {
     }));
   };
 
-  const maxVolumen = Math.max(...transaccionesPorDia.map(d => d.volumen), 1);
+  
 
   if (loading) {
     return (
@@ -246,10 +281,11 @@ export default function ReportsDashboard() {
             onChange={e => setPeriod(e.target.value)}
             className="custom-select flex-1 md:flex-none border-slate-200 bg-white text-slate-700 rounded-xl px-4 md:px-5 py-2.5 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer hover:bg-slate-50 hover:shadow-md"
           >
-            <option value="all">Todo el tiempo</option>
-            <option value="7">Últimos 7 días</option>
-            <option value="30">Últimos 30 días</option>
-            <option value="90">Últimos 3 meses</option>
+            <option value="hoy">Hoy</option>
+            <option value="ayer">Ayer</option>
+            <option value="semana">Semana</option>
+            <option value="mes">Mes</option>
+            <option value="all">Todo</option>
           </select>
           <button
             onClick={loadData}
@@ -282,7 +318,7 @@ export default function ReportsDashboard() {
           <div className="relative z-10">
             <p className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest mb-2">Transacciones</p>
             <p className="text-3xl md:text-4xl font-extrabold text-slate-900 font-mono tracking-tight">{reporteGeneral.total_transacciones}</p>
-            <p className="text-emerald-600 text-xs font-bold mt-2 bg-emerald-50 inline-block px-2 py-1 rounded border border-emerald-100/50">{period === 'all' ? 'totales' : `en los últimos ${period} días`}</p>
+            <p className="text-emerald-600 text-xs font-bold mt-2 bg-emerald-50 inline-block px-2 py-1 rounded border border-emerald-100/50">{period === 'all' ? 'totales' : `en ${getLabel(period).toLowerCase()}`}</p>
           </div>
         </div>
 
@@ -309,12 +345,57 @@ export default function ReportsDashboard() {
         </div>
       </div>
 
-      {/* Gráfico de actividad diaria */}
+{/* Profit Global - Gráfico de volumen mensual */}
       <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-10 gap-3">
           <h2 className="text-lg md:text-xl text-slate-800 font-extrabold tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-heading)' }}>
             <div className="p-2 bg-slate-50 text-slate-600 rounded-lg transition-transform hover:scale-110 duration-300">
               <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
+            </div>
+            Profit Global
+          </h2>
+          <span className="text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg">{getLabel(period)}</span>
+        </div>
+
+        {transaccionesPorDia.length === 0 ? (
+          <div className="text-center py-12 text-slate-400 font-medium">Sin actividad en este período</div>
+        ) : (
+          <div className="relative h-48 md:h-64 flex items-center justify-center">
+            <div className="absolute left-0 right-0 flex flex-col justify-center h-full">
+              <div className="flex items-center gap-4 md:gap-6 w-full overflow-x-auto px-4">
+                {transaccionesPorDia.map((dia, idx) => (
+                  <div key={dia.fecha} className="flex flex-col items-center group relative flex-shrink-0">
+                    <div className="relative">
+                      <div
+                        className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 shadow-[0_4px 16px_rgba(99,102,241,0.3)] group-hover:scale-125 transition-all duration-500 cursor-pointer flex items-center justify-center"
+                      >
+                        <span className="text-white font-bold text-xs">{dia.cantidad}</span>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 absolute -top-14 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-bold rounded-xl py-2 px-3 whitespace-nowrap shadow-xl transition-all z-20 pointer-events-none text-center">
+                        ${dia.volumen.toLocaleString()}
+                        <span className="block text-[0.65rem] text-slate-400 font-medium mt-0.5">{dia.cantidad} ops</span>
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
+                      </div>
+                    </div>
+                    <span className="text-[0.6rem] md:text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest mt-3 group-hover:text-indigo-500 transition-colors">
+                      {daysBack === 0 ? dia.fecha.slice(5, 7) : dia.fecha.slice(5)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 border-t border-slate-100"></div>
+            <div className="absolute left-0 top-0 bottom-0 border-l border-slate-100"></div>
+          </div>
+        )}
+      </div>
+
+      {/* Actividad diaria */}
+      <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-10 gap-3">
+          <h2 className="text-lg md:text-xl text-slate-800 font-extrabold tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-heading)' }}>
+            <div className="p-2 bg-slate-50 text-slate-600 rounded-lg transition-transform hover:scale-110 duration-300">
+              <Activity className="w-4 h-4 md:w-5 md:h-5" />
             </div>
             Actividad diaria
           </h2>

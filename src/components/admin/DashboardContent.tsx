@@ -25,6 +25,7 @@ interface DashboardStats {
   operatorTarget: number;
   operatingCost: number;
   operatorProfit: number;
+  weeklyActivity?: WeeklyActivityItem[];
 }
 
 interface Transaction {
@@ -41,13 +42,16 @@ interface Transaction {
   recipient: { bank: string } | null;
 }
 
-type DashboardPeriod = 'today' | 'yesterday' | 'weekly' | 'monthly';
+type WeeklyActivityItem = { dia: string; cantidad: number; volumen: number };
+type DashboardPeriod = 'today' | 'yesterday' | 'weekly' | 'monthly' | 'all';
+type ActivityChartPoint = { label: string; cantidad: number; volumen: number; profit: number };
 
 const PERIOD_OPTIONS: Array<{ key: DashboardPeriod; label: string }> = [
   { key: 'today', label: 'Hoy' },
   { key: 'yesterday', label: 'Ayer' },
-  { key: 'weekly', label: 'Semanal' },
-  { key: 'monthly', label: 'Mensual' }
+  { key: 'weekly', label: 'Semana' },
+  { key: 'monthly', label: 'Mes' },
+  { key: 'all', label: 'Todo' }
 ];
 
 const ESTADOS_MAP: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
@@ -73,11 +77,30 @@ function formatMoney(value: number) {
   });
 }
 
+function startOfLocalDay(date: Date) {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function endOfLocalDay(date: Date) {
+  const result = new Date(date);
+  result.setHours(23, 59, 59, 999);
+  return result;
+}
+
+function getTransactionProfit(transaction: Transaction) {
+  if (transaction.estado !== 'COMPLETED') return 0;
+  if (transaction.profitUSD !== null && transaction.profitUSD !== undefined) {
+    return Number(transaction.profitUSD || 0);
+  }
+  return Number(transaction.ingresoUSD || 0) - Number(transaction.salidaUSDT || 0);
+}
+
 export default function DashboardContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  const [activity, setActivity] = useState<{ dia: string; cantidad: number; volumen: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Admin');
   const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>('monthly');
@@ -108,28 +131,6 @@ export default function DashboardContent() {
 
         // Build weekly activity from transactions
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-        const hoy = new Date();
-        const semana = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(hoy);
-          d.setDate(d.getDate() - (6 - i));
-          return d;
-        });
-
-        const txs = allTxData.data || [];
-        const txsValidas = txs.filter((t: Transaction) => !isExcludedTransactionStatus(t.estado));
-        const actividad = semana.map(d => {
-          const diaStr = toLocalDateStr(d);
-          const diaTxs = txsValidas.filter((t: Transaction) => {
-            const tf = new Date(t.fecha);
-            return toLocalDateStr(tf) === diaStr;
-          });
-          return {
-            dia: dias[d.getDay()],
-            cantidad: diaTxs.length,
-            volumen: diaTxs.reduce((s: number, t: Transaction) => s + Number(t.ingresoUSD || 0), 0)
-          };
-        });
-        setActivity(actividad);
       } catch (err) {
         console.error('Dashboard load error:', err);
       } finally {
@@ -195,6 +196,10 @@ export default function DashboardContent() {
         return txMoment >= weekStart && txMoment <= now;
       }
 
+      if (selectedPeriod === 'all') {
+        return true;
+      }
+
       return txDate.getFullYear() === now.getFullYear() && txDate.getMonth() === now.getMonth();
     });
 
@@ -202,16 +207,82 @@ export default function DashboardContent() {
     const volumen = txsValidas.reduce((sum, transaction) => sum + Number(transaction.ingresoUSD || 0), 0);
     const costoOperativo = volumen * (tasaCosto / 100);
     const profitGlobalBruto = txsCompleted.reduce((sum, transaction) => {
-      const profitValue = transaction.profitUSD !== null && transaction.profitUSD !== undefined
-        ? Number(transaction.profitUSD)
-        : Number(transaction.ingresoUSD || 0) - Number(transaction.salidaUSDT || 0);
-      return sum + profitValue;
+      return sum + getTransactionProfit(transaction);
     }, 0);
     const profitGlobal = profitGlobalBruto - costoOperativo;
     const profitOperador = profitGlobal * (porcentaje / 100);
     const restantePorcentaje = Math.max(0, 100 - porcentaje);
     const restanteGlobal = profitGlobal - profitOperador;
     return { porcentaje, comision, tasaCosto, meta, volumen, profitGlobal, costoOperativo, profitOperador, restantePorcentaje, restanteGlobal };
+  }, [allTransactions, selectedPeriod, stats]);
+
+  const chartData = useMemo<ActivityChartPoint[]>(() => {
+    const now = new Date();
+    const costRate = Number(stats?.costRate || 0);
+    const validTransactions = allTransactions.filter((transaction) => !isExcludedTransactionStatus(transaction.estado));
+    const buildPoint = (label: string, transactions: Transaction[]) => {
+      const volumen = transactions.reduce((sum, transaction) => sum + Number(transaction.ingresoUSD || 0), 0);
+      const profitBruto = transactions.reduce((sum, transaction) => sum + getTransactionProfit(transaction), 0);
+      return {
+        label,
+        cantidad: transactions.length,
+        volumen,
+        profit: profitBruto - (volumen * (costRate / 100))
+      };
+    };
+
+    if (selectedPeriod === 'today' || selectedPeriod === 'yesterday') {
+      const target = new Date(now);
+      if (selectedPeriod === 'yesterday') target.setDate(target.getDate() - 1);
+      const start = startOfLocalDay(target);
+      const end = endOfLocalDay(target);
+      return [buildPoint(selectedPeriod === 'today' ? 'Hoy' : 'Ayer', validTransactions.filter((transaction) => {
+        const txDate = new Date(transaction.fecha);
+        return txDate >= start && txDate <= end;
+      }))];
+    }
+
+    if (selectedPeriod === 'weekly') {
+      const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+      return Array.from({ length: 7 }, (_, index) => {
+        const day = new Date(now);
+        day.setDate(now.getDate() - (6 - index));
+        const start = startOfLocalDay(day);
+        const end = endOfLocalDay(day);
+        return buildPoint(days[day.getDay()], validTransactions.filter((transaction) => {
+          const txDate = new Date(transaction.fecha);
+          return txDate >= start && txDate <= end;
+        }));
+      });
+    }
+
+    if (selectedPeriod === 'monthly') {
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      return Array.from({ length: daysInMonth }, (_, index) => {
+        const day = new Date(now.getFullYear(), now.getMonth(), index + 1);
+        const start = startOfLocalDay(day);
+        const end = endOfLocalDay(day);
+        return buildPoint(String(index + 1), validTransactions.filter((transaction) => {
+          const txDate = new Date(transaction.fecha);
+          return txDate >= start && txDate <= end;
+        }));
+      });
+    }
+
+    const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const monthlyMap = new Map<string, Transaction[]>();
+    validTransactions.forEach((transaction) => {
+      const txDate = new Date(transaction.fecha);
+      const key = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+      monthlyMap.set(key, [...(monthlyMap.get(key) || []), transaction]);
+    });
+
+    return [...monthlyMap.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, transactions]) => {
+        const [year, month] = key.split('-').map(Number);
+        return buildPoint(`${monthLabels[month - 1]} ${String(year).slice(-2)}`, transactions);
+      });
   }, [allTransactions, selectedPeriod, stats]);
 
   const alertas = useMemo(() => {
@@ -233,7 +304,25 @@ export default function DashboardContent() {
     setFechaHoy(new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
   }, []);
   const selectedPeriodLabel = PERIOD_OPTIONS.find((option) => option.key === selectedPeriod)?.label || 'Mensual';
-  const maxVolumen = Math.max(...activity.map(a => a.volumen), 1);
+  const chartWidth = 640;
+  const chartHeight = 240;
+  const chartPadding = { top: 28, right: 24, bottom: 38, left: 64 };
+  const plotWidth = chartWidth - chartPadding.left - chartPadding.right;
+  const plotHeight = chartHeight - chartPadding.top - chartPadding.bottom;
+  const maxProfit = Math.max(...chartData.map((point) => point.profit), 0);
+  const minProfit = Math.min(...chartData.map((point) => point.profit), 0);
+  const profitRange = Math.max(maxProfit - minProfit, 1);
+  const maxVolumen = Math.max(...chartData.map((point) => point.volumen), 1);
+  const chartPoints = chartData.map((point, index) => {
+    const x = chartPadding.left + (chartData.length <= 1 ? plotWidth / 2 : (index / (chartData.length - 1)) * plotWidth);
+    const y = chartPadding.top + ((maxProfit - point.profit) / profitRange) * plotHeight;
+    const volumeY = chartPadding.top + ((maxVolumen - point.volumen) / maxVolumen) * plotHeight;
+    return { ...point, x, y, volumeY };
+  });
+  const profitPath = chartPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ');
+  const chartAverage = chartData.length > 0
+    ? Math.round(chartData.reduce((sum, point) => sum + point.volumen, 0) / chartData.length)
+    : 0;
 
   if (loading) {
     return (
@@ -386,33 +475,57 @@ export default function DashboardContent() {
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-xl text-slate-800 font-extrabold tracking-tight flex items-center gap-2.5">
               <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Activity className="w-5 h-5" /></div>
-              Actividad de la semana
+              Actividad {selectedPeriodLabel.toLowerCase()}
             </h2>
           </div>
-          <div className="flex items-end justify-between gap-3 h-56 pt-6 relative border-b border-slate-100">
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-0">
-              {[1, 2, 3, 4].map(() => <div className="w-full border-t border-slate-100 border-dashed"></div>)}
-              <div></div>
-            </div>
-            {activity.map((dia, idx) => (
-              <div key={idx} className="flex-1 flex flex-col items-center group relative z-10 w-full">
-                <div className="w-full flex justify-center h-full items-end pb-2">
-                  <div className="w-[85%] max-w-[48px] bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t-xl hover:from-indigo-400 hover:to-cyan-400 transition-all duration-500 cursor-pointer relative shadow-[0_4px_12px_rgba(99,102,241,0.2)] group-hover:shadow-[0_8px_24px_rgba(99,102,241,0.3)] group-hover:scale-y-[1.05] origin-bottom"
-                    style={{ height: `${(dia.volumen / Math.max(maxVolumen, 1)) * 100}%` }}>
-                    <div className="opacity-0 group-hover:opacity-100 absolute -top-14 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-bold rounded-xl py-2 px-3 whitespace-nowrap shadow-xl transition-all z-20 pointer-events-none">
-                      ${dia.volumen.toLocaleString()}
-                      <span className="block text-[0.65rem] text-slate-400 font-medium mt-0.5">{dia.cantidad} ops</span>
-                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest mt-2 group-hover:text-indigo-500 transition-colors">{dia.dia}</span>
-              </div>
-            ))}
+          <div className="relative h-64 overflow-x-auto overflow-y-hidden">
+            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-full min-w-[640px] w-full" role="img" aria-label="Grafico de profit global y volumen total">
+              {[0, 1, 2, 3].map((line) => {
+                const y = chartPadding.top + (line / 3) * plotHeight;
+                const value = maxProfit - (line / 3) * profitRange;
+                return (
+                  <g key={line}>
+                    <line x1={chartPadding.left} x2={chartWidth - chartPadding.right} y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="6 8" />
+                    <text x={16} y={y + 4} className="fill-slate-400 text-[10px] font-bold">${Math.round(value).toLocaleString()}</text>
+                  </g>
+                );
+              })}
+              <line x1={chartPadding.left} x2={chartPadding.left} y1={chartPadding.top} y2={chartHeight - chartPadding.bottom} stroke="#e2e8f0" />
+              <line x1={chartPadding.left} x2={chartWidth - chartPadding.right} y1={chartHeight - chartPadding.bottom} y2={chartHeight - chartPadding.bottom} stroke="#e2e8f0" />
+              {profitPath && <path d={profitPath} fill="none" stroke="#4f46e5" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}
+              {chartPoints.map((point, index) => {
+                const showLabel = chartPoints.length <= 12 || index === 0 || index === chartPoints.length - 1 || index % Math.ceil(chartPoints.length / 8) === 0;
+                const tooltipX = Math.min(Math.max(point.x - 66, 8), chartWidth - 136);
+                const tooltipTextX = Math.min(Math.max(point.x, 74), chartWidth - 74);
+                const tooltipY = Math.max(point.y - 64, 8);
+                return (
+                  <g key={`${point.label}-${index}`} className="group">
+                    <line x1={point.x} x2={point.x} y1={chartHeight - chartPadding.bottom} y2={chartHeight - chartPadding.bottom + 5} stroke="#cbd5e1" />
+                    {showLabel && (
+                      <text x={point.x} y={chartHeight - 14} textAnchor="middle" className="fill-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                        {point.label}
+                      </text>
+                    )}
+                    <circle cx={point.x} cy={point.volumeY} r={Math.max(4, Math.min(11, (point.volumen / maxVolumen) * 11))} fill="#6366f1" opacity="0.88" />
+                    <circle cx={point.x} cy={point.y} r="5" fill="#0f172a" stroke="#ffffff" strokeWidth="2" />
+                    <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <rect x={tooltipX} y={tooltipY} width="132" height="48" rx="10" fill="#0f172a" />
+                      <text x={tooltipTextX} y={tooltipY + 20} textAnchor="middle" className="fill-white text-[11px] font-bold">
+                        Profit ${Math.round(point.profit).toLocaleString()}
+                      </text>
+                      <text x={tooltipTextX} y={tooltipY + 38} textAnchor="middle" className="fill-slate-300 text-[10px] font-semibold">
+                        Vol. ${Math.round(point.volumen).toLocaleString()} - {point.cantidad} ops
+                      </text>
+                    </g>
+                  </g>
+                );
+              })}
+            </svg>
           </div>
           <div className="flex justify-center gap-8 mt-6 pt-2 text-sm text-slate-500 font-semibold">
-            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-gradient-to-t from-indigo-500 to-indigo-400 rounded"></span> Volumen</span>
-            <span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-slate-400" /> Promedio diario: ${Math.round(activity.reduce((s, a) => s + a.volumen, 0) / 7).toLocaleString()}</span>
+            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-slate-900 rounded-full"></span> Profit global</span>
+            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-indigo-500 rounded-full"></span> Volumen total</span>
+            <span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-slate-400" /> Promedio: ${chartAverage.toLocaleString()}</span>
           </div>
         </div>
 

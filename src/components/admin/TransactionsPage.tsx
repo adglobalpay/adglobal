@@ -171,6 +171,7 @@ export default function TransactionsPage() {
   const [periodoFilter, setPeriodoFilter] = useState('month');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [costRate, setCostRate] = useState(2.9);
 
   const loadData = useCallback(async (options: { showLoader?: boolean; resetPage?: boolean } = {}) => {
     const { showLoader = true, resetPage = true } = options;
@@ -206,6 +207,15 @@ export default function TransactionsPage() {
     if (hasFreshInitialCache) return;
     loadData({ showLoader: !initialCache, resetPage: false });
   }, [hasFreshInitialCache, initialCache, loadData]);
+
+  useEffect(() => {
+    apiFetch('/api/config')
+      .then((config: any) => {
+        const rate = parseFloat(config['profit.tasa_costo']);
+        if (!isNaN(rate)) setCostRate(rate);
+      })
+      .catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     let result = [...transactions];
@@ -284,8 +294,11 @@ export default function TransactionsPage() {
         : Number(t.ingresoUSD || 0) - Number(t.salidaUSDT || 0);
       return s + (t.verificadorId ? profit : 0);
     }, 0);
-    return { totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, validadoAdmin };
-  }, [filtered]);
+    const volumen = validas.reduce((s, t) => s + Number(t.ingresoUSD || 0), 0);
+    const costoOperativo = volumen * (costRate / 100);
+    const profitGlobal = validadoAdmin - costoOperativo;
+    return { totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, validadoAdmin, costoOperativo, profitGlobal };
+  }, [filtered, costRate]);
 
   const handleExport = () => {
     if (filtered.length === 0) {
@@ -425,15 +438,33 @@ export default function TransactionsPage() {
           <p className="text-amber-600 text-xs font-bold mt-2">Toca para ver lo pendiente por revisar</p>
         </button>
 
-        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-4">
+        <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 relative overflow-hidden group card-hover anim-fade-in stagger-4 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-1">
             <p className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest">Admin</p>
             <div className="text-emerald-500"><CheckCircle2 className="w-5 h-5" /></div>
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold font-mono text-slate-800 tracking-tight">
-            <span className="text-emerald-500 text-lg md:text-xl mr-1">$</span>{kpis.validadoAdmin.toLocaleString()}
-          </p>
-          <p className="text-emerald-600 text-xs font-bold mt-2">Profit validado por admin</p>
+
+          <div className="mt-auto">
+            <p className="text-2xl md:text-3xl font-extrabold font-mono text-slate-900 tracking-tight">
+              <span className="text-emerald-500 text-lg md:text-xl mr-1">$</span>{kpis.profitGlobal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-emerald-600 text-xs font-bold mt-1">PROFIT GLOBAL</p>
+
+            <div className="relative z-10 mt-4 grid max-w-xs grid-cols-2 gap-4">
+              <div>
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Admin profit</p>
+                <p className="mt-1 text-sm font-extrabold text-slate-700">
+                  <span className="text-emerald-600">$</span>{kpis.validadoAdmin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Costo operativo</p>
+                <p className="mt-1 text-sm font-extrabold text-rose-500">
+                  -${kpis.costoOperativo.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
