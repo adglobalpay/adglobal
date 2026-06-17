@@ -76,6 +76,8 @@ interface ClientDetail {
   ofacStatus: string;
   referralCode: string | null;
   referredById: string | null;
+  reportTagId: string | null;
+  reportTag: ReportTag | null;
   status: string;
   ofacPdfUrl: string | null;
   createdAt: string;
@@ -88,6 +90,14 @@ interface ClientDetail {
   _count?: { transactions: number; recipients: number; referrals: number };
 }
 
+interface ReportTag {
+  id: string;
+  name: string;
+  label: string;
+  color: string;
+  isActive?: boolean;
+}
+
 interface EditClientForm {
   clientType: 'NATURAL' | 'JURIDICO';
   firstName: string;
@@ -97,6 +107,7 @@ interface EditClientForm {
   documentId: string;
   country: string;
   preferredMethod: string[];
+  reportTagId: string;
   notes: string;
   status: string;
 }
@@ -199,6 +210,7 @@ function createEditForm(client: ClientDetail): EditClientForm {
     documentId: client.documentId || '',
     country: client.country || 'us',
     preferredMethod: parsePreferredMethod(client.preferredMethod),
+    reportTagId: client.reportTagId || '',
     notes: client.notes || '',
     status: client.status || 'ACTIVE'
   };
@@ -232,11 +244,14 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
     lastName: '',
     email: '',
     phone: '',
+    documentId: '',
     country: 'us',
     preferredMethod: [],
+    reportTagId: '',
     notes: '',
     status: 'ACTIVE'
   });
+  const [reportTags, setReportTags] = useState<ReportTag[]>([]);
   const [isOfacModalOpen, setIsOfacModalOpen] = useState(false);
   const [isUploadingOfac, setIsUploadingOfac] = useState(false);
 
@@ -265,6 +280,18 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
   useEffect(() => {
     loadClient();
   }, [loadClient]);
+
+  useEffect(() => {
+    async function loadReportTags() {
+      try {
+        const data = await apiFetch('/api/report-tags');
+        setReportTags(Array.isArray(data) ? data.filter((tag: ReportTag) => tag.isActive !== false) : []);
+      } catch (err) {
+        console.error('Error cargando etiquetas de reporte:', err);
+      }
+    }
+    loadReportTags();
+  }, []);
 
   useEffect(() => {
     if (!isEditOpen) return;
@@ -642,6 +669,7 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
           documentId: editForm.documentId,
           country: editForm.country,
           preferredMethod: editForm.preferredMethod,
+          reportTagId: editForm.reportTagId || null,
           notes: editForm.notes,
           status: editForm.status
         })
@@ -684,6 +712,12 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${levelInfo.color}`}>
                     <span>{levelInfo.icon}</span> {levelInfo.name}
                   </span>
+                  {client.reportTag && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: client.reportTag.color }}></span>
+                      {client.reportTag.label}
+                    </span>
+                  )}
                     <select
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[0.65rem] font-bold border uppercase tracking-wider appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${statusCfg.className}`}
                       value={client.status}
@@ -1277,6 +1311,19 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
                           );
                         })}
                       </div>
+                    </label>
+                    <label className="block group">
+                      <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Etiqueta de reporte</span>
+                      <select
+                        value={editForm.reportTagId}
+                        onChange={(e) => handleEditFieldChange('reportTagId', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all hover:bg-white hover:border-slate-300 focus:border-amber-400 focus:bg-white focus:ring-[3px] focus:ring-amber-500/10"
+                      >
+                        <option value="">Sin etiqueta</option>
+                        {reportTags.map((tag) => (
+                          <option key={tag.id} value={tag.id}>{tag.label}</option>
+                        ))}
+                      </select>
                     </label>
                     <label className="block sm:col-span-2 group">
                       <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-[0.18em] text-slate-500">Notas internas</span>

@@ -319,6 +319,12 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
               <input type="hidden" id="clienteMetodo" value="Zelle" />
             </div>
           </div>
+          <div>
+            <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Etiqueta de reporte</label>
+            <select id="clienteReportTag" class="custom-select w-full border-slate-200 bg-slate-50 text-slate-800 rounded-xl px-4 py-3 font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white cursor-pointer">
+              <option value="">Sin etiqueta</option>
+            </select>
+          </div>
         </div>
         <div>
           <label class="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Notas</label>
@@ -334,6 +340,8 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
 </AdminLayout>
 
 <script is:inline>
+  var reportTags = [];
+
   // Helper para mostrar toast
   function showToast(type, message, description) {
     window.dispatchEvent(new CustomEvent('show-toast', {
@@ -354,6 +362,7 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
     if (clienteTipo) {
       clienteTipo.addEventListener('change', updateClienteTipoUI);
     }
+    cargarReportTags();
   });
 
   function updateClienteTipoUI() {
@@ -410,6 +419,7 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
       documentId: document.getElementById('clienteDocumento').value,
       country: document.getElementById('clientePais').value,
       preferredMethod: document.getElementById('clienteMetodo').value,
+      reportTagId: document.getElementById('clienteReportTag').value || null,
       notes: document.getElementById('clienteNotas').value
     };
 
@@ -442,6 +452,7 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
       // Cerrar modal y limpiar formulario
       document.getElementById('formCliente').reset();
       updateClienteTipoUI();
+      poblarReportTags();
       cerrarModalCliente();
 
       // Notificar a la tabla para que refresque sin recargar la página
@@ -450,6 +461,31 @@ import { Users, Plus, UserPlus, X } from 'lucide-react';
     } catch (err) {
       showToast('error', 'Error al crear cliente', err.message);
     }
+  }
+
+  async function cargarReportTags() {
+    var token = localStorage.getItem('adglobal_token');
+    if (!token) return;
+    var API_URL = window.__ADGLOBAL_API_URL__ || 'http://localhost:3001';
+    try {
+      var res = await fetch(API_URL + '/api/report-tags', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('Error');
+      var data = await res.json();
+      reportTags = Array.isArray(data) ? data.filter(function(tag) { return tag.isActive !== false; }) : [];
+      poblarReportTags();
+    } catch (err) {
+      console.error('Error cargando etiquetas:', err);
+    }
+  }
+
+  function poblarReportTags() {
+    var select = document.getElementById('clienteReportTag');
+    if (!select) return;
+    select.innerHTML = '<option value="">Sin etiqueta</option>' + reportTags.map(function(tag) {
+      return '<option value="' + tag.id + '">' + tag.label + '</option>';
+    }).join('');
   }
 
   // === DROPDOWN CUSTOM DE MÉTODO ===

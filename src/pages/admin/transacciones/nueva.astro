@@ -990,7 +990,8 @@ import {
           id: c.id,
           nombre: c.firstName + (c.lastName ? ' ' + c.lastName : ''),
           telefono: c.phone || '',
-          email: c.email || ''
+          email: c.email || '',
+          reportTagId: c.reportTagId || null
         };
       });
     } catch (e) {
@@ -1806,6 +1807,7 @@ import {
           montoVESManual: tieneVESManual(detalle),
           metodo: metodo,
           profitUSD: ingresoAsignado - salida,
+          reportTagId: estado.cliente.reportTagId || null,
           estado: 'PENDING'
         };
 

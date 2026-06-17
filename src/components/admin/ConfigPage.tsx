@@ -13,6 +13,8 @@ interface SystemUser {
   lastName: string | null;
   role: string;
   isActive: boolean;
+  reportTagId?: string | null;
+  reportTag?: ReportTagItem | null;
   createdAt: string;
 }
 
@@ -48,6 +50,18 @@ interface AccountTypeItem {
   isActive: boolean;
 }
 
+interface ReportTagItem {
+  id: string;
+  name: string;
+  label: string;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+const emptyUserForm = { email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true, reportTagId: '' };
+const emptyReportTagForm = { name: '', label: '', color: '#6366f1', sortOrder: 0, isActive: true };
+
 export default function ConfigPage() {
   const [config, setConfig] = useState<ConfigMap>({});
   const [users, setUsers] = useState<SystemUser[]>([]);
@@ -76,9 +90,15 @@ export default function ConfigPage() {
 
   // Users state
   const [userLoading, setUserLoading] = useState(false);
-  const [userForm, setUserForm] = useState({ email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true });
+  const [userForm, setUserForm] = useState(emptyUserForm);
   const [userEditing, setUserEditing] = useState<string | null>(null);
   const [showUserForm, setShowUserForm] = useState(false);
+
+  // Report tags state
+  const [reportTags, setReportTags] = useState<ReportTagItem[]>([]);
+  const [reportTagLoading, setReportTagLoading] = useState(false);
+  const [reportTagForm, setReportTagForm] = useState(emptyReportTagForm);
+  const [reportTagEditing, setReportTagEditing] = useState<string | null>(null);
 
   // Local form state for all fields
   const [form, setForm] = useState({
@@ -113,13 +133,15 @@ export default function ConfigPage() {
     async function load() {
       setLoading(true);
       try {
-        const [cfgData, usersData, monthlyStats] = await Promise.all([
+        const [cfgData, usersData, monthlyStats, reportTagsData] = await Promise.all([
           apiFetch('/api/config').catch(() => ({} as ConfigMap)),
           apiFetch('/api/users').catch(() => ([] as SystemUser[])),
-          apiFetch('/api/stats/monthly').catch(() => ({ profitGlobal: 0, volumenMensual: 0 }))
+          apiFetch('/api/stats/monthly').catch(() => ({ profitGlobal: 0, volumenMensual: 0 })),
+          apiFetch('/api/report-tags').catch(() => ([] as ReportTagItem[]))
         ]);
         setConfig(cfgData);
         setUsers(usersData);
+        setReportTags(reportTagsData);
 
         // Map backend config keys to form
         setForm(prev => {
@@ -463,7 +485,7 @@ export default function ConfigPage() {
         await apiFetch('/api/users', { method: 'POST', body: JSON.stringify(userForm) });
         window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Creado', description: 'Usuario creado exitosamente.' } }));
       }
-      setUserForm({ email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true });
+      setUserForm(emptyUserForm);
       setUserEditing(null);
       setShowUserForm(false);
       loadUsers();
@@ -473,7 +495,7 @@ export default function ConfigPage() {
   };
 
   const editUser = (user: SystemUser) => {
-    setUserForm({ email: user.email, password: '', firstName: user.firstName, lastName: user.lastName || '', role: user.role, isActive: user.isActive });
+    setUserForm({ email: user.email, password: '', firstName: user.firstName, lastName: user.lastName || '', role: user.role, isActive: user.isActive, reportTagId: user.reportTagId || '' });
     setUserEditing(user.id);
     setShowUserForm(true);
   };
@@ -489,10 +511,67 @@ export default function ConfigPage() {
     }
   };
 
+  // Report tags CRUD
+  const loadReportTags = async () => {
+    setReportTagLoading(true);
+    try {
+      const data = await apiFetch('/api/report-tags');
+      setReportTags(data);
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    } finally {
+      setReportTagLoading(false);
+    }
+  };
+
+  const saveReportTag = async () => {
+    if (!reportTagForm.label.trim()) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'warning', message: 'Nombre requerido', description: 'La etiqueta necesita un nombre visible.' } }));
+      return;
+    }
+    try {
+      if (reportTagEditing) {
+        await apiFetch(`/api/report-tags/${reportTagEditing}`, { method: 'PATCH', body: JSON.stringify(reportTagForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Etiqueta actualizada', description: 'El filtro de reporte fue actualizado.' } }));
+      } else {
+        await apiFetch('/api/report-tags', { method: 'POST', body: JSON.stringify(reportTagForm) });
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Etiqueta creada', description: 'Ya puedes asignarla a clientes y auditores.' } }));
+      }
+      setReportTagForm(emptyReportTagForm);
+      setReportTagEditing(null);
+      await loadReportTags();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
+  const editReportTag = (tag: ReportTagItem) => {
+    setReportTagForm({
+      name: tag.name,
+      label: tag.label,
+      color: tag.color || '#6366f1',
+      sortOrder: tag.sortOrder || 0,
+      isActive: tag.isActive
+    });
+    setReportTagEditing(tag.id);
+  };
+
+  const deleteReportTag = async (id: string) => {
+    if (!confirm('¿Eliminar esta etiqueta? Solo se permitirá si no está en uso.')) return;
+    try {
+      await apiFetch(`/api/report-tags/${id}`, { method: 'DELETE' });
+      await loadReportTags();
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Etiqueta eliminada', description: 'El filtro fue removido.' } }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error', description: err.message } }));
+    }
+  };
+
   useEffect(() => {
     loadPaymentMethods();
     loadBanks();
     loadAccountTypes();
+    loadReportTags();
   }, []);
 
   const costoOperativo = Math.round(Number(form.volumen_mensual) * (Number(form.tasa_costo) / 100));
@@ -787,6 +866,111 @@ export default function ConfigPage() {
         </div>
       </div>
 
+      {/* Etiquetas de reporte */}
+      <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center"><FileText className="w-5 h-5" /></div>
+            <div>
+              <h2 className="text-base md:text-lg font-extrabold text-slate-800 tracking-tight">Etiquetas de reportes</h2>
+              <p className="text-xs text-slate-400 font-medium">Filtros para clientes, operaciones y usuarios de solo lectura</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Nombre visible</label>
+                <input
+                  type="text"
+                  value={reportTagForm.label}
+                  onChange={e => setReportTagForm({ ...reportTagForm, label: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                  placeholder="Melanni"
+                />
+              </div>
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Slug opcional</label>
+                <input
+                  type="text"
+                  value={reportTagForm.name}
+                  onChange={e => setReportTagForm({ ...reportTagForm, name: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                  placeholder="melanni"
+                />
+              </div>
+              <div className="grid grid-cols-[1fr_92px] gap-3">
+                <div>
+                  <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Color</label>
+                  <input
+                    type="color"
+                    value={reportTagForm.color}
+                    onChange={e => setReportTagForm({ ...reportTagForm, color: e.target.value })}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2 py-1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Orden</label>
+                  <input
+                    type="number"
+                    value={reportTagForm.sortOrder}
+                    onChange={e => setReportTagForm({ ...reportTagForm, sortOrder: Number(e.target.value) || 0 })}
+                    className="w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={reportTagForm.isActive} onChange={e => setReportTagForm({ ...reportTagForm, isActive: e.target.checked })} className="rounded accent-indigo-600 w-4 h-4" />
+                <span className="text-sm font-semibold text-slate-700">Activa</span>
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={saveReportTag} className="flex-1 bg-cyan-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-cyan-700 transition-all btn-interactive flex items-center justify-center gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> {reportTagEditing ? 'Actualizar etiqueta' : 'Crear etiqueta'}
+              </button>
+              {reportTagEditing && (
+                <button onClick={() => { setReportTagEditing(null); setReportTagForm(emptyReportTagForm); }} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all">
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {reportTagLoading ? (
+              <div className="text-center py-8 text-slate-400 text-sm">Cargando etiquetas...</div>
+            ) : reportTags.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-sm font-medium">No hay etiquetas creadas</div>
+            ) : (
+              reportTags.map((tag) => (
+                <div key={tag.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 md:p-4 bg-slate-50 hover:bg-cyan-50/40 rounded-2xl transition-all duration-300 gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="h-10 w-10 rounded-xl border border-white shadow-sm" style={{ backgroundColor: tag.color }}></span>
+                    <div>
+                      <p className="font-bold text-slate-800 text-sm md:text-base">{tag.label}</p>
+                      <p className="text-xs text-slate-500 font-medium">{tag.name} · orden {tag.sortOrder}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${tag.isActive ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                      {tag.isActive ? 'Activa' : 'Inactiva'}
+                    </span>
+                    <button onClick={() => editReportTag(tag)} className="w-8 h-8 rounded-lg hover:bg-cyan-50 text-slate-400 hover:text-cyan-600 flex items-center justify-center transition-all" title="Editar">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => deleteReportTag(tag.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-all" title="Eliminar">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Usuarios */}
       <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
@@ -797,7 +981,7 @@ export default function ConfigPage() {
               <p className="text-xs text-slate-400 font-medium">Gestión de accesos y roles</p>
             </div>
           </div>
-          <button onClick={() => { setShowUserForm(!showUserForm); setUserEditing(null); setUserForm({ email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true }); }}
+          <button onClick={() => { setShowUserForm(!showUserForm); setUserEditing(null); setUserForm(emptyUserForm); }}
             className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 font-bold text-sm transition-all btn-interactive flex items-center gap-2">
             <Users className="w-4 h-4" /> {showUserForm ? 'Cancelar' : 'Nuevo'}
           </button>
@@ -829,7 +1013,7 @@ export default function ConfigPage() {
                   className="w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder={userEditing ? 'Dejar en blanco para no cambiar' : '••••••••'} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Rol</label>
                 <select value={userForm.role} onChange={e => setUserForm({ ...userForm, role: e.target.value })}
@@ -838,6 +1022,16 @@ export default function ConfigPage() {
                   <option value="ADMIN">Administrador</option>
                   <option value="SUPER_ADMIN">Super Admin</option>
                   <option value="AUDITOR">Auditor</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1">Etiqueta de reporte</label>
+                <select value={userForm.reportTagId} onChange={e => setUserForm({ ...userForm, reportTagId: e.target.value })}
+                  className="custom-select w-full px-3 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer">
+                  <option value="">Sin etiqueta</option>
+                  {reportTags.filter(tag => tag.isActive).map(tag => (
+                    <option key={tag.id} value={tag.id}>{tag.label}</option>
+                  ))}
                 </select>
               </div>
               <div className="flex items-center gap-3 pt-5">
@@ -852,7 +1046,7 @@ export default function ConfigPage() {
                 <Plus className="w-3.5 h-3.5" /> {userEditing ? 'Actualizar usuario' : 'Crear usuario'}
               </button>
               {userEditing && (
-                <button onClick={() => { setUserEditing(null); setUserForm({ email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true }); }} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all">
+                <button onClick={() => { setUserEditing(null); setUserForm(emptyUserForm); }} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all">
                   Limpiar
                 </button>
               )}
@@ -886,7 +1080,9 @@ export default function ConfigPage() {
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border ${color}`}>
                         {user.role}
                       </span>
-                      <p className="text-xs text-slate-400 mt-1 font-medium">{user.isActive ? 'Activo' : 'Inactivo'}</p>
+                      <p className="text-xs text-slate-400 mt-1 font-medium">
+                        {user.isActive ? 'Activo' : 'Inactivo'}{user.reportTag ? ` · ${user.reportTag.label}` : ''}
+                      </p>
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={() => editUser(user)} className="w-8 h-8 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all" title="Editar">

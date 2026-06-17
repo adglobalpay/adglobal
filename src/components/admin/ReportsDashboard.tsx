@@ -17,23 +17,15 @@ interface Transaction {
   clientId: string;
   client?: { firstName: string; lastName: string | null };
   recipient?: { name: string; bank: string };
+  reportTag?: ReportTag | null;
 }
 
-interface Client {
+interface ReportTag {
   id: string;
-  firstName: string;
-  lastName: string | null;
-  _count?: { transactions: number };
-}
-
-interface DashboardStats {
-  totalClients: number;
-  totalTransactions: number;
-  todayTransactions: number;
-  pendingKyc: number;
-  reviewOfac: number;
-  totalVolume: number;
-  pendingTransactions: number;
+  name: string;
+  label: string;
+  color: string;
+  isActive?: boolean;
 }
 
 function formatDate(d: string) {
@@ -61,8 +53,9 @@ function downloadCSV(filename: string, headers: string[], rows: (string | number
 
 export default function ReportsDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [tags, setTags] = useState<ReportTag[]>([]);
+  const [selectedReportTag, setSelectedReportTag] = useState('all');
+  const [scope, setScope] = useState<{ role: string; reportTagId: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState('mes');
@@ -93,14 +86,15 @@ export default function ReportsDashboard() {
     setLoading(true);
     setError('');
     try {
-      const [txData, clData, stData] = await Promise.all([
-        apiFetch('/api/transactions?limit=200'),
-        apiFetch('/api/clients'),
-        apiFetch('/api/stats/dashboard')
-      ]);
+      const params = new URLSearchParams({ limit: '500' });
+      if (selectedReportTag && selectedReportTag !== 'all') params.set('reportTagId', selectedReportTag);
+      const txData = await apiFetch(`/api/reports/transactions?${params.toString()}`);
       setTransactions(txData.data || []);
-      setClients(clData || []);
-      setStats(stData);
+      setTags(txData.tags || []);
+      setScope(txData.scope || null);
+      if (txData.scope?.role === 'AUDITOR' && txData.scope.reportTagId) {
+        setSelectedReportTag(txData.scope.reportTagId);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -110,7 +104,7 @@ export default function ReportsDashboard() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedReportTag]);
 
   const daysBack = getDaysBack(period);
   const cutoffDate = useMemo(() => {
@@ -131,6 +125,17 @@ export default function ReportsDashboard() {
       .filter(t => new Date(t.fecha) >= cutoffDate)
       .filter(t => !isExcludedTransactionStatus(t.estado));
   }, [transactions, cutoffDate]);
+
+  const totalClientsInScope = useMemo(() => {
+    return new Set(transactions.map(t => t.clientId).filter(Boolean)).size;
+  }, [transactions]);
+
+  const currentTag = useMemo(() => {
+    if (selectedReportTag === 'all') return null;
+    return tags.find(tag => tag.id === selectedReportTag) || null;
+  }, [selectedReportTag, tags]);
+
+  const isAuditor = scope?.role === 'AUDITOR';
 
   const reporteGeneral = useMemo(() => {
     const total = filteredTransactions.length;
@@ -174,6 +179,10 @@ export default function ReportsDashboard() {
     });
     return Object.values(map);
   }, [filteredTransactions, daysBack]);
+
+  const maxVolumen = useMemo(() => {
+    return Math.max(...transaccionesPorDia.map(d => d.volumen), 1);
+  }, [transaccionesPorDia]);
 
   const volumenPorDestino = useMemo(() => {
     const map: Record<string, number> = {};
@@ -222,10 +231,11 @@ export default function ReportsDashboard() {
   };
 
   const handleExportTabla = () => {
-    const headers = ['Fecha', 'Cliente', 'USD', 'USDT', 'Tasa', 'VES', 'Estado', 'Destinatario'];
+    const headers = ['Fecha', 'Cliente', 'Etiqueta', 'USD', 'USDT', 'Tasa', 'VES', 'Estado', 'Destinatario'];
     const rows = filteredTransactions.map(t => [
       formatDateFull(t.fecha),
       t.client ? `${t.client.firstName} ${t.client.lastName || ''}`.trim() : '',
+      t.reportTag?.label || '',
       t.ingresoUSD || 0,
       t.salidaUSDT || 0,
       t.tasa || 0,
@@ -274,8 +284,23 @@ export default function ReportsDashboard() {
             Reportes y Métricas
           </h1>
           <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Analiza el rendimiento global de las operaciones y las tendencias de volumen.</p>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-500 shadow-sm">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: currentTag?.color || '#6366f1' }}></span>
+            {currentTag ? currentTag.label : 'Todas las etiquetas'}
+          </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <select
+            value={selectedReportTag}
+            onChange={e => setSelectedReportTag(e.target.value)}
+            disabled={isAuditor}
+            className="custom-select flex-1 md:flex-none border-slate-200 bg-white text-slate-700 rounded-xl px-4 md:px-5 py-2.5 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer hover:bg-slate-50 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+          >
+            {!isAuditor && <option value="all">Todas las etiquetas</option>}
+            {tags.map(tag => (
+              <option key={tag.id} value={tag.id}>{tag.label}</option>
+            ))}
+          </select>
           <select
             value={period}
             onChange={e => setPeriod(e.target.value)}
@@ -329,7 +354,7 @@ export default function ReportsDashboard() {
           <div className="relative z-10">
             <p className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest mb-2">Clientes activos</p>
             <p className="text-3xl md:text-4xl font-extrabold text-slate-900 font-mono tracking-tight">{reporteGeneral.clientes_activos}</p>
-            <p className="text-indigo-600 text-xs font-bold mt-2 bg-indigo-50 inline-block px-2 py-1 rounded border border-indigo-100/50">de {stats?.totalClients || 0} totales</p>
+            <p className="text-indigo-600 text-xs font-bold mt-2 bg-indigo-50 inline-block px-2 py-1 rounded border border-indigo-100/50">de {totalClientsInScope} en alcance</p>
           </div>
         </div>
 
@@ -537,6 +562,7 @@ export default function ReportsDashboard() {
               <tr className="text-left text-slate-400 text-[0.65rem] font-bold uppercase tracking-wider border-b border-slate-100">
                 <th className="pb-3 md:pb-4 pl-2 md:pl-3">Fecha</th>
                 <th className="pb-3 md:pb-4">Cliente</th>
+                <th className="pb-3 md:pb-4">Etiqueta</th>
                 <th className="pb-3 md:pb-4">Monto USD</th>
                 <th className="pb-3 md:pb-4">Monto VES</th>
                 <th className="pb-3 md:pb-4">Tasa</th>
@@ -551,6 +577,16 @@ export default function ReportsDashboard() {
                   <td className="py-3 md:py-4 pl-2 md:pl-3 text-[0.8rem] text-slate-500 font-semibold">{formatDateFull(tx.fecha)}</td>
                   <td className="py-3 md:py-4 font-bold text-slate-800 text-sm md:text-[0.9rem] tracking-tight group-hover:text-indigo-600 transition-colors">
                     {tx.client ? `${tx.client.firstName} ${tx.client.lastName || ''}`.trim() : '—'}
+                  </td>
+                  <td className="py-3 md:py-4">
+                    {tx.reportTag ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[0.65rem] font-bold text-slate-600">
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tx.reportTag.color }}></span>
+                        {tx.reportTag.label}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-300">—</span>
+                    )}
                   </td>
                   <td className="py-3 md:py-4 font-mono font-bold text-emerald-600 text-sm md:text-base">${tx.ingresoUSD || 0}</td>
                   <td className="py-3 md:py-4 font-mono font-semibold text-slate-600 text-sm md:text-base">{tx.montoVES?.toLocaleString() || 0}</td>

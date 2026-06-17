@@ -25,6 +25,19 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     window.__ADGLOBAL_API_URL__ = API_URL;
   </script>
 
+  <script is:inline>
+    try {
+      const rawUser = localStorage.getItem('adglobal_user');
+      const user = rawUser ? JSON.parse(rawUser) : null;
+      const path = window.location.pathname;
+      if (user?.role === 'AUDITOR' && path !== '/admin/reportes' && !path.startsWith('/admin/reportes/')) {
+        window.location.href = '/admin/reportes';
+      }
+    } catch (_) {
+      // El guard principal de token se mantiene en el script de abajo.
+    }
+  </script>
+
   <style is:global>
     :root {
       --font-body: 'DM Sans', sans-serif;

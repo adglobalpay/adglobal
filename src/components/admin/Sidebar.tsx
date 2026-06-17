@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Users,
   FileText,
+  FileSignature,
   Settings,
   BellRing,
   MessageCircle,
@@ -113,15 +114,27 @@ export default function Sidebar() {
   useEffect(() => {
     setCurrentPath(window.location.pathname);
 
-    void loadInactiveClients();
-    void loadPendingKyc();
-
     // Load user from localStorage
     try {
       const raw = localStorage.getItem('adglobal_user');
-      if (raw) setUser(JSON.parse(raw));
+      if (raw) {
+        const parsedUser = JSON.parse(raw);
+        setUser(parsedUser);
+        if (parsedUser.role !== 'AUDITOR') {
+          void loadInactiveClients();
+          void loadPendingKyc();
+        } else {
+          setInactiveLoading(false);
+          setPendingKycLoading(false);
+        }
+      } else {
+        void loadInactiveClients();
+        void loadPendingKyc();
+      }
     } catch (e) {
       console.error('Error parsing user:', e);
+      void loadInactiveClients();
+      void loadPendingKyc();
     }
     
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -132,7 +145,7 @@ export default function Sidebar() {
       clearTimeout(timer);
       window.removeEventListener('resize', checkMobile);
     };
-  }, [loadInactiveClients]);
+  }, [loadInactiveClients, loadPendingKyc]);
 
   const handleLogout = () => {
     localStorage.removeItem('adglobal_token');
@@ -140,14 +153,18 @@ export default function Sidebar() {
     window.location.href = '/admin/login';
   };
 
-  const navItems: NavItem[] = [
+  const baseNavItems: NavItem[] = [
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
     { name: 'Clientes', path: '/admin/clientes', icon: <Users size={20} />, badge: inactiveClients.length },
     { name: 'Transacciones', path: '/admin/transacciones', icon: <BadgeDollarSign size={20} /> },
     { name: 'KYC', path: '/admin/kyc', icon: <Fingerprint size={20} />, badge: pendingKycCount },
+    { name: 'Contratos', path: '/admin/contratos', icon: <FileSignature size={20} /> },
     { name: 'Reportes', path: '/admin/reportes', icon: <FileText size={20} /> },
     { name: 'Configuración', path: '/admin/config', icon: <Settings size={20} /> },
   ];
+  const navItems = user?.role === 'AUDITOR'
+    ? baseNavItems.filter(item => item.path === '/admin/reportes')
+    : baseNavItems;
 
   const closeMobile = () => setIsMobileOpen(false);
 
@@ -269,9 +286,11 @@ export default function Sidebar() {
         </nav>
 
         {/* Capital Component */}
-        <div className="px-3 pb-2 shrink-0">
-          <CapitalOperador />
-        </div>
+        {user?.role !== 'AUDITOR' && (
+          <div className="px-3 pb-2 shrink-0">
+            <CapitalOperador />
+          </div>
+        )}
 
         {/* Notifications Panel */}
         {showNotifications && (
