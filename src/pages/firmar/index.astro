@@ -1,14 +1,7 @@
 ---
 import PublicContractSigner from '../../components/public/PublicContractSigner.tsx';
 
-export const prerender = false;
-
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
-const { token } = Astro.params;
-
-if (!token || typeof token !== 'string' || token.length < 8) {
-  return Astro.redirect('/');
-}
 ---
 
 <!DOCTYPE html>
@@ -56,7 +49,7 @@ if (!token || typeof token !== 'string' || token.length < 8) {
 </head>
 <body>
   <main class="min-h-screen px-4 pb-16 pt-6">
-    <PublicContractSigner client:load token={token} apiUrl={API_URL} />
+    <PublicContractSigner client:load apiUrl={API_URL} />
   </main>
 </body>
 </html>

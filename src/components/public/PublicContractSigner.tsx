@@ -20,11 +20,11 @@ interface InvitationData {
 }
 
 interface PublicContractSignerProps {
-  token: string;
   apiUrl: string;
 }
 
-export default function PublicContractSigner({ token, apiUrl }: PublicContractSignerProps) {
+export default function PublicContractSigner({ apiUrl }: PublicContractSignerProps) {
+  const [token, setToken] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawingRef = useRef(false);
   const hasSignatureRef = useRef(false);
@@ -128,6 +128,17 @@ export default function PublicContractSigner({ token, apiUrl }: PublicContractSi
   };
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    setToken(params.get('token') || '');
+  }, []);
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      setLoadError('Falta el token de invitacion en la URL.');
+      return;
+    }
     let mounted = true;
     (async () => {
       try {

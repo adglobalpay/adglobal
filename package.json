@@ -10,7 +10,6 @@
     "deploy": "astro build && gh-pages -d dist"
   },
   "dependencies": {
-    "@astrojs/node": "^9.5.5",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@tabler/icons-react": "^3.34.1",
