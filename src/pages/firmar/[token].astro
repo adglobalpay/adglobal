@@ -1,0 +1,62 @@
+---
+import PublicContractSigner from '../../components/public/PublicContractSigner.tsx';
+
+export const prerender = false;
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-production.up.railway.app';
+const { token } = Astro.params;
+
+if (!token || typeof token !== 'string' || token.length < 8) {
+  return Astro.redirect('/');
+}
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Firma tu contrato — AD Global Pay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="icon" href="/img/logo.webp" type="image/webp" />
+  <script is:inline define:vars={{ API_URL }}>
+    window.__ADGLOBAL_API_URL__ = API_URL;
+  </script>
+  <style>
+    :root {
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --indigo: #6366f1;
+      --indigo-light: #818cf8;
+      --indigo-dark: #4f46e5;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      font-family: var(--font-body);
+      background: linear-gradient(160deg, var(--slate-50) 0%, #f0f4ff 40%, #e8f4fd 100%);
+      min-height: 100vh;
+      color: var(--slate-800);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    pre { font-family: var(--font-body); }
+  </style>
+</head>
+<body>
+  <main class="min-h-screen px-4 pb-16 pt-6">
+    <PublicContractSigner client:load token={token} apiUrl={API_URL} />
+  </main>
+</body>
+</html>

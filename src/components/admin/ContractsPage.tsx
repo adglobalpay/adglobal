@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FileSignature, Loader2, RefreshCw, Save, ExternalLink, Search } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FileSignature, Loader2, RefreshCw, Send, FileText, Search, ExternalLink, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
+
+type InvitationStatus = 'NONE' | 'SENT' | 'SIGNED' | 'EXPIRED' | 'CANCELLED';
 
 interface Operator {
   id: string;
@@ -12,10 +14,11 @@ interface Operator {
   reportTag?: { id: string; label: string; color: string } | null;
 }
 
-interface ReportTag {
-  id: string;
-  label: string;
-  color: string;
+interface InvitationState {
+  status: InvitationStatus;
+  sentAt?: string;
+  expiresAt?: string;
+  signedAt?: string;
 }
 
 interface Contract {
@@ -43,25 +46,26 @@ AD Global Pay podra solicitar comprobantes, documentos adicionales o suspender u
 El firmante acepta la plantilla vigente, autoriza el tratamiento de sus datos operativos para ejecutar el servicio y reconoce que la firma digital registrada en este documento tiene validez como aceptacion expresa.`;
 
 export default function ContractsPage() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const drawingRef = useRef(false);
-  const hasSignatureRef = useRef(false);
   const [operators, setOperators] = useState<Operator[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [invitations, setInvitations] = useState<Record<string, InvitationState>>({});
   const [selectedOperatorId, setSelectedOperatorId] = useState('');
   const [templateName, setTemplateName] = useState('Contrato AD Global Pay');
   const [templateVersion, setTemplateVersion] = useState('v1');
   const [templateContent, setTemplateContent] = useState(emptyTemplate);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const selectedOperator = useMemo(
     () => operators.find((op) => op.id === selectedOperatorId) || null,
     [operators, selectedOperatorId]
   );
+
+  const signedOperatorIds = useMemo(() => {
+    return new Set(contracts.map((c) => c.signer.id));
+  }, [contracts]);
 
   const filteredOperators = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -78,6 +82,22 @@ export default function ContractsPage() {
     window.dispatchEvent(new CustomEvent('show-toast', { detail: { type, message, description } }));
   };
 
+  const loadInvitations = async (ops: Operator[]) => {
+    const results = await Promise.all(
+      ops.map(async (op) => {
+        try {
+          const data = await apiFetch(`/api/contracts/invitations/status/${op.id}`);
+          return [op.id, (data || { status: 'NONE' }) as InvitationState] as const;
+        } catch {
+          return [op.id, { status: 'NONE' } as InvitationState] as const;
+        }
+      })
+    );
+    const map: Record<string, InvitationState> = {};
+    for (const [id, state] of results) map[id] = state;
+    setInvitations(map);
+  };
+
   const loadData = async () => {
     setLoading(true);
     setError('');
@@ -88,7 +108,7 @@ export default function ContractsPage() {
         apiFetch('/api/contracts/template/default').catch(() => null)
       ]);
       const operatorsList = Array.isArray(usersData)
-        ? (usersData as Operator[]).filter((u) => u.role === 'OPERATOR')
+        ? (usersData as Operator[]).filter((u) => u.role === 'OPERATOR' && u.isActive)
         : [];
       setOperators(operatorsList);
       setContracts(Array.isArray(contractsData) ? contractsData : []);
@@ -97,6 +117,7 @@ export default function ContractsPage() {
         setTemplateVersion(templateData.templateVersion || 'v1');
         setTemplateContent(templateData.templateContent);
       }
+      await loadInvitations(operatorsList);
     } catch (err: any) {
       setError(err.message || 'Error cargando contratos');
     } finally {
@@ -104,122 +125,44 @@ export default function ContractsPage() {
     }
   };
 
-  const clearSignature = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    const scale = window.devicePixelRatio || 1;
-    ctx.scale(scale, scale);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, rect.width, rect.height);
-    hasSignatureRef.current = false;
-  };
-
-  const setupCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const scale = window.devicePixelRatio || 1;
-    canvas.width = Math.max(1, Math.floor(rect.width * scale));
-    canvas.height = Math.max(1, Math.floor(rect.height * scale));
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(scale, scale);
-    ctx.lineWidth = 2.2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#0f172a';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, rect.width, rect.height);
-    hasSignatureRef.current = false;
-  };
-
-  const pointerPosition = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
-  };
-
-  const startDrawing = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-    drawingRef.current = true;
-    canvas.setPointerCapture(event.pointerId);
-    const { x, y } = pointerPosition(event);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-
-  const draw = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!drawingRef.current) return;
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-    const { x, y } = pointerPosition(event);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    hasSignatureRef.current = true;
-  };
-
-  const stopDrawing = () => {
-    drawingRef.current = false;
-  };
-
-  const resetForm = () => {
-    setAcceptedTerms(false);
-    clearSignature();
-  };
-
-  const saveContract = async () => {
-    if (!selectedOperator) {
-      showToast('warning', 'Operador requerido', 'Selecciona un operador para generar el contrato.');
-      return;
-    }
-    if (!acceptedTerms || !hasSignatureRef.current) {
-      showToast('warning', 'Firma incompleta', 'Aceptacion y firma digital son obligatorias.');
-      return;
-    }
-
-    setSaving(true);
+  const sendInvitation = async (op: Operator) => {
+    setSendingId(op.id);
     try {
-      const signatureDataUrl = canvasRef.current!.toDataURL('image/png');
-      const signerName = `${selectedOperator.firstName} ${selectedOperator.lastName}`.trim();
-      const contract = await apiFetch('/api/contracts', {
+      const invitation = await apiFetch('/api/contracts/invitations', {
         method: 'POST',
         body: JSON.stringify({
-          signerId: selectedOperator.id,
+          signerId: op.id,
           templateName,
           templateVersion,
-          templateContent,
-          signerName,
-          signerEmail: selectedOperator.email,
-          signerDocument: selectedOperator.reportTag?.label || null,
-          acceptedTerms,
-          signatureDataUrl
+          templateContent
         })
       });
-      setContracts((prev) => [contract, ...prev]);
-      resetForm();
-      showToast('success', 'Contrato firmado', 'El PDF fue generado y guardado.');
+      setInvitations((prev) => ({
+        ...prev,
+        [op.id]: {
+          status: invitation.status || 'SENT',
+          sentAt: invitation.sentAt,
+          expiresAt: invitation.expiresAt
+        }
+      }));
+      showToast('success', 'Invitacion enviada', `Se envio el contrato a ${op.firstName} ${op.lastName}.`);
     } catch (err: any) {
-      showToast('error', 'Error al crear contrato', err.message);
+      showToast('error', 'No se pudo enviar', err.message);
     } finally {
-      setSaving(false);
+      setSendingId(null);
     }
+  };
+
+  const getStatus = (op: Operator): { key: 'signed' | 'sent' | 'none' | 'expired'; label: string; tone: 'green' | 'amber' | 'red' } => {
+    if (signedOperatorIds.has(op.id)) return { key: 'signed', label: 'Firmado', tone: 'green' };
+    const inv = invitations[op.id];
+    if (inv?.status === 'SENT') return { key: 'sent', label: 'Invitacion enviada', tone: 'amber' };
+    if (inv?.status === 'EXPIRED' || inv?.status === 'CANCELLED') return { key: 'expired', label: 'Sin contrato', tone: 'red' };
+    return { key: 'none', label: 'Sin contrato', tone: 'red' };
   };
 
   useEffect(() => {
     void loadData();
-  }, []);
-
-  useEffect(() => {
-    setupCanvas();
-    const onResize = () => setupCanvas();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   if (loading) {
@@ -245,7 +188,7 @@ export default function ContractsPage() {
             </span>
             Contratos
           </h1>
-          <p className="mt-2 text-sm font-medium text-slate-500 md:text-base">Firma digital de operadores, plantilla y PDF contractual.</p>
+          <p className="mt-2 text-sm font-medium text-slate-500 md:text-base">Estado de contratos por operador, invitaciones por correo y PDF contractual.</p>
         </div>
         <button onClick={loadData} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50">
           <RefreshCw className="h-4 w-4" /> Actualizar
@@ -255,8 +198,8 @@ export default function ContractsPage() {
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <section className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
           <div className="mb-4">
-            <h2 className="text-base font-extrabold text-slate-800">Operador firmante</h2>
-            <p className="text-xs font-medium text-slate-400">Busca y selecciona el operador que firma.</p>
+            <h2 className="text-base font-extrabold text-slate-800">Operadores</h2>
+            <p className="text-xs font-medium text-slate-400">Estado del contrato por operador.</p>
           </div>
           <div className="relative mb-3">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -267,32 +210,74 @@ export default function ContractsPage() {
               placeholder="Nombre, email, tag..."
             />
           </div>
-          <div className="max-h-[440px] space-y-2 overflow-y-auto pr-1">
+          <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
             {filteredOperators.map((op) => {
-              const active = selectedOperatorId === op.id;
+              const status = getStatus(op);
               const name = `${op.firstName} ${op.lastName}`.trim();
+              const isSending = sendingId === op.id;
+              const toneClasses = {
+                green: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                amber: 'bg-amber-50 text-amber-700 border-amber-200',
+                red: 'bg-rose-50 text-rose-700 border-rose-200'
+              }[status.tone];
+              const iconNode =
+                status.tone === 'green' ? <CheckCircle2 className="h-4 w-4" /> :
+                status.tone === 'amber' ? <Clock className="h-4 w-4" /> :
+                <AlertCircle className="h-4 w-4" />;
               return (
-                <button
+                <div
                   key={op.id}
-                  type="button"
-                  onClick={() => setSelectedOperatorId(op.id)}
-                  className={`w-full rounded-2xl border p-3 text-left transition-all ${
-                    active ? 'border-indigo-300 bg-indigo-50 shadow-sm' : 'border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white'
+                  className={`rounded-2xl border p-3 transition-all ${
+                    selectedOperatorId === op.id ? 'border-indigo-300 bg-indigo-50/50' : 'border-slate-100 bg-slate-50'
                   }`}
                 >
-                  <p className="text-sm font-extrabold text-slate-800">{name}</p>
-                  <p className="mt-0.5 text-xs font-semibold text-slate-500">{op.email || 'Sin email'}</p>
-                  {op.reportTag && (
-                    <span className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider ${op.reportTag.color}`}>
-                      {op.reportTag.label}
-                    </span>
-                  )}
-                </button>
+                  <div className="flex items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedOperatorId(op.id)}
+                      className="flex-1 text-left"
+                    >
+                      <p className="text-sm font-extrabold text-slate-800">{name}</p>
+                      <p className="mt-0.5 text-xs font-semibold text-slate-500">{op.email}</p>
+                      {op.reportTag && (
+                        <span className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider ${op.reportTag.color}`}>
+                          {op.reportTag.label}
+                        </span>
+                      )}
+                    </button>
+                    <div className="flex flex-col items-end gap-2">
+                      <span
+                        title={status.label}
+                        className={`inline-flex items-center justify-center rounded-full border p-1.5 ${toneClasses}`}
+                      >
+                        {iconNode}
+                      </span>
+                      {status.key !== 'signed' && (
+                        <button
+                          type="button"
+                          onClick={() => sendInvitation(op)}
+                          disabled={isSending}
+                          title="Enviar contrato por correo"
+                          className="inline-flex items-center justify-center gap-1 rounded-lg border border-indigo-200 bg-white px-2.5 py-1.5 text-[0.65rem] font-black uppercase tracking-wider text-indigo-700 transition-all hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isSending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                          {status.key === 'sent' ? 'Reenviar' : 'Enviar'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               );
             })}
             {filteredOperators.length === 0 && (
               <div className="py-8 text-center text-xs font-bold text-slate-400">No hay operadores disponibles.</div>
             )}
+          </div>
+
+          <div className="mt-4 space-y-1.5 border-t border-slate-100 pt-4 text-[0.65rem] font-bold text-slate-500">
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Verde: contrato firmado</div>
+            <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-amber-600" /> Amarillo: invitacion enviada</div>
+            <div className="flex items-center gap-2"><AlertCircle className="h-3.5 w-3.5 text-rose-600" /> Rojo: pendiente de enviar</div>
           </div>
         </section>
 
@@ -308,47 +293,46 @@ export default function ContractsPage() {
             </label>
             <label className="block sm:col-span-2">
               <span className="mb-1.5 block text-[0.65rem] font-black uppercase tracking-wider text-slate-400">Plantilla</span>
-              <textarea value={templateContent} onChange={(e) => setTemplateContent(e.target.value)} rows={9} className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-medium leading-6 text-slate-700 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" />
+              <textarea value={templateContent} onChange={(e) => setTemplateContent(e.target.value)} rows={11} className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-medium leading-6 text-slate-700 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" />
             </label>
           </div>
 
           {selectedOperator && (
             <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
-              <p className="text-[0.65rem] font-black uppercase tracking-wider text-indigo-500">Firmante</p>
+              <p className="text-[0.65rem] font-black uppercase tracking-wider text-indigo-500">Operador seleccionado</p>
               <p className="mt-1 text-base font-extrabold text-slate-800">{selectedOperator.firstName} {selectedOperator.lastName}</p>
               <p className="text-xs font-semibold text-slate-500">{selectedOperator.email}</p>
-              {selectedOperator.reportTag && (
-                <span className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider ${selectedOperator.reportTag.color}`}>
-                  {selectedOperator.reportTag.label}
-                </span>
-              )}
+              {(() => {
+                const status = getStatus(selectedOperator);
+                const toneClasses = {
+                  green: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                  amber: 'bg-amber-100 text-amber-700 border-amber-200',
+                  red: 'bg-rose-100 text-rose-700 border-rose-200'
+                }[status.tone];
+                return (
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider ${toneClasses}`}>
+                      {status.tone === 'green' ? <CheckCircle2 className="h-3 w-3" /> :
+                       status.tone === 'amber' ? <Clock className="h-3 w-3" /> :
+                       <AlertCircle className="h-3 w-3" />}
+                      {status.label}
+                    </span>
+                    {status.key !== 'signed' && (
+                      <button
+                        type="button"
+                        onClick={() => sendInvitation(selectedOperator)}
+                        disabled={sendingId === selectedOperator.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 disabled:opacity-60"
+                      >
+                        {sendingId === selectedOperator.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                        {status.key === 'sent' ? 'Reenviar invitacion' : 'Enviar invitacion'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
-
-          <div className="mt-5">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-[0.65rem] font-black uppercase tracking-wider text-slate-400">Firma digital</span>
-            </div>
-            <canvas
-              ref={canvasRef}
-              onPointerDown={startDrawing}
-              onPointerMove={draw}
-              onPointerUp={stopDrawing}
-              onPointerLeave={stopDrawing}
-              className="h-40 w-full touch-none rounded-2xl border-2 border-dashed border-slate-200 bg-white"
-            />
-          </div>
-
-          <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-slate-700">
-              <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="h-4 w-4 rounded accent-indigo-600" />
-              Acepta la plantilla y firma digitalmente
-            </label>
-            <button disabled={saving} onClick={saveContract} className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Guardar contrato
-            </button>
-          </div>
         </section>
       </div>
 
