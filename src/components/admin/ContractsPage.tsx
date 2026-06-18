@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileSignature, Loader2, RefreshCw, Send, FileText, Search, ExternalLink, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { FileSignature, Loader2, RefreshCw, Send, FileText, Search, ExternalLink, CheckCircle2, Clock, AlertCircle, X } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
 type InvitationStatus = 'NONE' | 'SENT' | 'SIGNED' | 'EXPIRED' | 'CANCELLED';
@@ -57,6 +57,7 @@ export default function ContractsPage() {
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [previewContract, setPreviewContract] = useState<Contract | null>(null);
 
   const selectedOperator = useMemo(
     () => operators.find((op) => op.id === selectedOperatorId) || null,
@@ -246,12 +247,26 @@ export default function ContractsPage() {
                       )}
                     </button>
                     <div className="flex flex-col items-end gap-2">
-                      <span
-                        title={status.label}
-                        className={`inline-flex items-center justify-center rounded-full border p-1.5 ${toneClasses}`}
-                      >
-                        {iconNode}
-                      </span>
+                      {status.key === 'signed' ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const c = contracts.find((ct) => ct.signer.id === op.id);
+                            if (c) setPreviewContract(c);
+                          }}
+                          title={status.label}
+                          className={`inline-flex items-center justify-center rounded-full border p-1.5 transition-all hover:scale-110 ${toneClasses}`}
+                        >
+                          {iconNode}
+                        </button>
+                      ) : (
+                        <span
+                          title={status.label}
+                          className={`inline-flex items-center justify-center rounded-full border p-1.5 ${toneClasses}`}
+                        >
+                          {iconNode}
+                        </span>
+                      )}
                       {status.key !== 'signed' && (
                         <button
                           type="button"
@@ -384,6 +399,50 @@ export default function ContractsPage() {
           )}
         </div>
       </section>
+
+      {previewContract && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4" onClick={() => setPreviewContract(null)}>
+          <div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <header className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div>
+                <p className="text-[0.65rem] font-black uppercase tracking-wider text-slate-400">{previewContract.templateName} · {previewContract.templateVersion}</p>
+                <h3 className="text-lg font-extrabold text-slate-800">{previewContract.signer.firstName} {previewContract.signer.lastName}</h3>
+                <p className="text-xs font-semibold text-slate-500">Firmado el {new Date(previewContract.signedAt).toLocaleString('es-ES')}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {previewContract.pdfUrl && (
+                  <a
+                    href={previewContract.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100"
+                  >
+                    Abrir en nueva pestaña <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPreviewContract(null)}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-50"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </header>
+            <div className="flex-1 bg-slate-100">
+              {previewContract.pdfUrl ? (
+                <iframe
+                  src={previewContract.pdfUrl}
+                  title="Contrato firmado"
+                  className="h-full w-full"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">PDF no disponible todavia.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
