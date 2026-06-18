@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, AlertTriangle, FileSignature, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, FileSignature, Loader2, Upload, X } from 'lucide-react';
 
 interface InvitationData {
   id: string;
@@ -23,7 +23,15 @@ interface PublicContractSignerProps {
   apiUrl: string;
 }
 
+interface UploadedDoc {
+  dataUrl: string;
+  preview: string;
+}
+
 export default function PublicContractSigner({ apiUrl }: PublicContractSignerProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawingRef = useRef(false);
+  const hasSignatureRef = useRef(false);
   const [token] = useState<string>(() => {
     if (typeof window === 'undefined') return '';
     const params = new URLSearchParams(window.location.search);
@@ -33,12 +41,14 @@ export default function PublicContractSigner({ apiUrl }: PublicContractSignerPro
     const last = segments[segments.length - 1];
     return last && last !== 'firmar' ? last : '';
   });
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const drawingRef = useRef(false);
-  const hasSignatureRef = useRef(false);
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [documentId, setDocumentId] = useState('');
+  const [idFront, setIdFront] = useState<UploadedDoc | null>(null);
+  const [idBack, setIdBack] = useState<UploadedDoc | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -108,20 +118,85 @@ export default function PublicContractSigner({ apiUrl }: PublicContractSignerPro
     drawingRef.current = false;
   };
 
+  const fileToDataUrl = (file: File): Promise<UploadedDoc> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result || '');
+        resolve({ dataUrl, preview: dataUrl });
+      };
+      reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+      reader.readAsDataURL(file);
+    });
+
+  const onFileChange = async (event: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setSubmitError('Solo se permiten imagenes.');
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      setSubmitError('La imagen supera 6MB.');
+      return;
+    }
+    setSubmitError('');
+    try {
+      const doc = await fileToDataUrl(file);
+      if (side === 'front') setIdFront(doc);
+      else setIdBack(doc);
+    } catch (err: any) {
+      setSubmitError(err.message || 'Error al cargar la imagen');
+    }
+  };
+
+  const uploadDoc = async (dataUrl: string, side: 'id_front' | 'id_back'): Promise<string> => {
+    const resp = await fetch(`${apiUrl.replace(/\/$/, '')}/api/contracts/invitations/upload-document`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, side, dataUrl })
+    });
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.error || `Error ${resp.status} al subir ${side}`);
+    }
+    const data = await resp.json();
+    return data.url as string;
+  };
+
   const submit = async () => {
     if (!invitation) return;
+    if (!firstName.trim() || !lastName.trim() || !documentId.trim()) {
+      setSubmitError('Completa nombre, apellido y documento.');
+      return;
+    }
+    if (!idFront || !idBack) {
+      setSubmitError('Sube las dos fotos de tu documento (frente y reverso).');
+      return;
+    }
     if (!acceptedTerms || !hasSignatureRef.current) {
-      setSubmitError('Debes aceptar los terminos y firmar antes de enviar.');
+      setSubmitError('Acepta los terminos y firma antes de enviar.');
       return;
     }
     setSubmitting(true);
     setSubmitError('');
     try {
+      const idFrontUrl = await uploadDoc(idFront.dataUrl, 'id_front');
+      const idBackUrl = await uploadDoc(idBack.dataUrl, 'id_back');
       const signatureDataUrl = canvasRef.current!.toDataURL('image/png');
       const resp = await fetch(`${apiUrl.replace(/\/$/, '')}/api/contracts/invitations/sign-by-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, signatureDataUrl, acceptedTerms: true })
+        body: JSON.stringify({
+          token,
+          signatureDataUrl,
+          acceptedTerms: true,
+          signerFirstName: firstName.trim(),
+          signerLastName: lastName.trim(),
+          signerDocumentId: documentId.trim(),
+          idFrontUrl,
+          idBackUrl
+        })
       });
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
@@ -150,7 +225,11 @@ export default function PublicContractSigner({ apiUrl }: PublicContractSignerPro
           throw new Error(data.error || `Error ${resp.status}`);
         }
         const data = (await resp.json()) as InvitationData;
-        if (mounted) setInvitation(data);
+        if (mounted) {
+          setInvitation(data);
+          setFirstName(data.signer.firstName || '');
+          setLastName(data.signer.lastName || '');
+        }
       } catch (err: any) {
         if (mounted) setLoadError(err.message || 'No se pudo cargar la invitacion');
       } finally {
@@ -194,7 +273,7 @@ export default function PublicContractSigner({ apiUrl }: PublicContractSignerPro
         <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" />
         <h1 className="mt-4 text-2xl font-extrabold text-emerald-700">Contrato firmado</h1>
         <p className="mt-2 text-sm text-emerald-700">
-          Gracias, {invitation.signer.firstName}. Hemos registrado tu firma digital exitosamente. Te enviamos una copia del PDF a {invitation.signer.email}.
+          Gracias, {invitation.signer.firstName}. Hemos registrado tu firma y tus documentos de identidad. Te enviamos una copia del PDF a {invitation.signer.email}.
         </p>
       </div>
     );
@@ -213,6 +292,38 @@ export default function PublicContractSigner({ apiUrl }: PublicContractSignerPro
   }
 
   const expiresDate = new Date(invitation.expiresAt).toLocaleString('es-ES');
+  const UploadSlot = ({ side, label, value }: { side: 'front' | 'back'; label: string; value: UploadedDoc | null }) => (
+    <label className="group relative flex h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+      {value ? (
+        <>
+          <img src={value.preview} alt={label} className="h-full w-full object-contain" />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              if (side === 'front') setIdFront(null); else setIdBack(null);
+            }}
+            className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-rose-600 shadow hover:bg-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <span className="absolute bottom-2 left-2 rounded-md bg-white/90 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider text-slate-700 shadow">{label}</span>
+        </>
+      ) : (
+        <>
+          <Upload className="h-6 w-6 text-slate-400 group-hover:text-indigo-600" />
+          <span className="mt-2 text-xs font-bold text-slate-500 group-hover:text-indigo-700">{label}</span>
+          <span className="mt-0.5 text-[0.65rem] font-semibold text-slate-400">PNG, JPG hasta 6MB</span>
+        </>
+      )}
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => onFileChange(e, side)}
+      />
+    </label>
+  );
 
   return (
     <div className="mx-auto mt-8 max-w-3xl space-y-6">
@@ -233,7 +344,33 @@ export default function PublicContractSigner({ apiUrl }: PublicContractSignerPro
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-[0.65rem] font-black uppercase tracking-wider text-slate-400">{invitation.templateName} · {invitation.templateVersion}</p>
-        <pre className="mt-3 max-h-72 overflow-y-auto whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">{invitation.templateContent}</pre>
+        <pre className="mt-3 max-h-60 overflow-y-auto whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">{invitation.templateContent}</pre>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="mb-3 text-[0.65rem] font-black uppercase tracking-wider text-slate-400">Datos del firmante</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wider text-slate-500">Nombre</span>
+            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wider text-slate-500">Apellido</span>
+            <input value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wider text-slate-500">Cedula / Documento de identidad</span>
+            <input value={documentId} onChange={(e) => setDocumentId(e.target.value)} placeholder="Ej. V-12345678" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" />
+          </label>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="mb-3 text-[0.65rem] font-black uppercase tracking-wider text-slate-400">Documento de identidad (cedula)</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <UploadSlot side="front" label="Frente" value={idFront} />
+          <UploadSlot side="back" label="Reverso" value={idBack} />
+        </div>
       </section>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
