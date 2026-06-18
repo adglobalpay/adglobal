@@ -58,6 +58,7 @@ export default function ContractsPage() {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [previewContract, setPreviewContract] = useState<Contract | null>(null);
+  const apiBaseUrl = (typeof window !== 'undefined' && (window as any).__ADGLOBAL_API_URL__) || '';
 
   const selectedOperator = useMemo(
     () => operators.find((op) => op.id === selectedOperatorId) || null,
@@ -383,7 +384,7 @@ export default function ContractsPage() {
                   </td>
                   <td className="py-3 text-right">
                     {contract.pdfUrl ? (
-                      <a href={contract.pdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100">
+                      <a href={`${apiBaseUrl.replace(/\/$/, '')}/api/contracts/pdf/public/${contract.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100">
                         Abrir <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     ) : (
@@ -412,7 +413,7 @@ export default function ContractsPage() {
               <div className="flex items-center gap-2">
                 {previewContract.pdfUrl && (
                   <a
-                    href={previewContract.pdfUrl}
+                    href={`${apiBaseUrl.replace(/\/$/, '')}/api/contracts/pdf/public/${previewContract.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100"
@@ -432,7 +433,7 @@ export default function ContractsPage() {
             <div className="flex-1 bg-slate-100">
               {previewContract.pdfUrl ? (
                 <iframe
-                  src={previewContract.pdfUrl}
+                  src={`${apiBaseUrl.replace(/\/$/, '')}/api/contracts/pdf/public/${previewContract.id}`}
                   title="Contrato firmado"
                   className="h-full w-full"
                 />
