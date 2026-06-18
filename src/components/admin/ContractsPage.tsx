@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FileSignature, Loader2, RefreshCw, Send, FileText, Search, ExternalLink, CheckCircle2, Clock, AlertCircle, X } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
@@ -401,8 +402,8 @@ export default function ContractsPage() {
         </div>
       </section>
 
-      {previewContract && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4" onClick={() => setPreviewContract(null)}>
+      {previewContract && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/70 p-4" onClick={() => setPreviewContract(null)}>
           <div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <header className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <div>
@@ -442,7 +443,8 @@ export default function ContractsPage() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
