@@ -24,7 +24,15 @@ interface PublicContractSignerProps {
 }
 
 export default function PublicContractSigner({ apiUrl }: PublicContractSignerProps) {
-  const [token, setToken] = useState<string>('');
+  const [token] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    const params = new URLSearchParams(window.location.search);
+    const queryToken = params.get('token');
+    if (queryToken) return queryToken;
+    const segments = window.location.pathname.split('/').filter(Boolean);
+    const last = segments[segments.length - 1];
+    return last && last !== 'firmar' ? last : '';
+  });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawingRef = useRef(false);
   const hasSignatureRef = useRef(false);
@@ -126,19 +134,6 @@ export default function PublicContractSigner({ apiUrl }: PublicContractSignerPro
       setSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const queryToken = params.get('token');
-    if (queryToken) {
-      setToken(queryToken);
-      return;
-    }
-    const segments = window.location.pathname.split('/').filter(Boolean);
-    const last = segments[segments.length - 1];
-    setToken(last && last !== 'firmar' ? last : '');
-  }, []);
 
   useEffect(() => {
     if (!token) {
