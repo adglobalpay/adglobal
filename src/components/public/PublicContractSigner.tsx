@@ -130,7 +130,14 @@ export default function PublicContractSigner({ apiUrl }: PublicContractSignerPro
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
-    setToken(params.get('token') || '');
+    const queryToken = params.get('token');
+    if (queryToken) {
+      setToken(queryToken);
+      return;
+    }
+    const segments = window.location.pathname.split('/').filter(Boolean);
+    const last = segments[segments.length - 1];
+    setToken(last && last !== 'firmar' ? last : '');
   }, []);
 
   useEffect(() => {
