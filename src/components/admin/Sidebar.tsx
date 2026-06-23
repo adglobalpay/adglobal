@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import CapitalOperador from './CapitalOperador';
-import { apiFetch } from '../../lib/auth';
+import { apiFetch, isReadOnlyUser } from '../../lib/auth';
 import {
   LayoutDashboard,
   Users,
@@ -120,7 +120,7 @@ export default function Sidebar() {
       if (raw) {
         const parsedUser = JSON.parse(raw);
         setUser(parsedUser);
-        if (parsedUser.role !== 'AUDITOR') {
+        if (!isReadOnlyUser(parsedUser)) {
           void loadInactiveClients();
           void loadPendingKyc();
         } else {
@@ -162,7 +162,7 @@ export default function Sidebar() {
     { name: 'Reportes', path: '/admin/reportes', icon: <FileText size={20} /> },
     { name: 'Configuración', path: '/admin/config', icon: <Settings size={20} /> },
   ];
-  const navItems = user?.role === 'AUDITOR'
+  const navItems = isReadOnlyUser(user)
     ? baseNavItems.filter(item => item.path === '/admin/reportes')
     : baseNavItems;
 
@@ -286,7 +286,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Capital Component */}
-        {user?.role !== 'AUDITOR' && (
+        {!isReadOnlyUser(user) && (
           <div className="px-3 pb-2 shrink-0">
             <CapitalOperador />
           </div>

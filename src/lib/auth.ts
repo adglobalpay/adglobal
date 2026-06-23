@@ -8,6 +8,14 @@ export interface User {
   firstName: string;
   lastName: string;
   role: string;
+  reportTagId?: string | null;
+  readOnly?: boolean;
+}
+
+export function isReadOnlyUser(user: User | null | undefined): boolean {
+  if (!user) return false;
+  if (user.readOnly === true) return true;
+  return user.role === 'AUDITOR';
 }
 
 export function getToken(): string | null {

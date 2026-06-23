@@ -15,6 +15,7 @@ interface SystemUser {
   isActive: boolean;
   reportTagId?: string | null;
   reportTag?: ReportTagItem | null;
+  readOnly?: boolean;
   createdAt: string;
 }
 
@@ -59,7 +60,7 @@ interface ReportTagItem {
   isActive: boolean;
 }
 
-const emptyUserForm = { email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true, reportTagId: '' };
+const emptyUserForm = { email: '', password: '', firstName: '', lastName: '', role: 'OPERATOR', isActive: true, readOnly: false, reportTagId: '' };
 const emptyReportTagForm = { name: '', label: '', color: '#6366f1', sortOrder: 0, isActive: true };
 
 export default function ConfigPage() {
@@ -495,7 +496,7 @@ export default function ConfigPage() {
   };
 
   const editUser = (user: SystemUser) => {
-    setUserForm({ email: user.email, password: '', firstName: user.firstName, lastName: user.lastName || '', role: user.role, isActive: user.isActive, reportTagId: user.reportTagId || '' });
+    setUserForm({ email: user.email, password: '', firstName: user.firstName, lastName: user.lastName || '', role: user.role, isActive: user.isActive, readOnly: !!user.readOnly, reportTagId: user.reportTagId || '' });
     setUserEditing(user.id);
     setShowUserForm(true);
   };
@@ -1034,10 +1035,14 @@ export default function ConfigPage() {
                   ))}
                 </select>
               </div>
-              <div className="flex items-center gap-3 pt-5">
+              <div className="flex flex-col gap-2 pt-1">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={userForm.isActive} onChange={e => setUserForm({ ...userForm, isActive: e.target.checked })} className="rounded accent-indigo-600 w-4 h-4" />
                   <span className="text-sm font-semibold text-slate-700">Activo</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-amber-50 border border-amber-200">
+                  <input type="checkbox" checked={userForm.readOnly} onChange={e => setUserForm({ ...userForm, readOnly: e.target.checked })} className="rounded accent-amber-600 w-4 h-4" />
+                  <span className="text-sm font-semibold text-amber-800">Solo lectura (acceso solo a Reportes)</span>
                 </label>
               </div>
             </div>
@@ -1064,6 +1069,7 @@ export default function ConfigPage() {
               const color = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'
                 ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
                 : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+              const isReadOnly = !!user.readOnly || user.role === 'AUDITOR';
               return (
                 <div key={user.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 md:p-4 bg-slate-50 hover:bg-indigo-50/30 rounded-2xl transition-all duration-300 group cursor-pointer hover:shadow-sm gap-3 sm:gap-0" style={{ animationDelay: `${idx * 60}ms` }}>
                   <div className="flex items-center gap-3 md:gap-4">
@@ -1077,9 +1083,16 @@ export default function ConfigPage() {
                   </div>
                   <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                     <div className="text-left sm:text-right">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${color}`}>
-                        {user.role}
-                      </span>
+                      <div className="flex flex-wrap items-center justify-start sm:justify-end gap-1.5">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${color}`}>
+                          {user.role}
+                        </span>
+                        {isReadOnly && (
+                          <span className="px-2.5 py-1 rounded-full text-[0.65rem] font-extrabold uppercase tracking-wider border bg-amber-100 text-amber-800 border-amber-200">
+                            Solo lectura
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-400 mt-1 font-medium">
                         {user.isActive ? 'Activo' : 'Inactivo'}{user.reportTag ? ` · ${user.reportTag.label}` : ''}
                       </p>
