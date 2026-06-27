@@ -900,6 +900,10 @@ import {
     return String(value || '').trim().toLowerCase() === 'binance';
   }
 
+  function metodoEsEfectivo(value) {
+    return normalizeSearchValue(value) === 'efectivo';
+  }
+
   // ===================== CARGA INICIAL =====================
   document.addEventListener('DOMContentLoaded', async function() {
     await cargarClientes();
@@ -1198,6 +1202,7 @@ import {
         var salida = parseFloat(detalle.salida) || 0;
         var requiereTasa = !bancoEsBinance(detalle.banco);
         var tasa = requiereTasa ? (parseFloat(detalle.tasa) || 0) : 0;
+        var permiteTasaCero = metodoEsEfectivo(detalle.metodo);
         var vesManual = detalle.ves === undefined || detalle.ves === null ? '' : String(detalle.ves).trim();
         var vesManualNumero = vesManual === '' ? null : parseFloat(vesManual);
         var nombreDestino = destinatario.nombre || ('Destinatario ' + (idx + 1));
@@ -1205,7 +1210,8 @@ import {
         if (!detalle.metodo) { showToast('warning', 'Falta método', 'Selecciona un método para ' + nombreDestino + '.'); return; }
         if (!detalle.banco) { showToast('warning', 'Falta banco', 'Selecciona un banco para ' + nombreDestino + '.'); return; }
         if (salida <= 0) { showToast('warning', 'Monto inválido', 'La salida de ' + nombreDestino + ' debe ser mayor a 0.'); return; }
-        if (requiereTasa && tasa <= 0) { showToast('warning', 'Tasa inválida', 'La tasa de ' + nombreDestino + ' debe ser mayor a 0.'); return; }
+        if (requiereTasa && tasa < 0) { showToast('warning', 'Tasa inválida', 'La tasa de ' + nombreDestino + ' debe ser 0 o mayor.'); return; }
+        if (requiereTasa && !permiteTasaCero && tasa <= 0) { showToast('warning', 'Tasa inválida', 'La tasa de ' + nombreDestino + ' debe ser mayor a 0.'); return; }
         if (vesManual !== '' && (isNaN(vesManualNumero) || vesManualNumero < 0)) { showToast('warning', 'VES inválido', 'El monto VES de ' + nombreDestino + ' debe ser 0 o mayor.'); return; }
 
         detalle.salida = salida;
@@ -1494,7 +1500,7 @@ import {
           '</div>' +
           '<div class="' + (esBinance ? 'hidden' : '') + '">' +
             '<label class="block text-[0.7rem] font-black uppercase tracking-wider text-slate-400 mb-2">Tasa (VES) *</label>' +
-            '<input type="number" step="0.01" value="' + escapeHtml(detalle.tasa) + '" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="actualizarDetalleDestinatario(\'' + safeId + '\', \'tasa\', this.value)" />' +
+            '<input type="number" step="0.01" min="0" value="' + escapeHtml(detalle.tasa) + '" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl text-sm font-bold font-mono focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" oninput="actualizarDetalleDestinatario(\'' + safeId + '\', \'tasa\', this.value)" />' +
           '</div>' +
         '</div>' +
         '<div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.92)_0%,rgba(241,245,249,0.98)_100%)] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_28px_-24px_rgba(15,23,42,0.25)]">' +
