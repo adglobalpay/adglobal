@@ -30,7 +30,9 @@ interface Transaction {
   tasa: number;
   estado: string;
   metodo: string;
+  profitUSD: number | null;
   recipient: { name: string } | null;
+  reportTag: ReportTag | null;
 }
 
 interface KycDocument {
@@ -626,7 +628,12 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
 
   const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName;
   const transaccionesValidas = client.transactions.filter(t => !isExcludedTransactionStatus(t.estado));
-  const totalUsd = transaccionesValidas.reduce((sum, t) => sum + Number(t.ingresoUSD || 0), 0);
+  const transaccionesPorEtiqueta = client.reportTagId
+    ? transaccionesValidas.filter(t => t.reportTag?.id === client.reportTagId)
+    : transaccionesValidas;
+  const operacionesPorEtiqueta = transaccionesPorEtiqueta.length;
+  const ingresoPorEtiqueta = transaccionesPorEtiqueta.reduce((sum, t) => sum + Number(t.ingresoUSD || 0), 0);
+  const profitPorEtiqueta = transaccionesPorEtiqueta.reduce((sum, t) => sum + Number(t.profitUSD || 0), 0);
   const totalTx = client._count?.transactions ?? client.transactions.length;
   const totalRecipients = client._count?.recipients ?? client.recipients.length;
   const levelInfo = getLevelInfo(totalTx);
@@ -782,10 +789,12 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 anim-fade-in-up stagger-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 anim-fade-in-up stagger-3">
           {[
             { label: 'Transacciones', value: totalTx.toString(), icon: <FileText className="w-5 h-5" />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-            { label: 'Total enviado', value: `$${totalUsd.toLocaleString()}`, icon: <Wallet className="w-5 h-5" />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'Operaciones', value: operacionesPorEtiqueta.toString(), icon: <FileText className="w-5 h-5" />, color: 'text-sky-600', bg: 'bg-sky-50' },
+            { label: 'Ingreso', value: `$${ingresoPorEtiqueta.toLocaleString()}`, icon: <Wallet className="w-5 h-5" />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'Profit', value: `$${profitPorEtiqueta.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: <Wallet className="w-5 h-5" />, color: 'text-violet-600', bg: 'bg-violet-50' },
             { label: 'Destinatarios', value: totalRecipients.toString(), icon: <UserPlus className="w-5 h-5" />, color: 'text-cyan-600', bg: 'bg-cyan-50' },
             { label: 'Referidos', value: (client._count?.referrals || client.referrals.length).toString(), icon: <ArrowRight className="w-5 h-5" />, color: 'text-amber-600', bg: 'bg-amber-50' }
           ].map((stat, i) => (
@@ -1105,7 +1114,11 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
             <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><FileText className="w-5 h-5" /></div>
             <div>
               <h2 className="text-base md:text-lg font-bold text-slate-800">Historial de transacciones</h2>
-              <p className="text-xs text-slate-400 font-medium">{totalTx} envíos registrados</p>
+              <p className="text-xs text-slate-400 font-medium">
+                {client.reportTag
+                  ? `${transaccionesPorEtiqueta.length} operaciones bajo la etiqueta ${client.reportTag.label}`
+                  : `${totalTx} envíos registrados`}
+              </p>
             </div>
           </div>
           <a href={`/admin/transacciones?cliente=${client.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-all">
@@ -1126,7 +1139,16 @@ export default function ClientDetailPage({ clientId: clientIdProp }: { clientId:
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {client.transactions.map((tx, idx) => {
+              {transaccionesPorEtiqueta.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-sm text-slate-400 font-medium">
+                    {client.reportTag
+                      ? `No hay operaciones registradas bajo la etiqueta ${client.reportTag.label}.`
+                      : 'No hay operaciones registradas.'}
+                  </td>
+                </tr>
+              )}
+              {transaccionesPorEtiqueta.map((tx, idx) => {
                 const normalizedStatus = normalizeTransactionStatus(tx.estado);
                 const txCfg = TX_ESTADO_MAP[normalizedStatus] || TX_ESTADO_MAP.PENDING;
                 return (
