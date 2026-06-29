@@ -12,7 +12,7 @@ interface Transaction {
   montoVES: number;
   estado: string;
   clientId: string;
-  client?: { firstName: string; lastName: string | null };
+  client?: { firstName: string; lastName: string | null; reportTag?: ReportTag | null };
   recipient?: { name: string; bank: string };
   reportTag?: ReportTag | null;
 }
@@ -29,6 +29,10 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+function getEffectiveReportTag(tx: Transaction) {
+  return tx.reportTag || tx.client?.reportTag || null;
+}
+
 export default function ReportsDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tags, setTags] = useState<ReportTag[]>([]);
@@ -42,12 +46,14 @@ export default function ReportsDashboard() {
       setLoading(true);
       setError('');
       try {
+        const params = new URLSearchParams({ limit: '5000' });
+        if (selectedReportTag !== 'all') params.set('reportTagId', selectedReportTag);
         const [txData, tagsData] = await Promise.all([
-          apiFetch('/api/transactions'),
+          apiFetch(`/api/reports/transactions?${params.toString()}`),
           apiFetch('/api/report-tags').catch(() => [])
         ]);
         if (!mounted) return;
-        setTransactions(Array.isArray(txData) ? txData : []);
+        setTransactions(Array.isArray(txData?.data) ? txData.data : Array.isArray(txData) ? txData : []);
         setTags(Array.isArray(tagsData) ? tagsData.filter((t: ReportTag) => t.isActive !== false) : []);
       } catch (err: any) {
         if (mounted) setError(err.message || 'Error cargando operaciones');
@@ -56,12 +62,11 @@ export default function ReportsDashboard() {
       }
     })();
     return () => { mounted = false; };
-  }, []);
+  }, [selectedReportTag]);
 
   const filtered = useMemo(() => {
-    if (selectedReportTag === 'all') return transactions;
-    return transactions.filter((tx) => tx.reportTag?.id === selectedReportTag);
-  }, [transactions, selectedReportTag]);
+    return transactions;
+  }, [transactions]);
 
   const totals = useMemo(() => {
     const valid = filtered.filter((tx) => !isExcludedTransactionStatus(tx.estado));
@@ -152,6 +157,7 @@ export default function ReportsDashboard() {
               {filtered.map((tx) => {
                 const clientName = tx.client ? `${tx.client.firstName} ${tx.client.lastName || ''}`.trim() : '-';
                 const recipientName = tx.recipient?.name || '-';
+                const reportTag = getEffectiveReportTag(tx);
                 return (
                   <tr key={tx.id} className="text-sm">
                     <td className="px-4 py-3 font-semibold text-slate-600">{formatDate(tx.fecha)}</td>
@@ -163,9 +169,9 @@ export default function ReportsDashboard() {
                     <td className="px-4 py-3 text-right font-mono text-slate-500">{(Number(tx.montoVES) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td className="px-4 py-3 font-bold text-slate-700">{normalizeTransactionStatus(tx.estado)}</td>
                     <td className="px-4 py-3">
-                      {tx.reportTag ? (
-                        <span className={`inline-flex rounded-md border px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider ${tx.reportTag.color}`}>
-                          {tx.reportTag.label}
+                      {reportTag ? (
+                        <span className={`inline-flex rounded-md border px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider ${reportTag.color}`}>
+                          {reportTag.label}
                         </span>
                       ) : (
                         <span className="text-xs font-bold text-slate-300">Sin tag</span>

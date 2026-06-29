@@ -203,13 +203,11 @@ export default function DashboardContent() {
       return txDate.getFullYear() === now.getFullYear() && txDate.getMonth() === now.getMonth();
     });
 
-    const txsCompleted = txsValidas.filter((transaction) => transaction.estado === 'COMPLETED');
     const volumen = txsValidas.reduce((sum, transaction) => sum + Number(transaction.ingresoUSD || 0), 0);
     const costoOperativo = volumen * (tasaCosto / 100);
-    const profitGlobalBruto = txsCompleted.reduce((sum, transaction) => {
+    const profitGlobal = txsValidas.reduce((sum, transaction) => {
       return sum + getTransactionProfit(transaction);
     }, 0);
-    const profitGlobal = profitGlobalBruto - costoOperativo;
     const profitOperador = profitGlobal * (porcentaje / 100);
     const restantePorcentaje = Math.max(0, 100 - porcentaje);
     const restanteGlobal = profitGlobal - profitOperador;
@@ -218,16 +216,15 @@ export default function DashboardContent() {
 
   const chartData = useMemo<ActivityChartPoint[]>(() => {
     const now = new Date();
-    const costRate = Number(stats?.costRate || 0);
     const validTransactions = allTransactions.filter((transaction) => !isExcludedTransactionStatus(transaction.estado));
     const buildPoint = (label: string, transactions: Transaction[]) => {
       const volumen = transactions.reduce((sum, transaction) => sum + Number(transaction.ingresoUSD || 0), 0);
-      const profitBruto = transactions.reduce((sum, transaction) => sum + getTransactionProfit(transaction), 0);
+      const profit = transactions.reduce((sum, transaction) => sum + getTransactionProfit(transaction), 0);
       return {
         label,
         cantidad: transactions.length,
         volumen,
-        profit: profitBruto - (volumen * (costRate / 100))
+        profit
       };
     };
 

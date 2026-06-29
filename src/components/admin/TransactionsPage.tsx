@@ -51,8 +51,18 @@ interface TransactionsCacheEntry {
   cachedAt: number;
 }
 
+interface TransactionSummary {
+  validCount: number;
+  totalIngreso: number;
+  totalSalida: number;
+  promedioTasa: number;
+  promedioMonto: number;
+  pendientes: number;
+  profitGlobal: number;
+}
+
 function getTransactionsCacheKey(clienteFilter: string) {
-  return `adglobal_transactions_cache:${clienteFilter || 'all'}`;
+  return `adglobal_transactions_cache_v2:${clienteFilter || 'all'}`;
 }
 
 function readTransactionsCache(clienteFilter: string): TransactionsCacheEntry | null {
@@ -126,6 +136,32 @@ function formatMethod(method: string) {
     .join(' ');
 }
 
+function getPeriodRange(period: string) {
+  const now = new Date();
+
+  if (period === 'all') return null;
+  if (period === 'month') {
+    return {
+      start: new Date(now.getFullYear(), now.getMonth(), 1),
+      end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+    };
+  }
+  if (period === 'last_month') {
+    return {
+      start: new Date(now.getFullYear(), now.getMonth() - 1, 1),
+      end: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+    };
+  }
+
+  const days = Math.max(1, parseInt(period, 10) || 1);
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (days - 1));
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
+
 function getMultipleGroupLabel(tx: Transaction) {
   if (!tx.multipleGroup?.isMultiple) return null;
   const part = tx.multipleGroup.index ? `${tx.multipleGroup.index}/${tx.multipleGroup.count}` : `${tx.multipleGroup.count} tx`;
@@ -165,13 +201,13 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(() => !initialCache);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [summary, setSummary] = useState<TransactionSummary | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
   const [periodoFilter, setPeriodoFilter] = useState('month');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [costRate, setCostRate] = useState(2.9);
 
   const loadData = useCallback(async (options: { showLoader?: boolean; resetPage?: boolean } = {}) => {
     const { showLoader = true, resetPage = true } = options;
@@ -182,7 +218,7 @@ export default function TransactionsPage() {
     }
     setError('');
     try {
-      let url = '/api/transactions?limit=500';
+      let url = '/api/transactions?limit=5000';
       if (clienteFilter) url += '&cliente=' + encodeURIComponent(clienteFilter);
       const data = await apiFetch(url);
       const nextTransactions = data.data || [];
@@ -203,19 +239,29 @@ export default function TransactionsPage() {
     }
   }, [clienteFilter]);
 
+  const loadSummary = useCallback(async () => {
+    setSummary(null);
+    try {
+      const params = new URLSearchParams();
+      params.set('periodo', periodoFilter);
+      if (clienteFilter) params.set('cliente', clienteFilter);
+      if (estadoFilter) params.set('estado', estadoFilter);
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      const data = await apiFetch(`/api/transactions/summary?${params.toString()}`);
+      setSummary(data);
+    } catch {
+      setSummary(null);
+    }
+  }, [clienteFilter, estadoFilter, periodoFilter, searchQuery]);
+
   useEffect(() => {
     if (hasFreshInitialCache) return;
     loadData({ showLoader: !initialCache, resetPage: false });
   }, [hasFreshInitialCache, initialCache, loadData]);
 
   useEffect(() => {
-    apiFetch('/api/config')
-      .then((config: any) => {
-        const rate = parseFloat(config['profit.tasa_costo']);
-        if (!isNaN(rate)) setCostRate(rate);
-      })
-      .catch(() => {});
-  }, []);
+    loadSummary();
+  }, [loadSummary]);
 
   const filtered = useMemo(() => {
     let result = [...transactions];
@@ -226,26 +272,12 @@ export default function TransactionsPage() {
 
     // Filtro de período
     if (periodoFilter !== 'all') {
-      const now = new Date();
-      if (periodoFilter === 'month') {
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      const range = getPeriodRange(periodoFilter);
+      if (range) {
         result = result.filter(t => {
           const d = new Date(t.fecha);
-          return d >= monthStart && d <= monthEnd;
+          return d >= range.start && d <= range.end;
         });
-      } else if (periodoFilter === 'last_month') {
-        const lmStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-        result = result.filter(t => {
-          const d = new Date(t.fecha);
-          return d >= lmStart && d <= lmEnd;
-        });
-      } else {
-        const days = parseInt(periodoFilter);
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - days);
-        result = result.filter(t => new Date(t.fecha) >= cutoff);
       }
     }
 
@@ -288,17 +320,15 @@ export default function TransactionsPage() {
     const promedioTasa = validas.length > 0 ? (tasaSum / validas.length) : 0;
     const promedioMonto = validas.length > 0 ? (totalIngreso / validas.length) : 0;
     const pendientes = validas.filter(t => isPendingReviewTransactionStatus(t.estado)).length;
-    const validadoAdmin = validas.reduce((s, t) => {
+    const profitGlobal = validas.reduce((s, t) => {
       const profit = t.profitUSD !== null && t.profitUSD !== undefined
         ? Number(t.profitUSD)
         : Number(t.ingresoUSD || 0) - Number(t.salidaUSDT || 0);
-      return s + (t.verificadorId ? profit : 0);
+      return s + profit;
     }, 0);
-    const volumen = validas.reduce((s, t) => s + Number(t.ingresoUSD || 0), 0);
-    const costoOperativo = volumen * (costRate / 100);
-    const profitGlobal = validadoAdmin - costoOperativo;
-    return { totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, validadoAdmin, costoOperativo, profitGlobal };
-  }, [filtered, costRate]);
+    const localSummary = { validCount: validas.length, totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, profitGlobal };
+    return summary || localSummary;
+  }, [filtered, summary]);
 
   const handleExport = () => {
     if (filtered.length === 0) {
@@ -452,15 +482,15 @@ export default function TransactionsPage() {
 
             <div className="relative z-10 mt-4 grid max-w-xs grid-cols-2 gap-4">
               <div>
-                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Admin profit</p>
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Profit acumulado</p>
                 <p className="mt-1 text-sm font-extrabold text-slate-700">
-                  <span className="text-emerald-600">$</span>{kpis.validadoAdmin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <span className="text-emerald-600">$</span>{kpis.profitGlobal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div>
-                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Costo operativo</p>
-                <p className="mt-1 text-sm font-extrabold text-rose-500">
-                  -${kpis.costoOperativo.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Giros válidos</p>
+                <p className="mt-1 text-sm font-extrabold text-slate-700">
+                  {kpis.validCount.toLocaleString()}
                 </p>
               </div>
             </div>
