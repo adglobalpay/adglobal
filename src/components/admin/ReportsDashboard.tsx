@@ -8,6 +8,7 @@ interface Transaction {
   fecha: string;
   ingresoUSD: number;
   salidaUSDT: number;
+  profitUSD?: number | null;
   tasa: number;
   montoVES: number;
   estado: string;
@@ -23,6 +24,21 @@ interface ReportTag {
   label: string;
   color: string;
   isActive?: boolean;
+}
+
+interface ReportsSummary {
+  count: number;
+  ingresoUSD: number;
+  salidaUSDT: number;
+  profitUSD: number;
+  operatorPercentage: number;
+  operatorProfit: number;
+}
+
+interface ReportsScope {
+  role: string;
+  reportTag: ReportTag | null;
+  isReadOnly: boolean;
 }
 
 function formatDate(d: string) {
@@ -46,6 +62,8 @@ export default function ReportsDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tags, setTags] = useState<ReportTag[]>([]);
   const [selectedReportTag, setSelectedReportTag] = useState('all');
+  const [scope, setScope] = useState<ReportsScope | null>(null);
+  const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -57,13 +75,12 @@ export default function ReportsDashboard() {
       try {
         const params = new URLSearchParams({ limit: '5000' });
         if (selectedReportTag !== 'all') params.set('reportTagId', selectedReportTag);
-        const [txData, tagsData] = await Promise.all([
-          apiFetch(`/api/reports/transactions?${params.toString()}`),
-          apiFetch('/api/report-tags').catch(() => [])
-        ]);
+        const txData = await apiFetch(`/api/reports/transactions?${params.toString()}`);
         if (!mounted) return;
         setTransactions(Array.isArray(txData?.data) ? txData.data : Array.isArray(txData) ? txData : []);
-        setTags(Array.isArray(tagsData) ? tagsData.filter((t: ReportTag) => t.isActive !== false) : []);
+        setTags(Array.isArray(txData?.tags) ? txData.tags.filter((t: ReportTag) => t.isActive !== false) : []);
+        setScope(txData?.scope || null);
+        setSummary(txData?.summary || null);
       } catch (err: any) {
         if (mounted) setError(err.message || 'Error cargando operaciones');
       } finally {
@@ -79,14 +96,22 @@ export default function ReportsDashboard() {
 
   const totals = useMemo(() => {
     const valid = filtered.filter((tx) => !isExcludedTransactionStatus(tx.estado));
-    const ingresoUSD = valid.reduce((acc, tx) => acc + (Number(tx.ingresoUSD) || 0), 0);
-    const salidaUSDT = valid.reduce((acc, tx) => acc + (Number(tx.salidaUSDT) || 0), 0);
+    const ingresoUSD = summary?.ingresoUSD ?? valid.reduce((acc, tx) => acc + (Number(tx.ingresoUSD) || 0), 0);
+    const salidaUSDT = summary?.salidaUSDT ?? valid.reduce((acc, tx) => acc + (Number(tx.salidaUSDT) || 0), 0);
+    const profitUSD = summary?.profitUSD ?? valid.reduce((acc, tx) => acc + (Number(tx.profitUSD) || ((Number(tx.ingresoUSD) || 0) - (Number(tx.salidaUSDT) || 0))), 0);
+    const operatorPercentage = summary?.operatorPercentage ?? 0;
+    const operatorProfit = summary?.operatorProfit ?? (profitUSD * (operatorPercentage / 100));
+    const operatorLabel = scope?.reportTag?.label || 'Operador';
     return {
-      count: valid.length,
+      count: summary?.count ?? valid.length,
       ingresoUSD,
-      salidaUSDT
+      salidaUSDT,
+      profitUSD,
+      operatorPercentage,
+      operatorProfit,
+      operatorLabel
     };
-  }, [filtered]);
+  }, [filtered, summary, scope]);
 
   if (loading) {
     return (
@@ -113,22 +138,31 @@ export default function ReportsDashboard() {
           </h1>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-500 md:text-lg">Vista de solo lectura. Filtra las operaciones por etiqueta.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-500">Etiqueta</label>
-          <select
-            value={selectedReportTag}
-            onChange={(e) => setSelectedReportTag(e.target.value)}
-            className="min-w-[220px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm outline-none transition-all hover:border-indigo-200 hover:shadow-md focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
-          >
-            <option value="all">Todas las etiquetas</option>
-            {tags.map((tag) => (
-              <option key={tag.id} value={tag.id}>{tag.label}</option>
-            ))}
-          </select>
-        </div>
+        {scope?.isReadOnly ? (
+          <div className="flex items-center gap-3">
+            <label className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-500">Etiqueta</label>
+            <div className="inline-flex min-w-[220px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm">
+              {scope.reportTag?.label || 'Sin etiqueta'}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <label className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-500">Etiqueta</label>
+            <select
+              value={selectedReportTag}
+              onChange={(e) => setSelectedReportTag(e.target.value)}
+              className="min-w-[220px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm outline-none transition-all hover:border-indigo-200 hover:shadow-md focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+            >
+              <option value="all">Todas las etiquetas</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>{tag.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <div className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
           <div className="absolute inset-x-0 top-0 h-1 bg-slate-900/5" />
           <div className="mb-5 flex items-center justify-between">
@@ -161,6 +195,28 @@ export default function ReportsDashboard() {
           </div>
           <p className="font-mono text-4xl font-black tracking-tight text-slate-900">₮ {totals.salidaUSDT.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           <p className="mt-2 text-xs font-bold text-slate-500">USDT</p>
+        </div>
+        <div className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
+          <div className="absolute inset-x-0 top-0 h-1 bg-amber-500/10" />
+          <div className="mb-5 flex items-center justify-between">
+            <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-400">Profit</p>
+            <span className="grid h-10 w-10 place-items-center rounded-2xl border border-amber-100 bg-amber-50 text-amber-600">
+              <BarChart3 className="h-4 w-4" />
+            </span>
+          </div>
+          <p className="font-mono text-4xl font-black tracking-tight text-slate-900">$ {totals.profitUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="mt-2 text-xs font-bold text-slate-500">Profit acumulado</p>
+        </div>
+        <div className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
+          <div className="absolute inset-x-0 top-0 h-1 bg-cyan-500/10" />
+          <div className="mb-5 flex items-center justify-between">
+            <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-400">{totals.operatorLabel}</p>
+            <span className="grid h-10 w-10 place-items-center rounded-2xl border border-cyan-100 bg-cyan-50 text-cyan-600">
+              <Tags className="h-4 w-4" />
+            </span>
+          </div>
+          <p className="font-mono text-4xl font-black tracking-tight text-slate-900">$ {totals.operatorProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="mt-2 text-xs font-bold text-slate-500">{totals.operatorPercentage}% del profit</p>
         </div>
       </div>
 
