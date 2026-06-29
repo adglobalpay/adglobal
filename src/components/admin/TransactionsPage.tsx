@@ -208,6 +208,7 @@ export default function TransactionsPage() {
   const [periodoFilter, setPeriodoFilter] = useState('month');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [costRate, setCostRate] = useState(2.9);
 
   const loadData = useCallback(async (options: { showLoader?: boolean; resetPage?: boolean } = {}) => {
     const { showLoader = true, resetPage = true } = options;
@@ -262,6 +263,15 @@ export default function TransactionsPage() {
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  useEffect(() => {
+    apiFetch('/api/config')
+      .then((config: any) => {
+        const rate = parseFloat(config['profit.tasa_costo']);
+        if (!isNaN(rate)) setCostRate(rate);
+      })
+      .catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     let result = [...transactions];
@@ -327,8 +337,15 @@ export default function TransactionsPage() {
       return s + profit;
     }, 0);
     const localSummary = { validCount: validas.length, totalIngreso, totalSalida, promedioTasa, promedioMonto, pendientes, profitGlobal };
-    return summary || localSummary;
-  }, [filtered, summary]);
+    const baseSummary = summary || localSummary;
+    const costoOperativo = baseSummary.totalIngreso * (costRate / 100);
+    return {
+      ...baseSummary,
+      profitAcumulado: baseSummary.profitGlobal,
+      costoOperativo,
+      profitGlobal: baseSummary.profitGlobal - costoOperativo
+    };
+  }, [filtered, summary, costRate]);
 
   const handleExport = () => {
     if (filtered.length === 0) {
@@ -484,13 +501,13 @@ export default function TransactionsPage() {
               <div>
                 <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Profit acumulado</p>
                 <p className="mt-1 text-sm font-extrabold text-slate-700">
-                  <span className="text-emerald-600">$</span>{kpis.profitGlobal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <span className="text-emerald-600">$</span>{kpis.profitAcumulado.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div>
-                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Giros válidos</p>
-                <p className="mt-1 text-sm font-extrabold text-slate-700">
-                  {kpis.validCount.toLocaleString()}
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-slate-400/75">Costo operativo</p>
+                <p className="mt-1 text-sm font-extrabold text-rose-500">
+                  -${kpis.costoOperativo.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
