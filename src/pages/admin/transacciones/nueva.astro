@@ -110,6 +110,10 @@ import {
           </div>
         </div>
 
+        <div id="clienteComplianceNotice" class="hidden max-w-md mx-auto rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+          <!-- Se llena dinámicamente -->
+        </div>
+
         <div class="flex justify-center pt-4">
           <a href="/admin/clientes" class="inline-flex items-center gap-2 px-5 py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-800 rounded-xl font-bold text-sm border border-slate-200 transition-all">
             <UserPlus class="w-4 h-4" /> Crear cliente nuevo
@@ -141,6 +145,10 @@ import {
 
         <div id="destinatariosSeleccionadosInfo" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
           0 destinatarios seleccionados
+        </div>
+
+        <div id="destinatariosComplianceNotice" class="hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+          <!-- Se llena dinámicamente -->
         </div>
 
         <div class="relative">
@@ -297,6 +305,9 @@ import {
                 </a>
                 <button type="button" onclick="ocultarAlertaKyc()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-amber-200 bg-white text-amber-700 text-sm font-bold hover:bg-amber-50 transition-all">
                   Entendido
+                </button>
+                <button type="button" id="btnRegistrarConKycPendiente" onclick="guardarTransaccion(true)" class="hidden inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20">
+                  Registrar de todos modos
                 </button>
               </div>
             </div>
@@ -592,6 +603,14 @@ import {
   };
 
   var API_URL = window.__ADGLOBAL_API_URL__ || 'https://backend-global-production.up.railway.app';
+  var currentUser = (function() {
+    try {
+      return JSON.parse(localStorage.getItem('adglobal_user') || 'null');
+    } catch (_) {
+      return null;
+    }
+  })();
+  var puedeForzarKyc = currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN');
 
   var estado = {
     paso: 1,
@@ -610,6 +629,68 @@ import {
     pago: null,
     admin: null
   };
+
+  function normalizeComplianceStatus(value) {
+    return String(value || '').trim().toUpperCase();
+  }
+
+  function requiereKyc(status) {
+    var normalized = normalizeComplianceStatus(status);
+    return normalized && normalized !== 'VERIFIED';
+  }
+
+  function kycStatusLabel(status) {
+    var normalized = normalizeComplianceStatus(status);
+    if (normalized === 'PROCESSING') return 'KYC en proceso';
+    if (normalized === 'REJECTED') return 'KYC rechazado';
+    if (normalized === 'VERIFIED') return 'KYC verificado';
+    return 'KYC pendiente';
+  }
+
+  function renderComplianceBadge(item) {
+    if (!item || !requiereKyc(item.kycStatus)) return '';
+    return '<span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[0.58rem] font-black uppercase tracking-wider text-amber-700">' + kycStatusLabel(item.kycStatus) + '</span>';
+  }
+
+  function renderClienteComplianceNotice() {
+    var box = document.getElementById('clienteComplianceNotice');
+    if (!box) return;
+
+    if (!estado.cliente || !requiereKyc(estado.cliente.kycStatus)) {
+      box.classList.add('hidden');
+      box.innerHTML = '';
+      return;
+    }
+
+    box.innerHTML = '<div class="flex items-start gap-3">' +
+      '<div class="mt-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0"></div>' +
+      '<div><p class="font-black text-amber-900">Este cliente requiere KYC para avanzar con montos altos.</p>' +
+      '<p class="mt-1 text-xs font-medium text-amber-700">' + escapeHtml(estado.cliente.nombre) + ' tiene ' + escapeHtml(kycStatusLabel(estado.cliente.kycStatus).toLowerCase()) + '. Podrás continuar, pero el sistema volverá a avisarte al guardar.</p></div>' +
+    '</div>';
+    box.classList.remove('hidden');
+  }
+
+  function renderDestinatariosComplianceNotice() {
+    var box = document.getElementById('destinatariosComplianceNotice');
+    if (!box) return;
+
+    var pendientes = (estado.destinatarios || []).filter(function(dest) {
+      return requiereKyc(dest.kycStatus);
+    });
+
+    if (pendientes.length === 0) {
+      box.classList.add('hidden');
+      box.innerHTML = '';
+      return;
+    }
+
+    box.innerHTML = '<div class="flex items-start gap-3">' +
+      '<div class="mt-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0"></div>' +
+      '<div><p class="font-black text-amber-900">Hay destinatarios con KYC pendiente o en proceso.</p>' +
+      '<p class="mt-1 text-xs font-medium text-amber-700">' + pendientes.map(function(dest) { return escapeHtml(dest.nombre); }).join(', ') + '. Podrás continuar, pero al guardar puede requerir confirmación administrativa.</p></div>' +
+    '</div>';
+    box.classList.remove('hidden');
+  }
 
   function formatFileSize(bytes) {
     if (!bytes) return '0 KB';
@@ -694,9 +775,15 @@ import {
     var box = document.getElementById('kycRequiredAlert');
     var reasons = document.getElementById('kycRequiredReasons');
     var message = document.getElementById('kycRequiredMessage');
+    var overrideBtn = document.getElementById('btnRegistrarConKycPendiente');
     if (box) box.classList.add('hidden');
     if (reasons) reasons.innerHTML = '';
     if (message) message.textContent = '';
+    if (overrideBtn) {
+      overrideBtn.classList.add('hidden');
+      overrideBtn.disabled = false;
+      overrideBtn.textContent = 'Registrar de todos modos';
+    }
   }
 
   function mostrarAlertaKyc(errorData) {
@@ -721,6 +808,16 @@ import {
     profileLink.href = entityType === 'RECIPIENT'
       ? '/admin/destinatarios/perfil?id=' + encodeURIComponent(errorData.entityId || '')
       : '/admin/clientes/perfil?id=' + encodeURIComponent(errorData.entityId || estado.cliente.id);
+    profileLink.textContent = entityType === 'RECIPIENT'
+      ? 'Ver perfil del destinatario'
+      : 'Ver perfil del cliente';
+    var overrideBtn = document.getElementById('btnRegistrarConKycPendiente');
+    if (overrideBtn) {
+      var canOverride = puedeForzarKyc && errorData.canOverride !== false;
+      overrideBtn.classList.toggle('hidden', !canOverride);
+      overrideBtn.disabled = false;
+      overrideBtn.textContent = 'Registrar de todos modos';
+    }
     box.classList.remove('hidden');
   }
 
@@ -840,7 +937,9 @@ import {
       relacion: r.relationship || '',
       identificacion: r.identification || '',
       clienteId: r.clientId || (r.client && r.client.id) || '',
-      clienteOrigen: r.client ? (r.client.firstName + (r.client.lastName ? ' ' + r.client.lastName : '')).trim() : ''
+      clienteOrigen: r.client ? (r.client.firstName + (r.client.lastName ? ' ' + r.client.lastName : '')).trim() : '',
+      kycStatus: r.kycStatus || 'PENDING',
+      ofacStatus: r.ofacStatus || 'PENDING'
     };
   }
 
@@ -995,7 +1094,9 @@ import {
           nombre: c.firstName + (c.lastName ? ' ' + c.lastName : ''),
           telefono: c.phone || '',
           email: c.email || '',
-          reportTagId: c.reportTagId || null
+          reportTagId: c.reportTagId || null,
+          kycStatus: c.kycStatus || 'PENDING',
+          ofacStatus: c.ofacStatus || 'PENDING'
         };
       });
     } catch (e) {
@@ -1057,13 +1158,13 @@ import {
       return;
     }
     cont.innerHTML = resultados.map(function(c) {
-      var tel = c.telefono ? '<span class="text-slate-400 font-medium ml-2">' + c.telefono + '</span>' : '';
-      var em = c.email ? '<span class="text-slate-400 font-medium ml-2">' + c.email + '</span>' : '';
+      var nombre = escapeHtml(c.nombre);
+      var contacto = escapeHtml(c.telefono || c.email || '');
       return '<button type="button" onclick="seleccionarCliente(\'' + c.id + '\')" class="w-full text-left px-4 py-3 hover:bg-indigo-50 transition-all flex items-center gap-3 border-b border-slate-100 last:border-0">' +
-        '<div class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold shrink-0">' + c.nombre.charAt(0) + '</div>' +
+        '<div class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold shrink-0">' + nombre.charAt(0) + '</div>' +
         '<div class="flex-1 min-w-0">' +
-          '<p class="font-bold text-sm text-slate-800 truncate">' + c.nombre + '</p>' +
-          '<p class="text-xs text-slate-400 font-medium truncate">' + (c.telefono || c.email || '') + '</p>' +
+          '<div class="flex items-center gap-2 min-w-0"><p class="font-bold text-sm text-slate-800 truncate">' + nombre + '</p>' + renderComplianceBadge(c) + '</div>' +
+          '<p class="text-xs text-slate-400 font-medium truncate">' + contacto + '</p>' +
         '</div>' +
       '</button>';
     }).join('');
@@ -1088,6 +1189,8 @@ import {
     document.getElementById('clienteTelefono').textContent = c.telefono || 'Sin teléfono';
     document.getElementById('clienteEmail').textContent = c.email || '';
     document.getElementById('clienteSeleccionado').classList.remove('hidden');
+    renderClienteComplianceNotice();
+    renderDestinatariosComplianceNotice();
     limpiarBusquedaDestinatarios(false);
   }
 
@@ -1102,6 +1205,8 @@ import {
     estado.destinatario = null;
     estado.destinatarios = [];
     estado.detallesPorDestinatario = {};
+    renderClienteComplianceNotice();
+    renderDestinatariosComplianceNotice();
     destinatariosVista = [];
     busquedaExistente = '';
     existentesVista = [];
@@ -1289,6 +1394,7 @@ import {
       estado.destinatario = estado.destinatarios[0] || null;
 
       renderDestinatariosWizard(destinatariosVista);
+      renderDestinatariosComplianceNotice();
     } catch (e) {
       if (requestId !== destinatariosRequestId) {
         return;
@@ -1319,6 +1425,7 @@ import {
       sin.classList.remove('hidden');
       actualizarInfoDestinatariosSeleccionados();
       actualizarAccionesDestinatarios();
+      renderDestinatariosComplianceNotice();
       return;
     }
     sin.classList.add('hidden');
@@ -1338,7 +1445,7 @@ import {
       return '<button type="button" onclick="seleccionarDestinatario(\'' + d.id + '\')" class="text-left p-4 rounded-xl border-2 ' + sel + ' transition-all duration-200 flex items-start gap-3">' +
         '<div class="w-10 h-10 rounded-lg ' + (seleccionado ? 'bg-emerald-500 text-white' : 'bg-emerald-100 text-emerald-600') + ' flex items-center justify-center text-sm font-bold shrink-0">' + (seleccionado ? '✓' : nombre.charAt(0)) + '</div>' +
         '<div class="flex-1 min-w-0">' +
-          '<p class="font-bold text-sm text-slate-800 truncate">' + nombre + '</p>' +
+          '<div class="flex flex-wrap items-center gap-2"><p class="font-bold text-sm text-slate-800 truncate">' + nombre + '</p>' + renderComplianceBadge(d) + '</div>' +
           '<p class="text-xs text-slate-500 font-medium truncate">' + banco + ' · ' + cuenta + '</p>' +
           (meta.length > 0 ? '<p class="mt-1 text-[0.65rem] font-semibold text-slate-400 truncate">' + meta.join(' · ') + '</p>' : '') +
           '<div class="mt-2 flex flex-wrap items-center gap-1.5">' +
@@ -1368,6 +1475,7 @@ import {
     }
     estado.destinatario = estado.destinatarios[0] || null;
     renderDestinatariosWizard(destinatariosVista);
+    renderDestinatariosComplianceNotice();
     renderComprobantesEgreso();
   }
 
@@ -1765,10 +1873,16 @@ import {
   }
 
   // ===================== GUARDAR =====================
-  async function guardarTransaccion() {
+  async function guardarTransaccion(forceKycOverride) {
+    forceKycOverride = Boolean(forceKycOverride);
     var btn = document.getElementById('btnGuardarFinal');
+    var overrideBtn = document.getElementById('btnRegistrarConKycPendiente');
     btn.disabled = true;
     btn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Guardando...';
+    if (overrideBtn) {
+      overrideBtn.disabled = true;
+      overrideBtn.textContent = forceKycOverride ? 'Registrando...' : 'Registrar de todos modos';
+    }
 
     var metodoMap = {
       'USDT': 'USDT', 'Efectivo': 'EFECTIVO', 'Zelle': 'ZELLE',
@@ -1817,6 +1931,10 @@ import {
           estado: 'PENDING'
         };
 
+        if (forceKycOverride) {
+          payload.forceKycOverride = true;
+        }
+
         if (multipleGroupId) {
           payload.multipleGroupId = multipleGroupId;
           payload.multipleGroupIndex = i + 1;
@@ -1858,6 +1976,7 @@ import {
 
       var modal = document.getElementById('modalExito');
       var content = document.getElementById('modalContentExito');
+      ocultarAlertaKyc();
       modal.classList.remove('hidden');
       modal.classList.add('anim-overlay');
       setTimeout(function() { content.style.transform = 'scale(1)'; content.classList.add('anim-modal'); }, 10);
@@ -1866,6 +1985,10 @@ import {
       showToast('error', 'Error al guardar', e.message);
       btn.disabled = false;
       btn.innerHTML = '<Save class="w-4 h-4"/> Guardar transacción';
+      if (overrideBtn) {
+        overrideBtn.disabled = false;
+        overrideBtn.textContent = 'Registrar de todos modos';
+      }
     }
   }
 
