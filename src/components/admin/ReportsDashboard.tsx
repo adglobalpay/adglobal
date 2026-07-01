@@ -142,6 +142,8 @@ export default function ReportsDashboard() {
   const [weekAnchor, setWeekAnchor] = useState(today);
   const [customFrom, setCustomFrom] = useState(`${today.slice(0, 7)}-01`);
   const [customTo, setCustomTo] = useState(today);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [scope, setScope] = useState<ReportsScope | null>(null);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,6 +209,7 @@ export default function ReportsDashboard() {
         setTags(Array.isArray(txData?.tags) ? txData.tags.filter((t: ReportTag) => t.isActive !== false) : []);
         setScope(txData?.scope || null);
         setSummary(txData?.summary || null);
+        setCurrentPage(1);
       } catch (err: any) {
         if (mounted) setError(err.message || 'Error cargando operaciones');
       } finally {
@@ -217,6 +220,12 @@ export default function ReportsDashboard() {
   }, [selectedReportTag, periodRange.dateFrom, periodRange.dateTo]);
 
   const filtered = useMemo(() => transactions, [transactions]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const paginated = filtered.slice(startIndex, startIndex + pageSize);
+  const firstItem = filtered.length === 0 ? 0 : startIndex + 1;
+  const lastItem = Math.min(startIndex + pageSize, filtered.length);
 
   const totals = useMemo(() => {
     const valid = filtered.filter((tx) => !isExcludedTransactionStatus(tx.estado));
@@ -241,6 +250,10 @@ export default function ReportsDashboard() {
     if (periodMode === 'day') setSelectedDay((value) => addDays(value, direction));
     if (periodMode === 'week') setWeekAnchor((value) => addDays(value, direction * 7));
     if (periodMode === 'month') setSelectedMonth((value) => addMonths(value, direction));
+  }
+
+  function goToPage(page: number) {
+    setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   }
 
   const summaryCards = [
@@ -509,7 +522,7 @@ export default function ReportsDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filtered.map((tx) => {
+              {paginated.map((tx) => {
                 const clientName = tx.client ? `${tx.client.firstName} ${tx.client.lastName || ''}`.trim() : '-';
                 const recipientName = tx.recipient?.name || '-';
                 const reportTag = getEffectiveReportTag(tx);
@@ -551,6 +564,59 @@ export default function ReportsDashboard() {
             <div className="py-14 text-center text-sm font-bold text-slate-400">No hay operaciones con este filtro.</div>
           )}
         </div>
+
+        {filtered.length > 0 && (
+          <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50/80 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-black text-slate-700">
+                Mostrando {firstItem}-{lastItem} de {filtered.length}
+              </p>
+              <p className="text-xs font-bold text-slate-400">Los totales de arriba incluyen todo el periodo filtrado.</p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <label className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+                Filas
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-black normal-case tracking-normal text-slate-700 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </label>
+
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => goToPage(safeCurrentPage - 1)}
+                  disabled={safeCurrentPage <= 1}
+                  className="grid h-10 w-10 place-items-center rounded-xl text-slate-600 transition-all hover:bg-slate-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                  aria-label="Pagina anterior"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="min-w-[96px] text-center text-sm font-black text-slate-700">
+                  {safeCurrentPage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => goToPage(safeCurrentPage + 1)}
+                  disabled={safeCurrentPage >= totalPages}
+                  className="grid h-10 w-10 place-items-center rounded-xl text-slate-600 transition-all hover:bg-slate-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                  aria-label="Pagina siguiente"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
