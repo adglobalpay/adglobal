@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft, Printer, Download, Phone, Mail, MapPin, Banknote,
-  CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload, Trash2
+  CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload, Trash2, CalendarDays
 } from 'lucide-react';
 import { apiFetch, getUser } from '../../lib/auth';
 import { isCompletedTransactionStatus, isFailedTransactionStatus, isPendingReviewTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
@@ -109,6 +109,17 @@ function getMultipleGroupHeadline(tx: TransactionDetail) {
   };
 }
 
+function toDateInputValue(value?: string | null) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-');
+}
+
 export default function TransactionDetailPage({ txId: txIdProp }: { txId: string }) {
   const [tx, setTx] = useState<TransactionDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,6 +136,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   const [editTasa, setEditTasa] = useState('');
   const [editMontoVES, setEditMontoVES] = useState('');
   const [editMetodo, setEditMetodo] = useState('');
+  const [editFecha, setEditFecha] = useState('');
   const [editComprobantePago, setEditComprobantePago] = useState('');
   const [editComprobanteAdmin, setEditComprobanteAdmin] = useState('');
 
@@ -160,6 +172,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
       setEditTasa(String(data.tasa ?? ''));
       setEditMontoVES(String(data.montoVES ?? ''));
       setEditMetodo(data.metodo ?? '');
+      setEditFecha(toDateInputValue(data.fecha));
       setEditComprobantePago(data.comprobantePago ?? '');
       setEditComprobanteAdmin(data.comprobanteAdmin ?? '');
       setIsEditing(false);
@@ -203,6 +216,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
         if (isAdminReviewer) {
           body.montoVES = editMontoVES ? parseFloat(editMontoVES) : undefined;
+          body.fecha = editFecha || undefined;
         }
       }
 
@@ -213,6 +227,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'success', message: 'Guardado', description: 'Transacción actualizada correctamente.' }
       }));
+      clearTransactionsCache();
       setIsEditing(false);
       loadTx();
     } catch (err: any) {
@@ -226,12 +241,12 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
 
   const clearTransactionsCache = () => {
     if (typeof window === 'undefined') return;
-    const prefix = 'adglobal_transactions_cache:';
+    const prefixes = ['adglobal_transactions_cache:', 'adglobal_transactions_cache_v2:'];
     const keysToRemove: string[] = [];
 
     for (let i = 0; i < window.sessionStorage.length; i += 1) {
       const key = window.sessionStorage.key(i);
-      if (key && key.startsWith(prefix)) {
+      if (key && prefixes.some((prefix) => key.startsWith(prefix))) {
         keysToRemove.push(key);
       }
     }
@@ -324,7 +339,23 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-500 font-medium">{fechaStr} · Método: <span className="font-bold text-slate-700">{tx.metodo}</span></p>
+          {isEditing && isAdminReviewer ? (
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="inline-flex items-center gap-2 text-sm font-bold text-slate-600">
+                <CalendarDays className="h-4 w-4 text-indigo-500" />
+                Fecha
+              </label>
+              <input
+                type="date"
+                value={editFecha}
+                onChange={e => setEditFecha(e.target.value)}
+                className="w-full sm:w-44 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+              />
+              <span className="text-sm text-slate-500 font-medium">Método: <span className="font-bold text-slate-700">{tx.metodo}</span></span>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500 font-medium">{fechaStr} · Método: <span className="font-bold text-slate-700">{tx.metodo}</span></p>
+          )}
         </div>
         <div className="flex gap-2 shrink-0">
           {canEdit && (
