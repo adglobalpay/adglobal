@@ -1,5 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, BarChart3, ArrowDownToLine, ArrowUpFromLine, FileText, Tags, CalendarDays } from 'lucide-react';
+import {
+  Loader2,
+  BarChart3,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  FileText,
+  Tags,
+  CalendarDays,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  Clock3
+} from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 import { isExcludedTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
 
@@ -41,8 +54,68 @@ interface ReportsScope {
   isReadOnly: boolean;
 }
 
+type PeriodMode = 'day' | 'week' | 'month' | 'custom';
+
+function pad(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function isValidDate(date: Date) {
+  return !Number.isNaN(date.getTime());
+}
+
+function toDateInputValue(date: Date) {
+  if (!isValidDate(date)) return '';
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function parseInputDate(value: string) {
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  const date = new Date(year, month - 1, day);
+  return isValidDate(date) ? date : null;
+}
+
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatDateLabel(date: Date) {
+  if (!isValidDate(date)) return 'Fecha';
+  return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatMonthLabel(monthValue: string) {
+  const [year, month] = monthValue.split('-').map(Number);
+  if (!year || !month) return 'Mes seleccionado';
+  return new Date(year, month - 1, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+}
+
+function formatMoney(value: number) {
+  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getWeekRange(anchorValue: string) {
+  const anchor = parseInputDate(anchorValue) || new Date();
+  const day = anchor.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const start = new Date(anchor);
+  start.setDate(anchor.getDate() + mondayOffset);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start, end };
+}
+
+function addDays(value: string, days: number) {
+  const date = parseInputDate(value) || new Date();
+  date.setDate(date.getDate() + days);
+  return toDateInputValue(date);
+}
+
+function addMonths(value: string, months: number) {
+  const [year, month] = value.split('-').map(Number);
+  const date = new Date(year || new Date().getFullYear(), (month || 1) - 1 + months, 1);
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
 }
 
 function getEffectiveReportTag(tx: Transaction) {
@@ -59,13 +132,64 @@ function statusClasses(status: string) {
 }
 
 export default function ReportsDashboard() {
+  const today = useMemo(() => toDateInputValue(new Date()), []);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tags, setTags] = useState<ReportTag[]>([]);
   const [selectedReportTag, setSelectedReportTag] = useState('all');
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('month');
+  const [selectedDay, setSelectedDay] = useState(today);
+  const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7));
+  const [weekAnchor, setWeekAnchor] = useState(today);
+  const [customFrom, setCustomFrom] = useState(`${today.slice(0, 7)}-01`);
+  const [customTo, setCustomTo] = useState(today);
   const [scope, setScope] = useState<ReportsScope | null>(null);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const periodRange = useMemo(() => {
+    if (periodMode === 'day') {
+      return { dateFrom: selectedDay, dateTo: selectedDay, label: formatDateLabel(parseInputDate(selectedDay) || new Date()) };
+    }
+
+    if (periodMode === 'week') {
+      const range = getWeekRange(weekAnchor);
+      return {
+        dateFrom: toDateInputValue(range.start),
+        dateTo: toDateInputValue(range.end),
+        label: `${formatDateLabel(range.start)} - ${formatDateLabel(range.end)}`
+      };
+    }
+
+    if (periodMode === 'month') {
+      const [year, month] = selectedMonth.split('-').map(Number);
+      if (!year || !month) {
+        return { dateFrom: '', dateTo: '', label: 'Mes seleccionado' };
+      }
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 0);
+      return {
+        dateFrom: toDateInputValue(start),
+        dateTo: toDateInputValue(end),
+        label: formatMonthLabel(selectedMonth)
+      };
+    }
+
+    const fromDate = parseInputDate(customFrom);
+    const toDate = parseInputDate(customTo);
+    if (fromDate && toDate && fromDate > toDate) {
+      return {
+        dateFrom: customTo,
+        dateTo: customFrom,
+        label: `${formatDateLabel(toDate)} - ${formatDateLabel(fromDate)}`
+      };
+    }
+    return {
+      dateFrom: customFrom,
+      dateTo: customTo,
+      label: `${fromDate ? formatDateLabel(fromDate) : 'Inicio'} - ${toDate ? formatDateLabel(toDate) : 'Fin'}`
+    };
+  }, [periodMode, selectedDay, selectedMonth, weekAnchor, customFrom, customTo]);
 
   useEffect(() => {
     let mounted = true;
@@ -74,6 +198,8 @@ export default function ReportsDashboard() {
       setError('');
       try {
         const params = new URLSearchParams({ limit: '5000' });
+        params.set('dateFrom', periodRange.dateFrom);
+        params.set('dateTo', periodRange.dateTo);
         if (selectedReportTag !== 'all') params.set('reportTagId', selectedReportTag);
         const txData = await apiFetch(`/api/reports/transactions?${params.toString()}`);
         if (!mounted) return;
@@ -88,11 +214,9 @@ export default function ReportsDashboard() {
       }
     })();
     return () => { mounted = false; };
-  }, [selectedReportTag]);
+  }, [selectedReportTag, periodRange.dateFrom, periodRange.dateTo]);
 
-  const filtered = useMemo(() => {
-    return transactions;
-  }, [transactions]);
+  const filtered = useMemo(() => transactions, [transactions]);
 
   const totals = useMemo(() => {
     const valid = filtered.filter((tx) => !isExcludedTransactionStatus(tx.estado));
@@ -101,7 +225,7 @@ export default function ReportsDashboard() {
     const profitUSD = summary?.profitUSD ?? valid.reduce((acc, tx) => acc + (Number(tx.profitUSD) || ((Number(tx.ingresoUSD) || 0) - (Number(tx.salidaUSDT) || 0))), 0);
     const operatorPercentage = summary?.operatorPercentage ?? 0;
     const operatorProfit = summary?.operatorProfit ?? (profitUSD * (operatorPercentage / 100));
-    const operatorLabel = scope?.reportTag?.label || 'Operador';
+    const operatorLabel = scope?.reportTag?.label || (selectedReportTag === 'all' ? 'Todas las etiquetas' : 'Operador');
     return {
       count: summary?.count ?? valid.length,
       ingresoUSD,
@@ -111,7 +235,48 @@ export default function ReportsDashboard() {
       operatorProfit,
       operatorLabel
     };
-  }, [filtered, summary, scope]);
+  }, [filtered, summary, scope, selectedReportTag]);
+
+  function shiftPeriod(direction: -1 | 1) {
+    if (periodMode === 'day') setSelectedDay((value) => addDays(value, direction));
+    if (periodMode === 'week') setWeekAnchor((value) => addDays(value, direction * 7));
+    if (periodMode === 'month') setSelectedMonth((value) => addMonths(value, direction));
+  }
+
+  const summaryCards = [
+    {
+      label: 'Operaciones',
+      value: String(totals.count),
+      note: 'en el periodo',
+      icon: FileText,
+      accent: 'from-slate-600 to-slate-900',
+      soft: 'bg-slate-50 text-slate-600 border-slate-200'
+    },
+    {
+      label: 'Ingreso total',
+      value: `$ ${formatMoney(totals.ingresoUSD)}`,
+      note: 'USD recibido',
+      icon: ArrowDownToLine,
+      accent: 'from-indigo-500 to-blue-600',
+      soft: 'bg-indigo-50 text-indigo-600 border-indigo-100'
+    },
+    {
+      label: 'Salida total',
+      value: `₮ ${formatMoney(totals.salidaUSDT)}`,
+      note: 'USDT enviado',
+      icon: ArrowUpFromLine,
+      accent: 'from-emerald-500 to-teal-600',
+      soft: 'bg-emerald-50 text-emerald-600 border-emerald-100'
+    },
+    {
+      label: 'Profit',
+      value: `$ ${formatMoney(totals.profitUSD)}`,
+      note: 'profit acumulado',
+      icon: BarChart3,
+      accent: 'from-amber-400 to-orange-500',
+      soft: 'bg-amber-50 text-amber-600 border-amber-100'
+    }
+  ];
 
   if (loading) {
     return (
@@ -128,99 +293,206 @@ export default function ReportsDashboard() {
 
   return (
     <div className="space-y-7">
-      <div className="flex flex-col gap-5 border-b border-slate-200 pb-7 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm">
-              <BarChart3 className="h-5 w-5 md:h-6 md:w-6" />
-            </span>
-            Reportes
-          </h1>
-          <p className="mt-3 text-sm font-semibold leading-6 text-slate-500 md:text-lg">Vista de solo lectura. Filtra las operaciones por etiqueta.</p>
+      <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-indigo-500 via-emerald-400 to-amber-400" />
+        <div className="grid gap-6 p-6 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+              <span className="grid h-14 w-14 place-items-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm">
+                <BarChart3 className="h-5 w-5 md:h-6 md:w-6" />
+              </span>
+              Reportes
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-500 md:text-base">
+              Revisa operaciones por etiqueta y por periodo para calcular lo que corresponde pagar.
+            </p>
+          </div>
+
+          {scope?.isReadOnly ? (
+            <div className="flex flex-col gap-2">
+              <label className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-500">Etiqueta</label>
+              <div className="inline-flex min-w-[220px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-700">
+                {scope.reportTag?.label || 'Sin etiqueta'}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <label className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-500">Etiqueta</label>
+              <select
+                value={selectedReportTag}
+                onChange={(e) => setSelectedReportTag(e.target.value)}
+                className="min-w-[220px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm outline-none transition-all hover:border-indigo-200 hover:shadow-md focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+              >
+                <option value="all">Todas las etiquetas</option>
+                {tags.map((tag) => (
+                  <option key={tag.id} value={tag.id}>{tag.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
-        {scope?.isReadOnly ? (
-          <div className="flex items-center gap-3">
-            <label className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-500">Etiqueta</label>
-            <div className="inline-flex min-w-[220px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm">
-              {scope.reportTag?.label || 'Sin etiqueta'}
+
+        <div className="border-t border-slate-100 bg-slate-50/70 p-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="inline-flex w-full flex-wrap items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm sm:w-auto">
+              {[
+                { key: 'day', label: 'Día' },
+                { key: 'week', label: 'Semana' },
+                { key: 'month', label: 'Mes' },
+                { key: 'custom', label: 'Rango' }
+              ].map((period) => (
+                <button
+                  key={period.key}
+                  type="button"
+                  onClick={() => setPeriodMode(period.key as PeriodMode)}
+                  className={`min-h-10 rounded-xl px-4 text-sm font-black transition-all ${
+                    periodMode === period.key
+                      ? 'bg-slate-950 text-white shadow-sm'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  {period.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="flex items-center gap-2">
+                {periodMode !== 'custom' && (
+                  <button
+                    type="button"
+                    onClick={() => shiftPeriod(-1)}
+                    className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-indigo-200 hover:text-indigo-600"
+                    aria-label="Periodo anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                )}
+
+                <div className="flex min-h-11 min-w-[230px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 shadow-sm">
+                  <CalendarRange className="h-4 w-4 text-indigo-500" />
+                  <span className="truncate capitalize">{periodRange.label}</span>
+                </div>
+
+                {periodMode !== 'custom' && (
+                  <button
+                    type="button"
+                    onClick={() => shiftPeriod(1)}
+                    className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-indigo-200 hover:text-indigo-600"
+                    aria-label="Periodo siguiente"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {periodMode === 'day' && (
+                <input
+                  type="date"
+                  value={selectedDay}
+                  onChange={(e) => setSelectedDay(e.target.value)}
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                />
+              )}
+
+              {periodMode === 'week' && (
+                <input
+                  type="date"
+                  value={weekAnchor}
+                  onChange={(e) => setWeekAnchor(e.target.value)}
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                />
+              )}
+
+              {periodMode === 'month' && (
+                <input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                />
+              )}
+
+              {periodMode === 'custom' && (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    type="date"
+                    value={customFrom}
+                    onChange={(e) => setCustomFrom(e.target.value)}
+                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                  />
+                  <input
+                    type="date"
+                    value={customTo}
+                    onChange={(e) => setCustomTo(e.target.value)}
+                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                  />
+                </div>
+              )}
             </div>
           </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <label className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-500">Etiqueta</label>
-            <select
-              value={selectedReportTag}
-              onChange={(e) => setSelectedReportTag(e.target.value)}
-              className="min-w-[220px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm outline-none transition-all hover:border-indigo-200 hover:shadow-md focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
-            >
-              <option value="all">Todas las etiquetas</option>
-              {tags.map((tag) => (
-                <option key={tag.id} value={tag.id}>{tag.label}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <div className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
-          <div className="absolute inset-x-0 top-0 h-1 bg-slate-900/5" />
-          <div className="mb-5 flex items-center justify-between">
-            <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-400">Operaciones</p>
-            <span className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-500">
-              <FileText className="h-4 w-4" />
-            </span>
-          </div>
-          <p className="text-4xl font-black tracking-tight text-slate-900">{totals.count}</p>
-          <p className="mt-2 text-xs font-bold text-slate-500">en el periodo</p>
+      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {summaryCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div key={card.label} className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
+                <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${card.accent}`} />
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-400">{card.label}</p>
+                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl border ${card.soft}`}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className="break-words font-mono text-3xl font-black tracking-tight text-slate-900 xl:text-[2rem]">{card.value}</p>
+                <p className="mt-2 text-xs font-bold text-slate-500">{card.note}</p>
+              </div>
+            );
+          })}
         </div>
-        <div className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
-          <div className="absolute inset-x-0 top-0 h-1 bg-indigo-500/10" />
-          <div className="mb-5 flex items-center justify-between">
-            <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-400">Ingreso total</p>
-            <span className="grid h-10 w-10 place-items-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600">
-              <ArrowDownToLine className="h-4 w-4" />
+
+        <div className="relative overflow-hidden rounded-3xl border border-cyan-100 bg-cyan-950 p-6 text-white shadow-[0_20px_55px_rgba(8,145,178,0.18)]">
+          <div className="absolute right-0 top-0 h-28 w-28 rounded-bl-[4rem] bg-cyan-400/20" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-cyan-200">A pagar</p>
+              <h2 className="mt-2 text-xl font-black text-white">{totals.operatorLabel}</h2>
+            </div>
+            <span className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/10 text-cyan-100">
+              <DollarSign className="h-5 w-5" />
             </span>
           </div>
-          <p className="font-mono text-4xl font-black tracking-tight text-slate-900">$ {totals.ingresoUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <p className="mt-2 text-xs font-bold text-slate-500">USD</p>
-        </div>
-        <div className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
-          <div className="absolute inset-x-0 top-0 h-1 bg-emerald-500/10" />
-          <div className="mb-5 flex items-center justify-between">
-            <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-400">Salida total</p>
-            <span className="grid h-10 w-10 place-items-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-600">
-              <ArrowUpFromLine className="h-4 w-4" />
-            </span>
+          <p className="relative mt-6 font-mono text-5xl font-black tracking-tight">$ {formatMoney(totals.operatorProfit)}</p>
+          <div className="relative mt-6 grid grid-cols-2 gap-3 border-t border-white/10 pt-4 text-sm">
+            <div>
+              <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-cyan-200">Porcentaje</p>
+              <p className="mt-1 font-black">{totals.operatorPercentage}%</p>
+            </div>
+            <div>
+              <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-cyan-200">Periodo</p>
+              <p className="mt-1 font-black capitalize">{periodRange.label}</p>
+            </div>
           </div>
-          <p className="font-mono text-4xl font-black tracking-tight text-slate-900">₮ {totals.salidaUSDT.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <p className="mt-2 text-xs font-bold text-slate-500">USDT</p>
-        </div>
-        <div className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
-          <div className="absolute inset-x-0 top-0 h-1 bg-amber-500/10" />
-          <div className="mb-5 flex items-center justify-between">
-            <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-400">Profit</p>
-            <span className="grid h-10 w-10 place-items-center rounded-2xl border border-amber-100 bg-amber-50 text-amber-600">
-              <BarChart3 className="h-4 w-4" />
-            </span>
-          </div>
-          <p className="font-mono text-4xl font-black tracking-tight text-slate-900">$ {totals.profitUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <p className="mt-2 text-xs font-bold text-slate-500">Profit acumulado</p>
-        </div>
-        <div className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)]">
-          <div className="absolute inset-x-0 top-0 h-1 bg-cyan-500/10" />
-          <div className="mb-5 flex items-center justify-between">
-            <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-400">{totals.operatorLabel}</p>
-            <span className="grid h-10 w-10 place-items-center rounded-2xl border border-cyan-100 bg-cyan-50 text-cyan-600">
-              <Tags className="h-4 w-4" />
-            </span>
-          </div>
-          <p className="font-mono text-4xl font-black tracking-tight text-slate-900">$ {totals.operatorProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <p className="mt-2 text-xs font-bold text-slate-500">{totals.operatorPercentage}% del profit</p>
         </div>
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
+        <div className="flex flex-col gap-3 border-b border-slate-100 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">Operaciones del periodo</h2>
+            <p className="mt-1 flex items-center gap-2 text-xs font-bold text-slate-500">
+              <Clock3 className="h-3.5 w-3.5 text-indigo-500" />
+              <span className="capitalize">{periodRange.label}</span>
+            </p>
+          </div>
+          <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
+            {totals.count} registros
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px]">
             <thead className="bg-slate-50">
@@ -251,10 +523,10 @@ export default function ReportsDashboard() {
                     </td>
                     <td className="px-5 py-4 font-black text-slate-800">{clientName}</td>
                     <td className="px-5 py-4 font-bold text-slate-600">{recipientName}</td>
-                    <td className="px-5 py-4 text-right font-mono font-black text-slate-800">${(Number(tx.ingresoUSD) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="px-5 py-4 text-right font-mono font-black text-slate-700">{(Number(tx.salidaUSDT) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 text-right font-mono font-black text-slate-800">${formatMoney(Number(tx.ingresoUSD) || 0)}</td>
+                    <td className="px-5 py-4 text-right font-mono font-black text-slate-700">{formatMoney(Number(tx.salidaUSDT) || 0)}</td>
                     <td className="px-5 py-4 text-right font-mono font-bold text-slate-500">{(Number(tx.tasa) || 0).toFixed(2)}</td>
-                    <td className="px-5 py-4 text-right font-mono font-bold text-slate-500">{(Number(tx.montoVES) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-4 text-right font-mono font-bold text-slate-500">{formatMoney(Number(tx.montoVES) || 0)}</td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex rounded-lg border px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] ${statusClasses(tx.estado)}`}>
                         {normalizeTransactionStatus(tx.estado)}
