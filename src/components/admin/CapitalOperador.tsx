@@ -4,8 +4,8 @@ import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, Search, Downl
 import { apiFetch } from '../../lib/auth';
 
 interface CapitalData {
-  binanceBalance: number;
-  fiatAvailable: number;
+  usdtBalance: number;
+  vesBalance: number;
   lastUpdate: string;
 }
 
@@ -33,8 +33,8 @@ interface CapitalAccount {
 
 export default function CapitalOperador() {
   const [capital, setCapital] = useState<CapitalData>({
-    binanceBalance: 0,
-    fiatAvailable: 0,
+    usdtBalance: 0,
+    vesBalance: 0,
     lastUpdate: ''
   });
   const [showDetails, setShowDetails] = useState(false);
@@ -49,20 +49,28 @@ export default function CapitalOperador() {
       try {
         setLoading(true);
         const accounts: CapitalAccount[] = await apiFetch('/api/capital');
-        const binance = accounts.find(a => a.type === 'binance');
-        const fiat = accounts.find(a => a.type === 'fiat');
+        const wallet = accounts.find(a => a.type === 'wallet');
+        const digitalBs = accounts.find(a => a.type === 'digital_bs');
 
         setCapital({
-          binanceBalance: binance ? Number(binance.balance) : 0,
-          fiatAvailable: fiat ? Number(fiat.balance) : 0,
+          usdtBalance: wallet ? Number(wallet.balance) : 0,
+          vesBalance: digitalBs ? Number(digitalBs.balance) : 0,
           lastUpdate: new Date().toLocaleTimeString()
         });
 
-        const historyAccount = binance;
-        if (historyAccount) {
-          const movs: Movimiento[] = await apiFetch(`/api/capital/${historyAccount.id}/movements`);
-          setMovimientos(movs);
-        }
+        // Cargar historial desde la cuenta wallet (Digital Level) y binance (legacy) para no perder datos previos
+        const historyAccounts = accounts.filter(a => a.type === 'wallet' || a.type === 'binance');
+        const historyResults = await Promise.all(
+          historyAccounts.map(account => apiFetch(`/api/capital/${account.id}/movements`) as Promise<Movimiento[]>)
+        );
+        const merged = historyResults
+          .flat()
+          .reduce((acc, mov) => {
+            if (!acc.find(m => m.id === mov.id)) acc.push(mov);
+            return acc;
+          }, [] as Movimiento[])
+          .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+        setMovimientos(merged);
       } catch (error) {
         console.error('Error cargando capital:', error);
       } finally {
@@ -151,14 +159,14 @@ export default function CapitalOperador() {
             <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">Binance (USDT)</p>
             <p className="text-sm lg:text-base font-bold text-indigo-400 font-mono tracking-tight flex items-baseline gap-0.5">
               <span className="text-[0.65rem] lg:text-[0.7rem] text-indigo-500/70">$</span>
-              {capital.binanceBalance.toLocaleString()}
+              {capital.usdtBalance.toLocaleString()}
             </p>
           </div>
 
           <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60">
             <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">Fiat Disponible</p>
-            <p className={`text-sm lg:text-base font-bold font-mono tracking-tight ${capital.fiatAvailable < 100000 ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {capital.fiatAvailable.toLocaleString()}
+            <p className={`text-sm lg:text-base font-bold font-mono tracking-tight ${capital.vesBalance < 100000 ? 'text-rose-400' : 'text-emerald-400'}`}>
+              {capital.vesBalance.toLocaleString()}
             </p>
           </div>
 
