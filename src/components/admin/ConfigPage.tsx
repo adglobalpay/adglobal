@@ -70,6 +70,7 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [showApiSecret, setShowApiSecret] = useState(false);
+  const [showDigitalApiKey, setShowDigitalApiKey] = useState(false);
 
   // Payment methods state
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodItem[]>([]);
@@ -123,6 +124,11 @@ export default function ConfigPage() {
     binance_alert_limit: '2000',
     binance_alert_email: 'carlos@adglobalpay.com',
     binance_check_frequency: '5',
+    digital_enabled: false,
+    digital_api_url: '',
+    digital_api_key: '',
+    digital_operator_alias: '',
+    digital_check_frequency: '5',
     session_timeout: '30',
     twofa_enabled: true,
     audit_enabled: true,
@@ -177,6 +183,11 @@ export default function ConfigPage() {
             binance_alert_limit: cfgData['binance.alert_limit'] || prev.binance_alert_limit,
             binance_alert_email: cfgData['binance.alert_email'] || prev.binance_alert_email,
             binance_check_frequency: cfgData['binance.check_frequency'] || prev.binance_check_frequency,
+            digital_enabled: cfgData['digital.enabled'] === 'true',
+            digital_api_url: cfgData['digital.api_url'] || prev.digital_api_url,
+            digital_api_key: cfgData['digital.api_key'] || prev.digital_api_key,
+            digital_operator_alias: cfgData['digital.operator_alias'] || prev.digital_operator_alias,
+            digital_check_frequency: cfgData['digital.check_frequency'] || prev.digital_check_frequency,
             session_timeout: cfgData['security.session_timeout'] || prev.session_timeout,
             twofa_enabled: cfgData['security.twofa_enabled'] === 'true',
             audit_enabled: cfgData['security.audit_enabled'] === 'true',
@@ -226,6 +237,11 @@ export default function ConfigPage() {
         'binance.alert_limit': form.binance_alert_limit,
         'binance.alert_email': form.binance_alert_email,
         'binance.check_frequency': form.binance_check_frequency,
+        'digital.enabled': String(form.digital_enabled),
+        'digital.api_url': form.digital_api_url,
+        'digital.api_key': form.digital_api_key,
+        'digital.operator_alias': form.digital_operator_alias,
+        'digital.check_frequency': form.digital_check_frequency,
         'security.session_timeout': form.session_timeout,
         'security.twofa_enabled': String(form.twofa_enabled),
         'security.audit_enabled': String(form.audit_enabled),
@@ -299,6 +315,39 @@ export default function ConfigPage() {
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'error', message: 'Error de conexión', description: err.message }
+      }));
+    }
+  };
+
+  const handleTestDigitalSync = async () => {
+    try {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'info', message: 'Sincronizando Digital', description: 'Consultando wallet live y cobertura en Digital Level...' }
+      }));
+
+      const response = await apiFetch('/api/digital/sync', {
+        method: 'POST'
+      });
+
+      const wallet = Number(response?.walletLive || 0).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      const bs = Number(response?.bsAvailable || 0).toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: 'Digital sincronizado',
+          description: `Wallet: $${wallet} · BsS: ${bs}`
+        }
+      }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error sincronizando Digital', description: err.message }
       }));
     }
   };
@@ -863,6 +912,109 @@ export default function ConfigPage() {
           <button onClick={handleTestBinanceAlert}
             className="flex-1 border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl hover:bg-slate-50 font-bold text-sm transition-all flex items-center justify-center gap-2">
             <Mail className="w-4 h-4" /> Probar alerta
+          </button>
+        </div>
+      </div>
+
+      {/* Digital Level */}
+      <div id="digital" className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center"><Plug className="w-5 h-5" /></div>
+            <div>
+              <h2 className="text-base md:text-lg font-extrabold text-slate-800 tracking-tight">Integración Digital Level</h2>
+              <p className="text-xs text-slate-400 font-medium">Conexión con Digital Level para wallet live y BsS disponibles</p>
+            </div>
+          </div>
+          <div className={`sm:ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border ${form.digital_enabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+            <div className={`w-2 h-2 rounded-full ${form.digital_enabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
+            {form.digital_enabled ? 'Habilitada' : 'Deshabilitada'}
+          </div>
+        </div>
+
+        <div className="bg-cyan-50 border-l-4 border-cyan-400 p-4 rounded-xl mb-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-cyan-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-cyan-800 font-semibold">Importante</p>
+              <p className="text-sm text-cyan-700 mt-1">Configura GLOBAL_API_KEY en el .env de Digital Level (binance-sentinel) y usa la misma clave aquí. El endpoint expuesto es <code className="bg-cyan-100 px-1 rounded">/api/external/global/wallet</code>.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 mb-6">
+          <input
+            id="digital_enabled"
+            type="checkbox"
+            checked={form.digital_enabled}
+            onChange={e => updateField('digital_enabled', e.target.checked)}
+            className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+          />
+          <label htmlFor="digital_enabled" className="text-sm font-semibold text-slate-700 cursor-pointer">
+            Habilitar sincronización con Digital Level
+          </label>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+          <div>
+            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">URL base de Digital Level</label>
+            <input
+              type="url"
+              value={form.digital_api_url}
+              onChange={e => updateField('digital_api_url', e.target.value)}
+              placeholder="https://digitalevel.com o http://localhost:3003"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-medium text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">API Key (GLOBAL_API_KEY)</label>
+            <div className="flex gap-2">
+              <input
+                type={showDigitalApiKey ? 'text' : 'password'}
+                value={form.digital_api_key}
+                onChange={e => updateField('digital_api_key', e.target.value)}
+                placeholder="********************"
+                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white"
+              />
+              <button onClick={() => setShowDigitalApiKey(!showDigitalApiKey)} className="px-3 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-500 transition-all hover:scale-105">
+                {showDigitalApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+          <div>
+            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Alias del operador en Digital</label>
+            <input
+              type="text"
+              value={form.digital_operator_alias}
+              onChange={e => updateField('digital_operator_alias', e.target.value)}
+              placeholder="Ej: Compay"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-medium text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Frecuencia de sincronización</label>
+            <select
+              value={form.digital_check_frequency}
+              onChange={e => updateField('digital_check_frequency', e.target.value)}
+              className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm cursor-pointer">
+              <option value="1">Cada 1 minuto</option>
+              <option value="5">Cada 5 minutos</option>
+              <option value="10">Cada 10 minutos</option>
+              <option value="15">Cada 15 minutos</option>
+              <option value="30">Cada 30 minutos</option>
+              <option value="60">Cada 1 hora</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button onClick={handleTestDigitalSync}
+            disabled={!form.digital_enabled || !form.digital_api_url || !form.digital_api_key || !form.digital_operator_alias}
+            className="flex-1 bg-cyan-600 text-white px-4 py-2.5 rounded-xl hover:bg-cyan-700 disabled:bg-slate-300 disabled:cursor-not-allowed font-bold text-sm transition-all btn-interactive flex items-center justify-center gap-2">
+            <Plug className="w-4 h-4" /> Sincronizar ahora
           </button>
         </div>
       </div>
