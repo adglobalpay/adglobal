@@ -24,15 +24,23 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Install deps
         run: npm ci || npm i
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - name: Build
         run: npm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Verify dist
+        run: |
+          ls -la ./dist
+          test -f ./dist/index.html || (echo "Missing dist/index.html" && exit 1)
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -49,3 +57,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
+          preview: false
