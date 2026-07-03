@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, Search, Download, Filter, RefreshCw } from 'lucide-react';
+import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, Search, Download, Filter } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
 interface CapitalData {
   binanceBalance: number;
   fiatAvailable: number;
-  digitalWallet: number;
-  digitalBs: number;
   lastUpdate: string;
 }
 
@@ -37,14 +35,11 @@ export default function CapitalOperador() {
   const [capital, setCapital] = useState<CapitalData>({
     binanceBalance: 0,
     fiatAvailable: 0,
-    digitalWallet: 0,
-    digitalBs: 0,
     lastUpdate: ''
   });
   const [showDetails, setShowDetails] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [syncLoading, setSyncLoading] = useState(false);
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState('todo');
@@ -56,19 +51,14 @@ export default function CapitalOperador() {
         const accounts: CapitalAccount[] = await apiFetch('/api/capital');
         const binance = accounts.find(a => a.type === 'binance');
         const fiat = accounts.find(a => a.type === 'fiat');
-        const digitalWalletAccount = accounts.find(a => a.type === 'wallet');
-        const digitalBsAccount = accounts.find(a => a.type === 'digital_bs');
 
         setCapital({
           binanceBalance: binance ? Number(binance.balance) : 0,
           fiatAvailable: fiat ? Number(fiat.balance) : 0,
-          digitalWallet: digitalWalletAccount ? Number(digitalWalletAccount.balance) : 0,
-          digitalBs: digitalBsAccount ? Number(digitalBsAccount.balance) : 0,
           lastUpdate: new Date().toLocaleTimeString()
         });
 
-        // Preferir movimientos de la cuenta Binance; si no existe, usar Digital Wallet.
-        const historyAccount = binance || digitalWalletAccount;
+        const historyAccount = binance;
         if (historyAccount) {
           const movs: Movimiento[] = await apiFetch(`/api/capital/${historyAccount.id}/movements`);
           setMovimientos(movs);
@@ -84,44 +74,6 @@ export default function CapitalOperador() {
     const interval = setInterval(fetchCapital, 300000);
     return () => clearInterval(interval);
   }, []);
-
-  const handleSyncDigital = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSyncLoading(true);
-    try {
-      const result = await apiFetch('/api/digital/sync', { method: 'POST' });
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: {
-          type: 'success',
-          message: 'Digital sincronizado',
-          description: `Wallet: $${Number(result.walletLive || 0).toLocaleString()} · BsS: ${Number(result.bsAvailable || 0).toLocaleString()}`
-        }
-      }));
-      // Refrescar capital inmediatamente
-      try {
-        const accounts: CapitalAccount[] = await apiFetch('/api/capital');
-        const binance = accounts.find(a => a.type === 'binance');
-        const fiat = accounts.find(a => a.type === 'fiat');
-        const digitalWalletAccount = accounts.find(a => a.type === 'wallet');
-        const digitalBsAccount = accounts.find(a => a.type === 'digital_bs');
-        setCapital({
-          binanceBalance: binance ? Number(binance.balance) : 0,
-          fiatAvailable: fiat ? Number(fiat.balance) : 0,
-          digitalWallet: digitalWalletAccount ? Number(digitalWalletAccount.balance) : 0,
-          digitalBs: digitalBsAccount ? Number(digitalBsAccount.balance) : 0,
-          lastUpdate: new Date().toLocaleTimeString()
-        });
-      } catch (refreshError) {
-        console.error('Error refrescando capital:', refreshError);
-      }
-    } catch (error: any) {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'error', message: 'Error sincronizando Digital', description: error?.message || 'Intenta de nuevo' }
-      }));
-    } finally {
-      setSyncLoading(false);
-    }
-  };
 
   const getFilteredMovimientos = () => {
     if (filter === 'todo') return movimientos;
@@ -204,26 +156,12 @@ export default function CapitalOperador() {
           </div>
 
           <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60">
-            <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">Wallet Live Digital</p>
-            <p className="text-sm lg:text-base font-bold text-cyan-400 font-mono tracking-tight flex items-baseline gap-0.5">
-              <span className="text-[0.65rem] lg:text-[0.7rem] text-cyan-500/70">$</span>
-              {capital.digitalWallet.toLocaleString()}
-            </p>
-          </div>
-
-          <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60">
             <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">Fiat Disponible</p>
             <p className={`text-sm lg:text-base font-bold font-mono tracking-tight ${capital.fiatAvailable < 100000 ? 'text-rose-400' : 'text-emerald-400'}`}>
               {capital.fiatAvailable.toLocaleString()}
             </p>
           </div>
 
-          <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60">
-            <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">BsS Digital</p>
-            <p className={`text-sm lg:text-base font-bold font-mono tracking-tight ${capital.digitalBs < 100000 ? 'text-rose-400' : 'text-amber-400'}`}>
-              {capital.digitalBs.toLocaleString()}
-            </p>
-          </div>
         </div>
 
         {showDetails && !loading && (
@@ -246,23 +184,11 @@ export default function CapitalOperador() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.location.href = '/admin/config#digital';
+                  window.location.href = '/admin/config';
                 }}
                 className="flex-1 min-w-[80px] justify-center text-xs bg-transparent border border-slate-700 text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-1.5 transition-colors font-medium"
               >
                 <Settings size={14} /> Config
-              </button>
-              <button
-                onClick={handleSyncDigital}
-                disabled={syncLoading}
-                className="flex-1 min-w-[80px] justify-center text-xs bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-3 py-2 rounded-lg hover:bg-cyan-500/20 flex items-center gap-1.5 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {syncLoading ? (
-                  <div className="w-3.5 h-3.5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-                ) : (
-                  <RefreshCw size={14} />
-                )}
-                Sync Digital
               </button>
             </div>
           </div>
