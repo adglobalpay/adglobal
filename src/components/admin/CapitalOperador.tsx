@@ -31,6 +31,38 @@ interface CapitalAccount {
   currency: string;
 }
 
+function formatCompactNumber(value: number, locale = 'es-VE'): string {
+  const absValue = Math.abs(value);
+  if (absValue >= 1_000_000_000) {
+    return (value / 1_000_000_000).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'B';
+  }
+  if (absValue >= 1_000_000) {
+    return (value / 1_000_000).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'M';
+  }
+  if (absValue >= 1_000) {
+    return (value / 1_000).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'K';
+  }
+  return value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getBalanceFontClass(value: number, isCompact: boolean): string {
+  if (isCompact) return 'text-xs lg:text-sm';
+  const str = Math.abs(value).toLocaleString('es-VE');
+  const chars = str.length;
+  if (chars >= 10) return 'text-[0.55rem] lg:text-[0.65rem]';
+  if (chars >= 8) return 'text-[0.6rem] lg:text-xs';
+  if (chars >= 6) return 'text-xs lg:text-sm';
+  return 'text-sm lg:text-base';
+}
+
+function formatSidebarBalance(value: number, currency: 'USDT' | 'VES'): { display: string; full: string; isCompact: boolean } {
+  const full = value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const threshold = currency === 'VES' ? 100_000 : 1_000_000;
+  const isCompact = Math.abs(value) >= threshold;
+  const display = isCompact ? formatCompactNumber(value, 'es-VE') : full;
+  return { display, full, isCompact };
+}
+
 export default function CapitalOperador() {
   const [capital, setCapital] = useState<CapitalData>({
     usdtBalance: 0,
@@ -155,19 +187,35 @@ export default function CapitalOperador() {
         </div>
 
         <div className="grid grid-cols-2 gap-2 lg:gap-3 mb-1 relative z-10">
-          <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60">
+          <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60 min-w-0">
             <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">Binance (USDT)</p>
-            <p className="text-sm lg:text-base font-bold text-indigo-400 font-mono tracking-tight flex items-baseline gap-0.5">
-              <span className="text-[0.65rem] lg:text-[0.7rem] text-indigo-500/70">$</span>
-              {capital.usdtBalance.toLocaleString()}
-            </p>
+            {(() => {
+              const usdt = formatSidebarBalance(capital.usdtBalance, 'USDT');
+              return (
+                <p
+                  className={`${getBalanceFontClass(capital.usdtBalance, usdt.isCompact)} font-bold text-indigo-400 font-mono tracking-tight flex items-baseline gap-0.5 whitespace-nowrap`}
+                  title={usdt.full}
+                >
+                  <span className="text-[0.65rem] lg:text-[0.7rem] text-indigo-500/70">$</span>
+                  {usdt.display}
+                </p>
+              );
+            })()}
           </div>
 
-          <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60">
+          <div className="bg-slate-950 p-2 lg:p-2.5 rounded-lg border border-slate-800/60 min-w-0">
             <p className="text-[0.55rem] lg:text-[0.6rem] uppercase tracking-wider text-slate-500 font-medium mb-0.5 lg:mb-1">Fiat Disponible</p>
-            <p className={`text-sm lg:text-base font-bold font-mono tracking-tight ${capital.vesBalance < 100000 ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {capital.vesBalance.toLocaleString()}
-            </p>
+            {(() => {
+              const ves = formatSidebarBalance(capital.vesBalance, 'VES');
+              return (
+                <p
+                  className={`${getBalanceFontClass(capital.vesBalance, ves.isCompact)} font-bold font-mono tracking-tight ${capital.vesBalance < 100000 ? 'text-rose-400' : 'text-emerald-400'} whitespace-nowrap`}
+                  title={ves.full}
+                >
+                  {ves.display}
+                </p>
+              );
+            })()}
           </div>
 
         </div>
