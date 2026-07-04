@@ -179,7 +179,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
             <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500/20 accent-indigo-600 cursor-pointer" />
             <span class="text-sm text-slate-500 font-medium group-hover:text-slate-700 transition-colors">Recordarme</span>
           </label>
-          <a href="#" class="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors link-anim">¿Olvidaste tu contraseña?</a>
+          <button type="button" id="forgotPasswordLink" class="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors link-anim">¿Olvidaste tu contraseña?</button>
         </div>
 
         <!-- Submit -->
@@ -217,6 +217,32 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
     <p class="text-center text-xs text-slate-400 mt-8 font-medium anim-fade-in-up stagger-5">
       © 2026 AD Global Services LLC. Todos los derechos reservados.
     </p>
+  </div>
+
+  <div id="forgotModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/45 px-5 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-md rounded-3xl p-6 md:p-8">
+      <div class="mb-6">
+        <h2 class="text-lg font-bold text-slate-800" style="font-family: var(--font-heading);">Recuperar acceso</h2>
+        <p class="text-sm text-slate-500 mt-1 font-medium">Te enviaremos un enlace para crear una nueva contraseña.</p>
+      </div>
+      <form id="forgotForm" class="space-y-5" onsubmit="event.preventDefault();">
+        <div>
+          <label for="forgotEmail" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Correo electrónico</label>
+          <input
+            type="email"
+            id="forgotEmail"
+            name="forgotEmail"
+            placeholder="admin@adglobalpay.com"
+            class="w-full px-4 py-3 bg-white/80 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-400 input-glow transition-all duration-300 font-medium placeholder:text-slate-400 placeholder:font-normal text-sm"
+            autocomplete="username"
+          />
+        </div>
+        <div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+          <button type="button" id="closeForgotModal" class="px-4 py-3 rounded-xl border border-slate-200 bg-white/70 text-sm font-bold text-slate-600 hover:text-slate-900 hover:bg-white transition-colors">Cancelar</button>
+          <button type="submit" id="forgotSubmitBtn" class="btn-gradient px-5 py-3 rounded-xl text-sm font-bold text-white shadow-lg shadow-indigo-500/20">Enviar enlace</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <ToastProvider client:load />
@@ -261,6 +287,83 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-global-producti
       var form = document.getElementById('loginForm');
       var errorMsg = document.getElementById('errorMessage');
       var submitBtn = document.getElementById('submitBtn');
+      var forgotLink = document.getElementById('forgotPasswordLink');
+      var forgotModal = document.getElementById('forgotModal');
+      var forgotForm = document.getElementById('forgotForm');
+      var forgotEmail = document.getElementById('forgotEmail');
+      var closeForgotModal = document.getElementById('closeForgotModal');
+      var forgotSubmitBtn = document.getElementById('forgotSubmitBtn');
+
+      function openForgotModal() {
+        var email = document.getElementById('email').value.trim();
+        if (forgotEmail && email) forgotEmail.value = email;
+        if (forgotModal) {
+          forgotModal.classList.remove('hidden');
+          forgotModal.classList.add('flex');
+        }
+        setTimeout(function() {
+          if (forgotEmail) forgotEmail.focus();
+        }, 50);
+      }
+
+      function closeForgot() {
+        if (forgotModal) {
+          forgotModal.classList.add('hidden');
+          forgotModal.classList.remove('flex');
+        }
+      }
+
+      if (forgotLink) {
+        forgotLink.addEventListener('click', openForgotModal);
+      }
+
+      if (closeForgotModal) {
+        closeForgotModal.addEventListener('click', closeForgot);
+      }
+
+      if (forgotModal) {
+        forgotModal.addEventListener('click', function(e) {
+          if (e.target === forgotModal) closeForgot();
+        });
+      }
+
+      if (forgotForm) {
+        forgotForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          var email = forgotEmail ? forgotEmail.value.trim() : '';
+          if (!email) {
+            showToast('error', 'Correo requerido', 'Ingresa el correo de tu usuario');
+            return;
+          }
+
+          var originalText = forgotSubmitBtn.textContent;
+          forgotSubmitBtn.innerHTML = '<svg class="animate-spin mx-auto" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+          forgotSubmitBtn.disabled = true;
+
+          try {
+            var API_URL = window.__ADGLOBAL_API_URL__ || 'http://localhost:3001';
+            var res = await fetch(API_URL + '/api/auth/forgot-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: email })
+            });
+            var data = await res.json().catch(function() { return {}; });
+
+            if (!res.ok) {
+              throw new Error(data.error || 'No se pudo enviar el enlace');
+            }
+
+            closeForgot();
+            showToast('success', 'Revisa tu correo', data.message || 'Si el correo existe, enviaremos instrucciones');
+          } catch (err) {
+            showToast('error', 'No se pudo enviar', err.message || 'Intenta nuevamente en unos minutos');
+          } finally {
+            forgotSubmitBtn.innerHTML = originalText;
+            forgotSubmitBtn.disabled = false;
+          }
+        });
+      }
       
       if (form) {
         form.addEventListener('submit', async function(e) {
