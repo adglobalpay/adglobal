@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, Search, Download, Filter } from 'lucide-react';
+import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, ArrowDownLeft, Search, Download } from 'lucide-react';
 import { apiFetch } from '../../lib/auth';
 
 interface CapitalData {
@@ -21,6 +21,8 @@ interface Movimiento {
   rate: number | null;
   fee: number | null;
   metodo: string | null;
+  reference?: string | null;
+  operationLabel?: string;
 }
 
 interface CapitalAccount {
@@ -75,6 +77,7 @@ export default function CapitalOperador() {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState('todo');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     async function fetchCapital() {
@@ -90,19 +93,26 @@ export default function CapitalOperador() {
           lastUpdate: new Date().toLocaleTimeString()
         });
 
-        // Cargar historial desde la cuenta wallet (Digital Level) y binance (legacy) para no perder datos previos
-        const historyAccounts = accounts.filter(a => a.type === 'wallet' || a.type === 'binance');
-        const historyResults = await Promise.all(
-          historyAccounts.map(account => apiFetch(`/api/capital/${account.id}/movements`) as Promise<Movimiento[]>)
-        );
-        const merged = historyResults
-          .flat()
-          .reduce((acc, mov) => {
-            if (!acc.find(m => m.id === mov.id)) acc.push(mov);
-            return acc;
-          }, [] as Movimiento[])
-          .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-        setMovimientos(merged);
+        try {
+          const digitalMovements = await apiFetch('/api/capital/digital/movements') as Movimiento[];
+          setMovimientos(
+            digitalMovements.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+          );
+        } catch (historyError) {
+          console.warn('No se pudo cargar el historial Digital, usando historial local:', historyError);
+          const historyAccounts = accounts.filter(a => a.type === 'wallet' || a.type === 'binance');
+          const historyResults = await Promise.all(
+            historyAccounts.map(account => apiFetch(`/api/capital/${account.id}/movements`) as Promise<Movimiento[]>)
+          );
+          const merged = historyResults
+            .flat()
+            .reduce((acc, mov) => {
+              if (!acc.find(m => m.id === mov.id)) acc.push(mov);
+              return acc;
+            }, [] as Movimiento[])
+            .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+          setMovimientos(merged);
+        }
       } catch (error) {
         console.error('Error cargando capital:', error);
       } finally {
@@ -116,8 +126,24 @@ export default function CapitalOperador() {
   }, []);
 
   const getFilteredMovimientos = () => {
-    if (filter === 'todo') return movimientos;
-    return movimientos.filter(m => m.cobertura.toLowerCase() === filter);
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    return movimientos.filter(m => {
+      const matchesFilter = filter === 'todo' || m.cobertura.toLowerCase() === filter;
+      if (!matchesFilter) return false;
+      if (!normalizedSearch) return true;
+      return [
+        m.descripcion,
+        m.metodo,
+        m.reference,
+        m.operationLabel,
+        m.cobertura,
+        m.tipo
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch);
+    });
   };
 
   const itemsPerPage = 12;
@@ -293,6 +319,8 @@ export default function CapitalOperador() {
                   <input 
                     type="text" 
                     placeholder="Buscar referencia..." 
+                    value={searchTerm}
+                    onChange={(event) => { setSearchTerm(event.target.value); setCurrentPage(1); }}
                     className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium placeholder-slate-400"
                   />
                 </div>
@@ -316,38 +344,47 @@ export default function CapitalOperador() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {currentMovimientos.map((mov) => (
-                    <tr key={mov.id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4 whitespace-nowrap text-slate-500 text-xs font-medium">
-                        {new Date(mov.fecha).toLocaleString('es-ES').split(',').map((p,i) => <span key={i} className={i===1?'block text-[0.65rem] mt-0.5 opacity-70':''}>{p}</span>)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-800">{mov.descripcion}</div>
-                        <div className="flex items-center gap-2 mt-1 text-[0.65rem] font-medium">
-                          <span className="text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{mov.metodo || 'N/A'}</span>
-                          <span className="text-slate-400">USDT/VES</span>
-                          <span className="text-slate-400 border-l border-slate-200 pl-2">RATE {mov.rate}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-widest border border-emerald-100">
-                          <ArrowUpRight size={10} strokeWidth={3} /> {mov.tipo}
-                        </span>
-                        <div className="text-[0.65rem] text-slate-400 uppercase tracking-wider font-semibold mt-1.5">Trade Buy</div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="font-bold text-emerald-600 font-mono tracking-tight">+${Number(mov.montoUSD).toFixed(2)}</div>
-                        <div className="text-[0.65rem] uppercase tracking-wider text-slate-500 font-medium mt-1">{mov.montoFiat ? mov.montoFiat.toLocaleString() : '—'} VES</div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-[0.65rem] font-bold uppercase tracking-wider border border-indigo-100">{mov.cobertura}</span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="font-bold text-slate-800 font-mono tracking-tight">${Number(mov.balanceAfter).toLocaleString()}</div>
-                        <div className="text-[0.7rem] text-slate-400 font-medium mt-1 leading-none">Disponible</div>
-                      </td>
-                    </tr>
-                  ))}
+                  {currentMovimientos.map((mov) => {
+                    const isOut = mov.tipo.toLowerCase() === 'salida';
+                    const amountClass = isOut ? 'text-rose-600' : 'text-emerald-600';
+                    const operationClass = isOut
+                      ? 'text-rose-600 bg-rose-50 border-rose-100'
+                      : 'text-emerald-600 bg-emerald-50 border-emerald-100';
+
+                    return (
+                      <tr key={mov.id} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="px-6 py-4 whitespace-nowrap text-slate-500 text-xs font-medium">
+                          {new Date(mov.fecha).toLocaleString('es-ES').split(',').map((p,i) => <span key={i} className={i===1?'block text-[0.65rem] mt-0.5 opacity-70':''}>{p}</span>)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-slate-800">{mov.descripcion}</div>
+                          <div className="flex items-center gap-2 mt-1 text-[0.65rem] font-medium">
+                            <span className="text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{mov.metodo || 'N/A'}</span>
+                            <span className="text-slate-400">USDT/VES</span>
+                            <span className="text-slate-400 border-l border-slate-200 pl-2">{mov.rate ? `RATE ${Number(mov.rate).toFixed(2)}` : 'SIN RATE'}</span>
+                            {mov.reference ? <span className="text-slate-400 border-l border-slate-200 pl-2">ORD {mov.reference}</span> : null}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-widest border ${operationClass}`}>
+                            {isOut ? <ArrowDownLeft size={10} strokeWidth={3} /> : <ArrowUpRight size={10} strokeWidth={3} />} {mov.tipo}
+                          </span>
+                          <div className="text-[0.65rem] text-slate-400 uppercase tracking-wider font-semibold mt-1.5">{mov.operationLabel || 'Trade Buy'}</div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className={`font-bold font-mono tracking-tight ${amountClass}`}>{isOut ? '-' : '+'}${Number(mov.montoUSD).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <div className="text-[0.65rem] uppercase tracking-wider text-slate-500 font-medium mt-1">{mov.montoFiat ? mov.montoFiat.toLocaleString() : '—'} VES</div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-[0.65rem] font-bold uppercase tracking-wider border border-indigo-100">{mov.cobertura}</span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="font-bold text-slate-800 font-mono tracking-tight">${Number(mov.balanceAfter).toLocaleString()}</div>
+                          <div className="text-[0.7rem] text-slate-400 font-medium mt-1 leading-none">Disponible</div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
