@@ -3,7 +3,7 @@ import {
   ArrowLeft, Printer, Download, Phone, Mail, MapPin, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, FileText, Save, Upload, Trash2, CalendarDays
 } from 'lucide-react';
-import { apiFetch, getUser } from '../../lib/auth';
+import { apiDownloadBlob, apiFetch, getUser } from '../../lib/auth';
 import { isCompletedTransactionStatus, isFailedTransactionStatus, isPendingReviewTransactionStatus, normalizeTransactionStatus } from '../../lib/transactionStatus';
 
 interface TransactionDetail {
@@ -128,6 +128,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
   const [notas, setNotas] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   // Campos editables por operador
@@ -284,6 +285,41 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
     }
   };
 
+  const handleInvoicePdf = async (mode: 'download' | 'print') => {
+    if (!tx || downloadingInvoice) return;
+
+    setDownloadingInvoice(true);
+    try {
+      const { blob, filename } = await apiDownloadBlob(`/api/transactions/${tx.id}/invoice.pdf`);
+      const url = URL.createObjectURL(blob);
+      if (mode === 'print') {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } else {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || `factura-${tx.id.substring(0, 8).toUpperCase()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      }
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: 'Factura lista',
+          description: mode === 'print' ? 'El PDF se abrió para imprimir.' : 'El PDF se descargó correctamente.'
+        }
+      }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'No se pudo generar la factura', description: err.message }
+      }));
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto space-y-6">
@@ -374,12 +410,19 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
               <Trash2 className="w-4 h-4" /> {deleting ? 'Eliminando...' : 'Eliminar'}
             </button>
           )}
-          <button onClick={() => window.print()} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all shadow-sm">
-            <Printer className="w-4 h-4" /> Imprimir
+          <button
+            onClick={() => handleInvoicePdf('print')}
+            disabled={downloadingInvoice}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all shadow-sm disabled:opacity-60"
+          >
+            <Printer className="w-4 h-4" /> {downloadingInvoice ? 'Generando...' : 'Imprimir'}
           </button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Próximamente', description: 'Descarga PDF en desarrollo.' } }))}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-indigo-500/25 btn-interactive">
-            <Download className="w-4 h-4" /> Descargar
+          <button
+            onClick={() => handleInvoicePdf('download')}
+            disabled={downloadingInvoice}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-indigo-500/25 btn-interactive disabled:opacity-60"
+          >
+            <Download className="w-4 h-4" /> {downloadingInvoice ? 'Generando...' : 'Descargar'}
           </button>
         </div>
       </div>

@@ -75,6 +75,40 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
   return data;
 }
 
+export async function apiDownloadBlob(path: string, options: RequestInit = {}): Promise<{ blob: Blob; filename: string | null }> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers as Record<string, string> || {})
+  };
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers
+  });
+
+  if (res.status === 401) {
+    clearAuth();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/login';
+    }
+    throw new Error('Sesion expirada');
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.error || `Error ${res.status}`);
+  }
+
+  const disposition = res.headers.get('content-disposition') || '';
+  const filenameMatch = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(disposition);
+
+  return {
+    blob: await res.blob(),
+    filename: filenameMatch ? decodeURIComponent(filenameMatch[1].replace(/"$/, '')) : null
+  };
+}
+
 export async function login(email: string, password: string): Promise<{ user: User; token: string }> {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: 'POST',
