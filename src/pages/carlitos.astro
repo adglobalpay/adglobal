@@ -1,0 +1,638 @@
+---
+// ============================================================
+// carlitos.astro - Recibo de Remesa para AD GLOBAL SERVICES LLC
+// Ubicación: src/pages/carlitos.astro
+// Ruta local: http://localhost:4321/carlitos
+// ============================================================
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recibo de Transferencia - AD GLOBAL SERVICES LLC</title>
+    <style>
+        /* ===== RESET Y ESTILOS GENERALES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f4f6fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 15px;
+        }
+
+        /* ===== TARJETA DEL RECIBO ===== */
+        .recibo {
+            max-width: 880px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(109, 30, 209, 0.12);
+            overflow: hidden;
+            border: 1px solid #f0ebf7;
+        }
+
+        /* ===== BANDA SUPERIOR ===== */
+        .banda-superior {
+            background: linear-gradient(135deg, #6d1ed1, #8b3ae8);
+            padding: 14px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .banda-superior .msb-tag {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 16px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .banda-superior .estado {
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banda-superior .estado .check {
+            background: #4caf50;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        /* ===== CONTENIDO ===== */
+        .contenido {
+            padding: 28px 35px 22px 35px;
+        }
+
+        /* ===== ENCABEZADO ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 2px solid #f0ebf7;
+        }
+
+        .header-izq {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-izq .logo {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .header-izq .info-empresa .nombre {
+            font-size: 20px;
+            font-weight: 700;
+            color: #6d1ed1;
+            letter-spacing: -0.3px;
+        }
+
+        .header-izq .info-empresa .dir {
+            font-size: 11.5px;
+            color: #777;
+            margin-top: 1px;
+        }
+
+        .header-izq .info-empresa .tel {
+            font-size: 11.5px;
+            color: #777;
+        }
+
+        .header-der {
+            text-align: right;
+        }
+
+        .header-der .titulo {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: 1.5px;
+        }
+
+        .header-der .num-recibo {
+            font-size: 13px;
+            color: #6d1ed1;
+            font-weight: 600;
+            background: #f4f0fc;
+            padding: 2px 14px;
+            border-radius: 16px;
+            display: inline-block;
+            margin-top: 3px;
+        }
+
+        .header-der .fecha {
+            font-size: 11.5px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* ===== KYC EN DOS COLUMNAS ===== */
+        .kyc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .kyc-box {
+            background: #f9f7fc;
+            border-radius: 12px;
+            padding: 14px 18px;
+            border-left: 4px solid #6d1ed1;
+        }
+
+        .kyc-box h4 {
+            font-size: 11px;
+            font-weight: 700;
+            color: #6d1ed1;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 8px;
+        }
+
+        .kyc-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            font-size: 12.5px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .kyc-row:last-child {
+            border-bottom: none;
+        }
+
+        .kyc-row .lbl {
+            color: #999;
+            font-weight: 500;
+        }
+
+        .kyc-row .val {
+            color: #1a1a2e;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        /* ===== SECCIÓN MONTO ===== */
+        .monto-box {
+            background: #f9f7fc;
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 16px;
+        }
+
+        .monto-box .titulo-monto {
+            font-size: 11px;
+            font-weight: 700;
+            color: #6d1ed1;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 6px;
+        }
+
+        .monto-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .monto-row:last-child {
+            border-bottom: none;
+        }
+
+        .monto-row .lbl {
+            color: #888;
+            font-weight: 500;
+        }
+
+        .monto-row .val {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+
+        .monto-row.total {
+            border-top: 2px solid #d5c6ed;
+            padding-top: 8px;
+            margin-top: 4px;
+        }
+
+        .monto-row.total .lbl {
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .monto-row.total .val {
+            font-size: 19px;
+            font-weight: 800;
+            color: #6d1ed1;
+        }
+
+        /* ===== TIPO DE CAMBIO ===== */
+        .tc-box {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            background: #f4f0fc;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 18px;
+        }
+
+        .tc-item .tc-lbl {
+            font-size: 10.5px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .tc-item .tc-val {
+            font-size: 16px;
+            font-weight: 700;
+            color: #6d1ed1;
+            margin-top: 2px;
+        }
+
+        .tc-item .tc-val.dark {
+            color: #1a1a2e;
+        }
+
+        /* ===== AVISO LEGAL - LETRA PEQUEÑA ===== */
+        .legal-box {
+            background: #faf9fd;
+            border-radius: 12px;
+            padding: 14px 18px;
+            border-left: 3px solid #6d1ed1;
+            margin-bottom: 16px;
+        }
+
+        .legal-box .legal-text {
+            font-size: 10.5px;
+            color: #777;
+            line-height: 1.7;
+        }
+
+        .legal-box .legal-text.en {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #e8e0f0;
+        }
+
+        .legal-box .legal-text strong {
+            color: #555;
+            font-weight: 700;
+        }
+
+        .legal-box .legal-text .highlight {
+            color: #6d1ed1;
+            font-weight: 600;
+        }
+
+        /* ===== DECLARACIÓN ===== */
+        .declaracion {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: #faf9fd;
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 18px;
+            border: 1px solid #ede8f5;
+        }
+
+        .declaracion .dec-item {
+            font-size: 11px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .declaracion .dec-item .dec-label {
+            font-weight: 700;
+            color: #6d1ed1;
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 2px;
+        }
+
+        .declaracion .dec-item.en {
+            border-left: 1px solid #e0d8ed;
+            padding-left: 15px;
+        }
+
+        /* ===== PIE ===== */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 14px;
+            border-top: 2px solid #f0ebf7;
+            font-size: 10.5px;
+            color: #aaa;
+        }
+
+        .footer .regs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 16px;
+        }
+
+        .footer .regs .badge {
+            background: #eef0f5;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #777;
+            font-size: 9.5px;
+        }
+
+        .footer .copy {
+            color: #bbb;
+            font-size: 9.5px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 700px) {
+            .banda-superior {
+                padding: 12px 20px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .contenido {
+                padding: 20px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-der {
+                text-align: left;
+                width: 100%;
+            }
+
+            .kyc-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .tc-box {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .declaracion {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .declaracion .dec-item.en {
+                border-left: none;
+                padding-left: 0;
+                border-top: 1px solid #e0d8ed;
+                padding-top: 6px;
+            }
+
+            .footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .recibo {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                border-radius: 0;
+            }
+            .banda-superior {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="recibo">
+
+        
+
+        <!-- ===== CONTENIDO ===== -->
+        <div class="contenido">
+
+            <!-- ===== ENCABEZADO ===== -->
+            <div class="header">
+                <div class="header-izq">
+                    <img src="/public/img/logo.webp" alt="AD GLOBAL SERVICES LLC" class="logo" />
+                    <div class="info-empresa">
+                        <span class="nombre">AD GLOBAL SERVICES LLC</span>
+                        <br>
+                        <span class="dir">7901 4th St N #25273 · St. Petersburg, FL 33702</span>
+                        <span class="tel">📞 (448) 204-5984</span>
+                    </div>
+                </div>
+                <div class="header-der">
+                    <div class="titulo">RECIBO</div>
+                    <div class="num-recibo"># REM-2026-0001</div>
+                    <div class="fecha">08 de julio de 2026 · 10:35 AM EST</div>
+                </div>
+            </div>
+
+            <!-- ===== KYC: REMITENTE Y DESTINATARIO ===== -->
+            <div class="kyc-grid">
+
+                <!-- Remitente -->
+                <div class="kyc-box">
+                    <h4>📤 Remitente / Sender</h4>
+                    <div class="kyc-row">
+                        <span class="lbl">Nombre</span>
+                        <span class="val">Juan Pérez González</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">Documento</span>
+                        <span class="val">Pasaporte · 123456789</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">Dirección</span>
+                        <span class="val">123 Main St, Miami, FL 33101</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">Teléfono</span>
+                        <span class="val">(305) 555-1234</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">Correo</span>
+                        <span class="val">juan.perez@email.com</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">ID Cliente</span>
+                        <span class="val">CL-98765</span>
+                    </div>
+                </div>
+
+                <!-- Destinatario -->
+                <div class="kyc-box">
+                    <h4>📥 Destinatario / Recipient</h4>
+                    <div class="kyc-row">
+                        <span class="lbl">Nombre</span>
+                        <span class="val">María López Hernández</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">País</span>
+                        <span class="val">🇲🇽 México</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">Método de entrega</span>
+                        <span class="val">Depósito bancario</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">Banco</span>
+                        <span class="val">Banco de México · 123456789</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">Teléfono</span>
+                        <span class="val">+52 55 1234 5678</span>
+                    </div>
+                    <div class="kyc-row">
+                        <span class="lbl">Relación</span>
+                        <span class="val">Familiar</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===== DETALLE DE MONTO ===== -->
+            <div class="monto-box">
+                <div class="titulo-monto">💰 Detalle de la Transferencia</div>
+
+                <div class="monto-row">
+                    <span class="lbl">Monto enviado (USD)</span>
+                    <span class="val">$1,200.00</span>
+                </div>
+                <div class="monto-row">
+                    <span class="lbl">Comisión</span>
+                    <span class="val">$15.00</span>
+                </div>
+                <div class="monto-row">
+                    <span class="lbl">Impuestos</span>
+                    <span class="val">$0.00</span>
+                </div>
+                <div class="monto-row total">
+                    <span class="lbl">TOTAL A PAGAR</span>
+                    <span class="val">$1,215.00</span>
+                </div>
+            </div>
+
+            <!-- ===== TIPO DE CAMBIO ===== -->
+            <div class="tc-box">
+                <div class="tc-item">
+                    <div class="tc-lbl">Tipo de cambio</div>
+                    <div class="tc-val">1 USD = 20.50 MXN</div>
+                </div>
+                <div class="tc-item">
+                    <div class="tc-lbl">Monto a recibir</div>
+                    <div class="tc-val dark">$24,600.00 MXN</div>
+                </div>
+                <div class="tc-item">
+                    <div class="tc-lbl">Fecha de disponibilidad</div>
+                    <div class="tc-val dark" style="font-size:15px;">08 de julio de 2026</div>
+                </div>
+            </div>
+
+            <!-- ===== AVISO LEGAL - LETRA PEQUEÑA ===== -->
+            <div class="legal-box">
+
+                <div class="legal-text">
+                    <strong>⏳ Derecho a cancelar:</strong> Tiene <strong>30 minutos</strong> después de realizar el pago para cancelar la transferencia y recibir un reembolso completo, a menos que los fondos ya hayan sido recogidos o depositados en la cuenta del destinatario.<br />
+                    <strong>📞 Disputas y errores:</strong> Para disputar un error, contacte a <span class="highlight">AD GLOBAL SERVICES LLC</span> al <strong>(448) 204-5984</strong> dentro de los <strong>190 días</strong> posteriores a la transacción.
+                </div>
+
+                <div class="legal-text en">
+                    <strong>⏳ Right to Cancel:</strong> You have <strong>30 minutes</strong> after making the payment to cancel the transfer and receive a full refund, unless the funds have already been picked up or deposited into the recipient's account.<br />
+                    <strong>📞 Disputes and Errors:</strong> To dispute an error, contact <span class="highlight">AD GLOBAL SERVICES LLC</span> at <strong>(448) 204-5984</strong> within <strong>190 days</strong> of the transaction.
+                </div>
+
+                <div style="height:1px; background:#e8e0f0; margin:8px 0;"></div>
+
+                <div class="legal-text">
+                    <strong>📜 AVISO LEGAL Y POLÍTICA DE PRIVACIDAD:</strong> Esta operación se ha realizado conforme a sus indicaciones, actuando usted por cuenta propia. Los datos proporcionados para llevar a cabo la transacción, así como una copia de la documentación que acredita su identidad, serán tratados por <span class="highlight">AD GLOBAL SERVICES LLC</span>, con domicilio en 7901 4th St N #25273, St. Petersburg, FL 33702, y número de registro MSB: MRX26-00003351, en calidad de responsable del tratamiento y con la finalidad de prestar el servicio de transferencia de remesas. De conformidad con la normativa vigente (Regla de Transferencias de Remesas del CFPB y Ley de Secreto Bancario - BSA), la Entidad ha procedido a conservar un registro electrónico íntegro del presente recibo y de sus datos personales. Para más información sobre el tratamiento de sus datos personales, consulte nuestra Política de Privacidad en nuestro sitio web.
+                </div>
+
+                <div class="legal-text en">
+                    <strong>📜 LEGAL NOTICE AND PRIVACY POLICY:</strong> This transaction has been carried out according to your instructions, acting on your own behalf. The data provided to carry out the transaction, as well as a copy of the documentation verifying your identity, will be processed by <span class="highlight">AD GLOBAL SERVICES LLC</span>, with registered address at 7901 4th St N #25273, St. Petersburg, FL 33702, and MSB Registration Number: MRX26-00003351, as data controller and for the purpose of providing the remittance transfer service. In accordance with applicable regulations (CFPB Remittance Transfer Rule and Bank Secrecy Act - BSA), the Entity has retained a complete electronic record of this receipt and your personal data. For more information about the processing of your personal data, please refer to our Privacy Policy on our website.
+                </div>
+
+            </div>
+
+            <!-- ===== DECLARACIÓN DEL CLIENTE ===== -->
+            <div class="declaracion">
+                <div class="dec-item">
+                    <span class="dec-label">✍️ Declaración del Cliente</span>
+                    El remitente declara explícitamente que esta transacción se realiza en su propio nombre y que la información proporcionada es veraz y completa.
+                </div>
+                <div class="dec-item en">
+                    <span class="dec-label">✍️ Client Declaration</span>
+                    The sender explicitly declares that this transaction is performed on his/her own behalf and that the information provided is truthful and complete.
+                </div>
+            </div>
+
+            <!-- ===== PIE DE PÁGINA ===== -->
+            <div class="footer">
+                <div class="regs">
+                    <span>🛡️ <span class="badge">CFPB</span> (855) 411-2372</span>
+                    <span>🛡️ <span class="badge">OFR Florida</span> www.flofr.gov</span>
+                    <span>🛡️ <span class="badge">FinCEN</span> www.fincen.gov</span>
+                </div>
+                <span class="copy">AD GLOBAL SERVICES LLC · MSB # MRX26-00003351 · Documento legal</span>
+            </div>
+
+        </div><!-- fin .contenido -->
+
+    </div><!-- fin .recibo -->
+
+</body>
+</html>
