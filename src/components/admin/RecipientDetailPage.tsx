@@ -27,12 +27,22 @@ interface RecipientTransaction {
     id: string;
     firstName: string;
     lastName: string | null;
+    reportTagId?: string | null;
   } | null;
   recipient: {
     id: string;
     name: string;
     bank: string;
   } | null;
+  reportTag?: { id: string; label: string; color: string } | null;
+}
+
+interface ReportTag {
+  id: string;
+  name: string;
+  label: string;
+  color: string;
+  isActive?: boolean;
 }
 
 interface RecipientDetail {
@@ -47,6 +57,8 @@ interface RecipientDetail {
   accountType: string;
   identification: string | null;
   notes: string | null;
+  reportTagId?: string | null;
+  reportTag?: ReportTag | null;
   kycStatus: string;
   ofacStatus: string;
   ofacPdfUrl: string | null;
@@ -248,6 +260,7 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
   const [isUploadingOfac, setIsUploadingOfac] = useState(false);
 
   const [recipientId, setRecipientId] = useState(() => getInitialRecipientId(recipientIdProp));
+  const [reportTags, setReportTags] = useState<ReportTag[]>([]);
 
   const [form, setForm] = useState({
     name: '',
@@ -258,7 +271,8 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     accountNumber: '',
     accountType: '',
     identification: '',
-    notes: ''
+    notes: '',
+    reportTagId: ''
   });
 
   const loadRecipient = useCallback(async () => {
@@ -295,21 +309,31 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     apiFetch('/api/account-types')
       .then((data) => setAccountTypes(data))
       .catch(() => setAccountTypes([]));
+    apiFetch('/api/report-tags')
+      .then((data) => setReportTags(Array.isArray(data) ? data.filter((tag: ReportTag) => tag.isActive !== false) : []))
+      .catch(() => setReportTags([]));
   }, [loadRecipient]);
 
   const activeAccountTypeLabels = useMemo(
     () => accountTypes.filter((type) => type.isActive !== false).map((type) => type.label),
     [accountTypes]
   );
+  const transactionsPorEtiqueta = useMemo(() => {
+    const all = recipient?.transactions || [];
+    if (!recipient?.reportTagId) return all;
+    return all.filter((tx) => {
+      const clientTagId = (tx.client as any)?.reportTagId;
+      return tx.reportTag?.id === recipient.reportTagId || clientTagId === recipient.reportTagId;
+    });
+  }, [recipient?.transactions, recipient?.reportTagId]);
   const historyTotalPages = useMemo(
-    () => Math.max(1, Math.ceil((recipient?.transactions.length || 0) / HISTORY_PAGE_SIZE)),
-    [recipient?.transactions.length]
+    () => Math.max(1, Math.ceil(transactionsPorEtiqueta.length / HISTORY_PAGE_SIZE)),
+    [transactionsPorEtiqueta.length]
   );
   const paginatedTransactions = useMemo(() => {
-    if (!recipient) return [];
     const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
-    return recipient.transactions.slice(start, start + HISTORY_PAGE_SIZE);
-  }, [historyPage, recipient]);
+    return transactionsPorEtiqueta.slice(start, start + HISTORY_PAGE_SIZE);
+  }, [historyPage, transactionsPorEtiqueta]);
 
   useEffect(() => {
     setHistoryPage(1);
@@ -338,7 +362,8 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
       accountNumber: recipient.accountNumber,
       accountType: recipient.accountType,
       identification: recipient.identification || '',
-      notes: recipient.notes || ''
+      notes: recipient.notes || '',
+      reportTagId: recipient.reportTagId || ''
     });
     setIsEditOpen(true);
   };
@@ -634,7 +659,18 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
     try {
       await apiFetch(`/api/recipients/${recipient.id}`, {
         method: 'PATCH',
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          name: form.name,
+          relationship: form.relationship,
+          phone: form.phone,
+          email: form.email,
+          bank: form.bank,
+          accountNumber: form.accountNumber,
+          accountType: form.accountType,
+          identification: form.identification,
+          notes: form.notes,
+          reportTagId: form.reportTagId || null
+        })
       });
 
       setIsEditOpen(false);
@@ -724,6 +760,12 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border bg-cyan-50 text-cyan-700 border-cyan-200">
                     <Users className="w-3.5 h-3.5" /> {recipient.linkedClientsCount} cliente{recipient.linkedClientsCount === 1 ? '' : 's'}
                   </span>
+                  {recipient.reportTag && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: recipient.reportTag.color }}></span>
+                      {recipient.reportTag.label}
+                    </span>
+                  )}
                   {duplicateNotice && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border bg-amber-50 text-amber-700 border-amber-200">
                       <Link2 className="w-3.5 h-3.5" /> {recipient.duplicateRecordsCount} registros agrupados
@@ -1117,7 +1159,11 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
               <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><FileText className="w-5 h-5" /></div>
               <div>
                 <h2 className="text-base md:text-lg font-bold text-slate-800">Historial consolidado</h2>
-                <p className="text-xs text-slate-400 font-medium">{recipient.transactions.length} movimientos de esta ficha</p>
+                <p className="text-xs text-slate-400 font-medium">
+                  {recipient.reportTag
+                    ? `${transactionsPorEtiqueta.length} operaciones bajo la etiqueta ${recipient.reportTag.label}`
+                    : `${recipient.transactions.length} movimientos de esta ficha`}
+                </p>
               </div>
             </div>
             <a href={`/admin/transacciones?destinatario=${recipient.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-all">
@@ -1168,7 +1214,9 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                 {paginatedTransactions.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-6 py-10 text-center text-sm font-medium text-slate-400">
-                      Todavía no hay transacciones para este destinatario.
+                      {recipient.reportTag
+                        ? `No hay operaciones registradas bajo la etiqueta ${recipient.reportTag.label}.`
+                        : 'Todavía no hay transacciones para este destinatario.'}
                     </td>
                   </tr>
                 )}
@@ -1176,11 +1224,11 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
             </table>
           </div>
 
-          {recipient.transactions.length > 0 && (
+          {transactionsPorEtiqueta.length > 0 && (
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs font-medium text-slate-400">
                 Mostrando {(historyPage - 1) * HISTORY_PAGE_SIZE + 1}-
-                {Math.min(historyPage * HISTORY_PAGE_SIZE, recipient.transactions.length)} de {recipient.transactions.length}
+                {Math.min(historyPage * HISTORY_PAGE_SIZE, transactionsPorEtiqueta.length)} de {transactionsPorEtiqueta.length}
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -1349,6 +1397,20 @@ export default function RecipientDetailPage({ recipientId: recipientIdProp }: { 
                     onChange={(e) => setForm((prev) => ({ ...prev, identification: e.target.value }))}
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition-all focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15"
                   />
+                </label>
+
+                <label className="block">
+                  <span className="block text-[0.65rem] font-black uppercase tracking-wider text-slate-400 mb-1.5">Etiqueta de reporte</span>
+                  <select
+                    value={form.reportTagId}
+                    onChange={(e) => setForm((prev) => ({ ...prev, reportTagId: e.target.value }))}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-cyan-400"
+                  >
+                    <option value="">Sin etiqueta</option>
+                    {reportTags.map((tag) => (
+                      <option key={tag.id} value={tag.id}>{tag.label}</option>
+                    ))}
+                  </select>
                 </label>
               </div>
 

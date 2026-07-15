@@ -27,7 +27,7 @@ interface Transaction {
   estado: string;
   clientId: string;
   client?: { firstName: string; lastName: string | null; reportTag?: ReportTag | null };
-  recipient?: { name: string; bank: string };
+  recipient?: { name: string; bank: string; reportTag?: ReportTag | null };
   reportTag?: ReportTag | null;
 }
 
@@ -119,7 +119,7 @@ function addMonths(value: string, months: number) {
 }
 
 function getEffectiveReportTag(tx: Transaction) {
-  return tx.reportTag || tx.client?.reportTag || null;
+  return tx.reportTag || tx.client?.reportTag || tx.recipient?.reportTag || null;
 }
 
 function statusClasses(status: string) {
