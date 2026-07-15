@@ -507,7 +507,7 @@ export default function ReportsDashboard() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px]">
+          <table className="w-full min-w-[960px]">
             <thead className="bg-slate-50">
               <tr className="border-b border-slate-100 text-left text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-400">
                 <th className="px-5 py-4">Fecha</th>
@@ -515,6 +515,7 @@ export default function ReportsDashboard() {
                 <th className="px-5 py-4">Destinatario</th>
                 <th className="px-5 py-4 text-right">Ingreso USD</th>
                 <th className="px-5 py-4 text-right">Salida USDT</th>
+                <th className="px-5 py-4 text-right">Profit</th>
                 <th className="px-5 py-4 text-right">Tasa</th>
                 <th className="px-5 py-4 text-right">Monto VES</th>
                 <th className="px-5 py-4">Estado</th>
@@ -538,6 +539,7 @@ export default function ReportsDashboard() {
                     <td className="px-5 py-4 font-bold text-slate-600">{recipientName}</td>
                     <td className="px-5 py-4 text-right font-mono font-black text-slate-800">${formatMoney(Number(tx.ingresoUSD) || 0)}</td>
                     <td className="px-5 py-4 text-right font-mono font-black text-slate-700">{formatMoney(Number(tx.salidaUSDT) || 0)}</td>
+                    <td className="px-5 py-4 text-right font-mono font-black text-emerald-600">$ {formatMoney((Number(tx.ingresoUSD) || 0) - (Number(tx.salidaUSDT) || 0))}</td>
                     <td className="px-5 py-4 text-right font-mono font-bold text-slate-500">{(Number(tx.tasa) || 0).toFixed(2)}</td>
                     <td className="px-5 py-4 text-right font-mono font-bold text-slate-500">{formatMoney(Number(tx.montoVES) || 0)}</td>
                     <td className="px-5 py-4">
