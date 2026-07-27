@@ -48,7 +48,7 @@ interface User {
 const getWhatsAppLink = (phone: string, name: string) => {
   const digits = phone.replace(/\D/g, '');
   const normalizedPhone = digits.length === 10 ? `1${digits}` : digits;
-  const message = encodeURIComponent(`Hola ${name}, ¿cómo estás? Te escribimos porque notamos que hace varios días no realizas envíos. ¿Necesitas ayuda con algo?`);
+  const message = encodeURIComponent(`Hola ${name}, ¿Cómo has estado? Soy del equipo de AD GLOBAL. Tenía tiempo sin saber de ti y quería saludarte. Siempre estamos a la orden para lo que necesites.`);
   return `https://wa.me/${normalizedPhone}?text=${message}`;
 };
 
