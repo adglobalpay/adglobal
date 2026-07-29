@@ -11,7 +11,7 @@ import StatsStrip from "../components/StatsStrip.astro";
 import PaypalToVESHero from '../components/PaypalToVESHero.astro';
 import ServicesGrid from "../components/ServicesGrid.astro";
 import WhatsAppFloat from "../components/WhatsAppFloat.astro";
-
+import VenezuelaBanks from "../components/VenezuelaBanks.astro"; // ✅ IMPORTADO
 
 
 
@@ -27,7 +27,8 @@ const stats = [
   <PaypalToVESHero />
   <Process />
   <StatsStrip items={stats} className="mt-16 mb-10" />
-  <Testimonials />
+  <Testimonials />  <!-- ✅ CERRADO CORRECTAMENTE -->
+  <VenezuelaBanks /> <!-- ✅ SECCIÓN DE BANCOS AGREGADA -->
   <About />
   <FAQ />
   <Footer />

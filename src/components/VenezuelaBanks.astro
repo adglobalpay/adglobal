@@ -1,0 +1,209 @@
+---
+// venezuelabanks.astro
+const title = "Opciones de envío para Venezuela";
+const subtitle = "Transferencia bancaria a través de nuestra red de confianza en Venezuela. Selecciona tu proveedor preferido.";
+
+// Lista completa de bancos venezolanos
+const allBanks = [
+  // Bancos principales
+  {
+    name: "Banco de Venezuela",
+    logo: "/img/bdv.webp",  // ✅ Ruta corregida (sin punto)
+    alt: "Banco de Venezuela"
+  },
+  {
+    name: "Banco Nacional De Credito (BNC)",
+    logo: "/img/bnc.webp",  // ✅ Ruta corregida
+    alt: "Banco Nacional De Credito"
+  },
+  {
+    name: "BBVA Banco Provincial",
+    logo: "/img/bbva.webp",  // ✅ Ruta corregida
+    alt: "BBVA Banco Provincial"
+  },
+  {
+    name: "Banesco",
+    logo: "/img/banesco.webp",  // ✅ Ruta corregida
+    alt: "Banesco"
+  },
+  {
+    name: "Banco Mercantil",
+    logo: "/img/mercantil.webp",  // ✅ Ruta corregida
+    alt: "Banco Mercantil"
+  },
+  {
+    name: "Bancamiga Banco Microfinanciero",
+    logo: "/img/bancamiga.webp",  // ✅ Ruta corregida
+    alt: "Bancamiga Banco Microfinanciero"
+  },
+  // Bancos adicionales
+  {
+    name: "Banco Venezolano de Credito",
+    logo: "/img/venezolanodecredito.webp",  // ✅ EXTENSIÓN AGREGADA
+    alt: "Banco Venezolano de Credito"
+  },
+  {
+    name: "Banco Bicentenario",
+    logo: "/img/bicentenario.webp",  // ✅ Ruta corregida
+    alt: "Banco Bicentenario"
+  },
+  {
+    name: "Banco del Tesoro",
+    logo: "/img/bancodeltesoro.webp",  // ✅ Ruta corregida
+    alt: "Banco del Tesoro"
+  },
+  {
+    name: "Banco Exterior",
+    logo: "/img/bancoexterior.webp",  // ✅ Ruta corregida
+    alt: "Banco Exterior"
+  },
+  {
+    name: "Banco Occidental de Descuento (BOD)",
+    logo: "/img/bod.webp",  // ✅ Ruta corregida
+    alt: "Banco Occidental de Descuento"
+  },
+  {
+    name: "Banco Caroní",
+    logo: "/img/caroni.webp",  // ✅ Ruta corregida
+    alt: "Banco Caroní"
+  },
+  {
+    name: "Banco Plaza",
+    logo: "/img/bancoplaza.webp",  // ✅ Ruta corregida
+    alt: "Banco Plaza"
+  },
+  {
+    name: "Banco Sofitasa",
+    logo: "/img/sofitasa.webp",  // ✅ Ruta corregida
+    alt: "Banco Sofitasa"
+  },
+  {
+    name: "Banco Activo",
+    logo: "/img/bancoactivo.webp",  // ✅ Ruta corregida
+    alt: "Banco Activo"
+  },
+  {
+    name: "100% Banco",
+    logo: "/img/100banco.webp",  // ✅ Ruta corregida (sin % para evitar problemas)
+    alt: "100% Banco"
+  },
+  {
+    name: "Banco Fondo Común",
+    logo: "/img/bfc.webp",  // ✅ Ruta corregida
+    alt: "Banco Fondo Común"
+  },
+  {
+    name: "Banco Agrícola de Venezuela",
+    logo: "/img/bancoagricola.webp",  // ✅ Ruta corregida
+    alt: "Banco Agrícola de Venezuela"
+  },
+  {
+    name: "Banco de la Gente Emprendedora (Bangente)",
+     logo: "/img/bangente.webp", 
+    alt: "Banco de la Gente Emprendedora"
+  },
+  {
+    name: "Mi Banco",
+     logo: "/img/mibanco.webp", 
+    alt: "Mi Banco"
+  },
+  {
+    name: "Banco Nacional de Vivienda y Hábitat (BANAVIH)",
+     logo: "/img/banavih.webp", 
+    alt: "Banco Nacional de Vivienda y Hábitat"
+  },
+  {
+    name: "Banco de Desarrollo de la Mujer (BANMUJER)",
+     logo: "/img/banmujer.webp", 
+    alt: "Banco de Desarrollo de la Mujer"
+  }
+];
+
+// Mostrar solo los primeros 6 inicialmente
+const initialBanks = allBanks.slice(0, 6);
+const remainingBanks = allBanks.slice(6);
+
+const viewMoreText = "Ver más bancos";
+const viewLessText = "Ver menos";
+const footerText = "Las marcas comerciales, nombres comerciales y logotipos mostrados son marcas registradas de sus respectivos propietarios. No debe inferirse afiliación ni respaldo de AD GLOBAL.";
+---
+
+<section id="bancos" class="relative overflow-hidden bg-gradient-to-br from-sky-50 to-blue-50">
+  <div class="pointer-events-none absolute inset-0">
+    <div class="absolute -right-24 top-12 h-72 w-72 rounded-full bg-blue-200/30 blur-3xl"></div>
+    <div class="absolute left-0 bottom-0 h-80 w-80 rotate-45 bg-blue-200/20"></div>
+  </div>
+
+  <div class="relative mx-auto max-w-6xl px-4 py-10 sm:py-16">
+    <!-- Título y subtítulo -->
+    <h2 class="text-center text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">{title}</h2>
+    <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600 sm:text-base">
+      {subtitle}
+    </p>
+
+    <!-- Grid de bancos con logos - Todos los bancos -->
+    <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" id="bank-grid">
+      {allBanks.map((bank, index) => (
+        <div 
+          class={`flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white/80 p-3 shadow-sm transition-all hover:border-blue-300 hover:bg-white hover:shadow-md hover:-translate-y-0.5 backdrop-blur-sm ${index >= 6 ? 'hidden extra-banks' : ''}`}
+          data-index={index}
+        >
+          <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-1.5">
+            <img
+              src={bank.logo}
+              alt={bank.alt}
+              class="h-full w-full object-contain"
+              loading="lazy"
+              width="40"
+              height="40"
+              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23f0f0f0%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2210%22 font-family=%22sans-serif%22%3EBanco%3C/text%3E%3C/svg%3E'"
+            />
+          </div>
+          <span class="text-sm font-medium text-slate-800 sm:text-base">{bank.name}</span>
+        </div>
+      ))}
+    </div>
+
+    <!-- Ver más / Ver menos -->
+    <div class="mt-4 text-center">
+      <button
+        id="toggleBanks"
+        class="inline-block rounded-full bg-blue-100/80 px-6 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-200/80 hover:text-blue-800 backdrop-blur-sm cursor-pointer"
+      >
+        {viewMoreText}
+      </button>
+    </div>
+
+    <!-- Footer legal -->
+    <div class="mt-6 border-t border-slate-200/80 pt-4 text-center">
+      <p class="text-xs text-slate-500 sm:text-sm">
+        {footerText}
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  // JavaScript para toggle de "Ver más / Ver menos"
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleButton = document.getElementById('toggleBanks');
+    const extraBanks = document.querySelectorAll('.extra-banks');
+    let isExpanded = false;
+
+    if (toggleButton && extraBanks.length > 0) {
+      toggleButton.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        
+        extraBanks.forEach(bank => {
+          if (isExpanded) {
+            bank.classList.remove('hidden');
+          } else {
+            bank.classList.add('hidden');
+          }
+        });
+
+        toggleButton.textContent = isExpanded ? 'Ver menos' : 'Ver más bancos';
+      });
+    }
+  });
+</script>
