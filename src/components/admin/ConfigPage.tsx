@@ -122,6 +122,8 @@ export default function ConfigPage() {
     digital_api_key: '',
     digital_operator_alias: '',
     digital_check_frequency: '5',
+    digital_alert_limit: '0',
+    digital_alert_email: '',
     session_timeout: '30',
     twofa_enabled: true,
     audit_enabled: true,
@@ -176,6 +178,8 @@ export default function ConfigPage() {
             digital_api_key: cfgData['digital.api_key'] || prev.digital_api_key,
             digital_operator_alias: cfgData['digital.operator_alias'] || prev.digital_operator_alias,
             digital_check_frequency: cfgData['digital.check_frequency'] || prev.digital_check_frequency,
+            digital_alert_limit: cfgData['digital.alert_limit'] ?? cfgData['binance.alert_limit'] ?? prev.digital_alert_limit,
+            digital_alert_email: cfgData['digital.alert_email'] ?? cfgData['binance.alert_email'] ?? prev.digital_alert_email,
             session_timeout: cfgData['security.session_timeout'] || prev.session_timeout,
             twofa_enabled: cfgData['security.twofa_enabled'] === 'true',
             audit_enabled: cfgData['security.audit_enabled'] === 'true',
@@ -225,6 +229,8 @@ export default function ConfigPage() {
         'digital.api_key': form.digital_api_key,
         'digital.operator_alias': form.digital_operator_alias,
         'digital.check_frequency': form.digital_check_frequency,
+        'digital.alert_limit': form.digital_alert_limit,
+        'digital.alert_email': form.digital_alert_email,
         'security.session_timeout': form.session_timeout,
         'security.twofa_enabled': String(form.twofa_enabled),
         'security.audit_enabled': String(form.audit_enabled),
@@ -276,6 +282,31 @@ export default function ConfigPage() {
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'error', message: 'Error sincronizando Digital', description: err.message }
+      }));
+    }
+  };
+
+  const handleTestDigitalAlert = async () => {
+    try {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'info', message: 'Probando alerta de Digital', description: 'Sincronizando la wallet y enviando el correo de prueba...' }
+      }));
+
+      const response = await apiFetch('/api/digital/test-alert', {
+        method: 'POST'
+      });
+      const email = response?.result?.alert?.email || form.digital_alert_email;
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: 'Alerta de prueba enviada',
+          description: email ? `Revisa el correo enviado a ${email}.` : 'Revisa el correo configurado para las alertas.'
+        }
+      }));
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'Error enviando alerta', description: err.message }
       }));
     }
   };
@@ -852,11 +883,56 @@ export default function ConfigPage() {
           </div>
         </div>
 
+        <div className="rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4 mb-6">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-white text-cyan-600 border border-cyan-100 flex items-center justify-center flex-shrink-0"><Mail className="w-4 h-4" /></div>
+            <div>
+              <p className="text-sm font-bold text-slate-800">Alerta de saldo mínimo</p>
+              <p className="text-xs text-slate-500 mt-0.5">Se notifica una vez cuando la wallet live cae bajo el límite y se reactiva al recuperarse.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Límite de alerta ($)</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.digital_alert_limit}
+                  onChange={e => updateField('digital_alert_limit', e.target.value)}
+                  className="w-full pl-8 pr-4 py-3 bg-white border border-slate-200 text-slate-800 rounded-xl font-mono font-semibold text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all"
+                  placeholder="Ej: 700"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email para notificaciones</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="email"
+                  value={form.digital_alert_email}
+                  onChange={e => updateField('digital_alert_email', e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all"
+                  placeholder="admin@empresa.com"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-3">
           <button onClick={handleTestDigitalSync}
             disabled={!form.digital_enabled || !form.digital_api_url || !form.digital_api_key || !form.digital_operator_alias}
             className="flex-1 bg-cyan-600 text-white px-4 py-2.5 rounded-xl hover:bg-cyan-700 disabled:bg-slate-300 disabled:cursor-not-allowed font-bold text-sm transition-all btn-interactive flex items-center justify-center gap-2">
             <Plug className="w-4 h-4" /> Sincronizar ahora
+          </button>
+          <button onClick={handleTestDigitalAlert}
+            disabled={!form.digital_enabled || !form.digital_api_url || !form.digital_api_key || !form.digital_operator_alias || !form.digital_alert_email || Number(form.digital_alert_limit) <= 0}
+            className="flex-1 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl hover:bg-slate-50 hover:border-cyan-200 hover:text-cyan-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed font-bold text-sm transition-all btn-interactive flex items-center justify-center gap-2">
+            <Mail className="w-4 h-4" /> Probar alerta
           </button>
         </div>
       </div>

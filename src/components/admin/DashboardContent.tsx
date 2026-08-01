@@ -43,7 +43,7 @@ interface Transaction {
 }
 
 type WeeklyActivityItem = { dia: string; cantidad: number; volumen: number };
-type DashboardPeriod = 'today' | 'yesterday' | 'weekly' | 'monthly' | 'all';
+type DashboardPeriod = 'today' | 'yesterday' | 'weekly' | 'monthly' | 'last_month' | 'all';
 type ActivityChartPoint = { label: string; cantidad: number; volumen: number; profit: number };
 
 const PERIOD_OPTIONS: Array<{ key: DashboardPeriod; label: string }> = [
@@ -51,6 +51,7 @@ const PERIOD_OPTIONS: Array<{ key: DashboardPeriod; label: string }> = [
   { key: 'yesterday', label: 'Ayer' },
   { key: 'weekly', label: 'Semana' },
   { key: 'monthly', label: 'Mes' },
+  { key: 'last_month', label: 'Mes pasado' },
   { key: 'all', label: 'Todo' }
 ];
 
@@ -196,6 +197,11 @@ export default function DashboardContent() {
         return txMoment >= weekStart && txMoment <= now;
       }
 
+      if (selectedPeriod === 'last_month') {
+        const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return txDate.getFullYear() === previousMonth.getFullYear() && txDate.getMonth() === previousMonth.getMonth();
+      }
+
       if (selectedPeriod === 'all') {
         return true;
       }
@@ -255,10 +261,13 @@ export default function DashboardContent() {
       });
     }
 
-    if (selectedPeriod === 'monthly') {
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    if (selectedPeriod === 'monthly' || selectedPeriod === 'last_month') {
+      const targetMonth = selectedPeriod === 'last_month'
+        ? new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        : now;
+      const daysInMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).getDate();
       return Array.from({ length: daysInMonth }, (_, index) => {
-        const day = new Date(now.getFullYear(), now.getMonth(), index + 1);
+        const day = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), index + 1);
         const start = startOfLocalDay(day);
         const end = endOfLocalDay(day);
         return buildPoint(String(index + 1), validTransactions.filter((transaction) => {
