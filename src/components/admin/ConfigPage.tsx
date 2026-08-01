@@ -68,8 +68,6 @@ export default function ConfigPage() {
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [showApiSecret, setShowApiSecret] = useState(false);
   const [showDigitalApiKey, setShowDigitalApiKey] = useState(false);
 
   // Payment methods state
@@ -119,11 +117,6 @@ export default function ConfigPage() {
     meta_operador: '5000',
     volumen_mensual: '45890',
     profit_global: '12580',
-    binance_api_key: '',
-    binance_api_secret: '',
-    binance_alert_limit: '2000',
-    binance_alert_email: 'carlos@adglobalpay.com',
-    binance_check_frequency: '5',
     digital_enabled: false,
     digital_api_url: '',
     digital_api_key: '',
@@ -178,11 +171,6 @@ export default function ConfigPage() {
             meta_operador: cfgData['profit.meta_operador'] || prev.meta_operador,
           volumen_mensual: String(monthlyStats.volumenMensual || 0),
           profit_global: String(monthlyStats.profitGlobal || 0),
-            binance_api_key: cfgData['binance.api_key'] || prev.binance_api_key,
-            binance_api_secret: cfgData['binance.api_secret'] || prev.binance_api_secret,
-            binance_alert_limit: cfgData['binance.alert_limit'] || prev.binance_alert_limit,
-            binance_alert_email: cfgData['binance.alert_email'] || prev.binance_alert_email,
-            binance_check_frequency: cfgData['binance.check_frequency'] || prev.binance_check_frequency,
             digital_enabled: cfgData['digital.enabled'] === 'true',
             digital_api_url: cfgData['digital.api_url'] || prev.digital_api_url,
             digital_api_key: cfgData['digital.api_key'] || prev.digital_api_key,
@@ -232,11 +220,6 @@ export default function ConfigPage() {
         'profit.comision_global': form.comision_global,
         'profit.tasa_costo': form.tasa_costo,
         'profit.meta_operador': form.meta_operador,
-        'binance.api_key': form.binance_api_key,
-        'binance.api_secret': form.binance_api_secret,
-        'binance.alert_limit': form.binance_alert_limit,
-        'binance.alert_email': form.binance_alert_email,
-        'binance.check_frequency': form.binance_check_frequency,
         'digital.enabled': String(form.digital_enabled),
         'digital.api_url': form.digital_api_url,
         'digital.api_key': form.digital_api_key,
@@ -261,61 +244,6 @@ export default function ConfigPage() {
       }));
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleTestBinanceAlert = async () => {
-    try {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'info', message: 'Probando alerta', description: 'Enviando email de prueba...' }
-      }));
-
-      const response = await apiFetch('/api/binance/test-alert', {
-        method: 'POST'
-      });
-
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: {
-          type: 'success',
-          message: 'Alerta enviada',
-          description: response?.result?.email
-            ? `Correo de prueba enviado a ${response.result.email}.`
-            : 'Correo de prueba enviado correctamente.'
-        }
-      }));
-    } catch (err: any) {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'error', message: 'Error al probar alerta', description: err.message }
-      }));
-    }
-  };
-
-  const handleTestBinanceConnection = async () => {
-    try {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'info', message: 'Probando conexión', description: 'Consultando balance en Binance...' }
-      }));
-
-      const response = await apiFetch('/api/binance/test-connection', {
-        method: 'POST'
-      });
-
-      const formattedBalance = Number(response?.balance || 0).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: {
-          type: 'success',
-          message: 'Conexión verificada',
-          description: `Balance USDT detectado: ${formattedBalance}.`
-        }
-      }));
-    } catch (err: any) {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'error', message: 'Error de conexión', description: err.message }
-      }));
     }
   };
 
@@ -827,92 +755,6 @@ export default function ConfigPage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Binance */}
-      <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 card-hover anim-fade-in">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><Plug className="w-5 h-5" /></div>
-            <div>
-              <h2 className="text-base md:text-lg font-extrabold text-slate-800 tracking-tight">Integración Binance</h2>
-              <p className="text-xs text-slate-400 font-medium">Conexión con API de Binance para balances</p>
-            </div>
-          </div>
-          <div className="sm:ml-auto flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            Conectado
-          </div>
-        </div>
-        <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-xl mb-6">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-amber-800 font-semibold">Importante</p>
-              <p className="text-sm text-amber-700 mt-1">Usa una API key con permisos de SOLO LECTURA. Nunca compartas tu API Secret.</p>
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-          <div>
-            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">API Key</label>
-            <div className="flex gap-2">
-              <input type={showApiKey ? 'text' : 'password'} value={form.binance_api_key} onChange={e => updateField('binance_api_key', e.target.value)}
-                placeholder="********************"
-                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white" />
-              <button onClick={() => setShowApiKey(!showApiKey)} className="px-3 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-500 transition-all hover:scale-105">
-                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">API Secret</label>
-            <div className="flex gap-2">
-              <input type={showApiSecret ? 'text' : 'password'} value={form.binance_api_secret} onChange={e => updateField('binance_api_secret', e.target.value)}
-                placeholder="********************"
-                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white" />
-              <button onClick={() => setShowApiSecret(!showApiSecret)} className="px-3 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-500 transition-all hover:scale-105">
-                {showApiSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-          <div>
-            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Límite de alerta ($)</label>
-            <input type="number" value={form.binance_alert_limit} onChange={e => updateField('binance_alert_limit', e.target.value)} min={500} step={100}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-mono font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm" />
-          </div>
-          <div>
-            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email para notificaciones</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="email" value={form.binance_alert_email} onChange={e => updateField('binance_alert_email', e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Frecuencia de verificación</label>
-            <select value={form.binance_check_frequency} onChange={e => updateField('binance_check_frequency', e.target.value)}
-              className="custom-select w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all hover:bg-white hover:shadow-sm cursor-pointer">
-              <option value="5">Cada 5 minutos</option>
-              <option value="10">Cada 10 minutos</option>
-              <option value="15">Cada 15 minutos</option>
-              <option value="30">Cada 30 minutos</option>
-              <option value="60">Cada 1 hora</option>
-            </select>
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button onClick={handleTestBinanceConnection}
-            className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 font-bold text-sm transition-all btn-interactive flex items-center justify-center gap-2">
-            <Plug className="w-4 h-4" /> Probar conexión
-          </button>
-          <button onClick={handleTestBinanceAlert}
-            className="flex-1 border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl hover:bg-slate-50 font-bold text-sm transition-all flex items-center justify-center gap-2">
-            <Mail className="w-4 h-4" /> Probar alerta
-          </button>
         </div>
       </div>
 
