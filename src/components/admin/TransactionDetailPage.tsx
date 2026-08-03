@@ -225,6 +225,7 @@ export default function TransactionDetailPage({ txId: txIdProp }: { txId: string
         method: 'PATCH',
         body: JSON.stringify(body)
       });
+      window.dispatchEvent(new CustomEvent('adglobal:capital-updated'));
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'success', message: 'Guardado', description: 'Transacción actualizada correctamente.' }
       }));

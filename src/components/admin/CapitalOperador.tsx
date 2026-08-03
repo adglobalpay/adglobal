@@ -93,26 +93,30 @@ export default function CapitalOperador() {
           lastUpdate: new Date().toLocaleTimeString()
         });
 
-        try {
-          const digitalMovements = await apiFetch('/api/capital/digital/movements') as Movimiento[];
-          setMovimientos(
-            digitalMovements.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
-          );
-        } catch (historyError) {
-          console.warn('No se pudo cargar el historial Digital, usando historial local:', historyError);
-          const historyAccounts = accounts.filter(a => a.type === 'wallet' || a.type === 'binance');
-          const historyResults = await Promise.all(
-            historyAccounts.map(account => apiFetch(`/api/capital/${account.id}/movements`) as Promise<Movimiento[]>)
-          );
-          const merged = historyResults
-            .flat()
-            .reduce((acc, mov) => {
-              if (!acc.find(m => m.id === mov.id)) acc.push(mov);
-              return acc;
-            }, [] as Movimiento[])
-            .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-          setMovimientos(merged);
-        }
+        const [digitalMovements, globalMovements] = await Promise.all([
+          apiFetch('/api/capital/digital/movements')
+            .then(data => data as Movimiento[])
+            .catch((historyError) => {
+              console.warn('No se pudo cargar el historial de Digital:', historyError);
+              return [] as Movimiento[];
+            }),
+          digitalBs
+            ? apiFetch(`/api/capital/${digitalBs.id}/movements`)
+                .then(data => data as Movimiento[])
+                .catch((historyError) => {
+                  console.warn('No se pudo cargar el control local de BsS:', historyError);
+                  return [] as Movimiento[];
+                })
+            : Promise.resolve([] as Movimiento[])
+        ]);
+
+        const merged = [...digitalMovements, ...globalMovements]
+          .reduce((acc, mov) => {
+            if (!acc.find(m => m.id === mov.id)) acc.push(mov);
+            return acc;
+          }, [] as Movimiento[])
+          .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+        setMovimientos(merged);
       } catch (error) {
         console.error('Error cargando capital:', error);
       } finally {
@@ -120,9 +124,14 @@ export default function CapitalOperador() {
       }
     }
 
-    fetchCapital();
+    void fetchCapital();
+    const handleCapitalUpdated = () => void fetchCapital();
+    window.addEventListener('adglobal:capital-updated', handleCapitalUpdated);
     const interval = setInterval(fetchCapital, 300000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('adglobal:capital-updated', handleCapitalUpdated);
+    };
   }, []);
 
   const getFilteredMovimientos = () => {
