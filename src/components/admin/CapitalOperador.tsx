@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, ArrowDownLeft, Search, Download } from 'lucide-react';
-import { apiFetch } from '../../lib/auth';
+import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, ArrowDownLeft, Search, Download, RotateCcw, AlertTriangle } from 'lucide-react';
+import { apiFetch, getUser } from '../../lib/auth';
 
 interface CapitalData {
   usdtBalance: number;
@@ -78,6 +78,9 @@ export default function CapitalOperador() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState('todo');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const canResetFiat = ['SUPER_ADMIN', 'ADMIN'].includes(getUser()?.role || '');
 
   useEffect(() => {
     async function fetchCapital() {
@@ -199,6 +202,33 @@ export default function CapitalOperador() {
     }));
   };
 
+  const handleResetFiatBalance = async () => {
+    try {
+      setIsResetting(true);
+      await apiFetch('/api/capital/digital-bs/reset', { method: 'POST' });
+      setCapital(current => ({
+        ...current,
+        vesBalance: 0,
+        lastUpdate: new Date().toLocaleTimeString()
+      }));
+      setShowResetConfirmation(false);
+      window.dispatchEvent(new CustomEvent('adglobal:capital-updated'));
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: 'BsS reiniciados a cero',
+          description: 'Las nuevas ventas sumarán BsS y las transferencias completadas los descontarán desde esta nueva base.'
+        }
+      }));
+    } catch (error: any) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'No se pudo reiniciar BsS', description: error.message }
+      }));
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="p-2 lg:p-3 border-t border-white/5 bg-slate-950">
       <div 
@@ -282,9 +312,63 @@ export default function CapitalOperador() {
                 <Settings size={14} /> Config
               </button>
             </div>
+
+            {canResetFiat && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowResetConfirmation(true);
+                }}
+                className="w-full justify-center text-xs bg-rose-500/10 border border-rose-500/25 text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-500/20 hover:text-rose-200 flex items-center gap-1.5 transition-colors font-medium"
+              >
+                <RotateCcw size={14} /> Reiniciar BsS a cero
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      {showResetConfirmation && createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4" onClick={() => !isResetting && setShowResetConfirmation(false)}>
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="border-b border-rose-100 bg-rose-50 px-6 py-5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-rose-200 bg-white text-rose-600">
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-slate-900" style={{ fontFamily: 'var(--font-heading)' }}>Reiniciar BsS disponibles</h2>
+                  <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600">Esta acción establece el capital operativo en <strong className="text-rose-700">0,00 BsS</strong>.</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-5 text-sm leading-relaxed text-slate-600">
+              <p>El historial no se borra. Se toma el saldo actual de Digital como nueva base para que no vuelva a sumarse el acumulado anterior.</p>
+              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">Luego, las nuevas ventas sumarán BsS y cada transferencia completada los descontará normalmente.</p>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                disabled={isResetting}
+                onClick={() => setShowResetConfirmation(false)}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isResetting}
+                onClick={handleResetFiatBalance}
+                className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RotateCcw size={15} className={isResetting ? 'animate-spin' : ''} />
+                {isResetting ? 'Reiniciando...' : 'Sí, reiniciar'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Modal de Historial - Renderizado via Portal para salir del Sidebar */}
       {showHistory && createPortal(
