@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, ArrowDownLeft, Search, Download, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Wallet, History, Settings, ChevronRight, X, ArrowUpRight, ArrowDownLeft, Search, Download, PencilLine, AlertTriangle } from 'lucide-react';
 import { apiFetch, getUser } from '../../lib/auth';
 
 interface CapitalData {
@@ -78,9 +78,10 @@ export default function CapitalOperador() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState('todo');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-  const canResetFiat = ['SUPER_ADMIN', 'ADMIN'].includes(getUser()?.role || '');
+  const [showBalanceAdjustment, setShowBalanceAdjustment] = useState(false);
+  const [adjustedBalance, setAdjustedBalance] = useState('');
+  const [isAdjustingBalance, setIsAdjustingBalance] = useState(false);
+  const canAdjustFiat = ['SUPER_ADMIN', 'ADMIN'].includes(getUser()?.role || '');
 
   useEffect(() => {
     async function fetchCapital() {
@@ -202,30 +203,55 @@ export default function CapitalOperador() {
     }));
   };
 
-  const handleResetFiatBalance = async () => {
+  const normalizedAdjustedBalance = adjustedBalance.replace(',', '.');
+  const parsedAdjustedBalance = Number(normalizedAdjustedBalance);
+  const isValidAdjustedBalance = /^\d+(?:[.,]\d{1,2})?$/.test(adjustedBalance)
+    && Number.isFinite(parsedAdjustedBalance)
+    && parsedAdjustedBalance >= 0;
+
+  const handleAdjustedBalanceChange = (value: string) => {
+    const sanitized = value
+      .replace(/[^\d.,]/g, '')
+      .replace(',', '.');
+    const [integerPart = '', ...decimalParts] = sanitized.split('.');
+    const decimalPart = decimalParts.join('').slice(0, 2);
+    setAdjustedBalance(decimalParts.length > 0 ? `${integerPart}.${decimalPart}` : integerPart);
+  };
+
+  const openBalanceAdjustment = () => {
+    setAdjustedBalance(capital.vesBalance.toFixed(2));
+    setShowBalanceAdjustment(true);
+  };
+
+  const handleFiatBalanceAdjustment = async () => {
+    if (!isValidAdjustedBalance) return;
+
     try {
-      setIsResetting(true);
-      await apiFetch('/api/capital/digital-bs/reset', { method: 'POST' });
+      setIsAdjustingBalance(true);
+      await apiFetch('/api/capital/digital-bs/adjust', {
+        method: 'POST',
+        body: JSON.stringify({ balance: parsedAdjustedBalance })
+      });
       setCapital(current => ({
         ...current,
-        vesBalance: 0,
+        vesBalance: parsedAdjustedBalance,
         lastUpdate: new Date().toLocaleTimeString()
       }));
-      setShowResetConfirmation(false);
+      setShowBalanceAdjustment(false);
       window.dispatchEvent(new CustomEvent('adglobal:capital-updated'));
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: {
           type: 'success',
-          message: 'BsS reiniciados a cero',
-          description: 'Las nuevas ventas sumarán BsS y las transferencias completadas los descontarán desde esta nueva base.'
+          message: 'Saldo disponible actualizado',
+          description: `El capital operativo quedó en ${parsedAdjustedBalance.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BsS.`
         }
       }));
     } catch (error: any) {
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { type: 'error', message: 'No se pudo reiniciar BsS', description: error.message }
+        detail: { type: 'error', message: 'No se pudo actualizar el saldo', description: error.message }
       }));
     } finally {
-      setIsResetting(false);
+      setIsAdjustingBalance(false);
     }
   };
 
@@ -313,56 +339,76 @@ export default function CapitalOperador() {
               </button>
             </div>
 
-            {canResetFiat && (
+            {canAdjustFiat && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowResetConfirmation(true);
+                  openBalanceAdjustment();
                 }}
-                className="w-full justify-center text-xs bg-rose-500/10 border border-rose-500/25 text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-500/20 hover:text-rose-200 flex items-center gap-1.5 transition-colors font-medium"
+                className="w-full justify-center text-xs bg-indigo-500/10 border border-indigo-500/25 text-indigo-200 px-3 py-2 rounded-lg hover:bg-indigo-500/20 hover:text-indigo-100 flex items-center gap-1.5 transition-colors font-medium"
               >
-                <RotateCcw size={14} /> Reiniciar BsS a cero
+                <PencilLine size={14} /> Ajustar saldo BsS
               </button>
             )}
           </div>
         )}
       </div>
 
-      {showResetConfirmation && createPortal(
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4" onClick={() => !isResetting && setShowResetConfirmation(false)}>
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="border-b border-rose-100 bg-rose-50 px-6 py-5">
+      {showBalanceAdjustment && createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4" onClick={() => !isAdjustingBalance && setShowBalanceAdjustment(false)}>
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="border-b border-indigo-100 bg-indigo-50 px-6 py-5">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-rose-200 bg-white text-rose-600">
-                  <AlertTriangle size={20} />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-200 bg-white text-indigo-600">
+                  <PencilLine size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold tracking-tight text-slate-900" style={{ fontFamily: 'var(--font-heading)' }}>Reiniciar BsS disponibles</h2>
-                  <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600">Esta acción establece el capital operativo en <strong className="text-rose-700">0,00 BsS</strong>.</p>
+                  <h2 className="text-lg font-bold tracking-tight text-slate-900" style={{ fontFamily: 'var(--font-heading)' }}>Ajustar BsS disponibles</h2>
+                  <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600">Indica el saldo exacto que debe quedar como capital operativo.</p>
                 </div>
               </div>
             </div>
             <div className="px-6 py-5 text-sm leading-relaxed text-slate-600">
-              <p>El historial no se borra. Se toma el saldo actual de Digital como nueva base para que no vuelva a sumarse el acumulado anterior.</p>
-              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">Luego, las nuevas ventas sumarán BsS y cada transferencia completada los descontará normalmente.</p>
+              <label htmlFor="fiat-balance-adjustment" className="block text-xs font-bold uppercase tracking-wider text-slate-600">Saldo final en BsS</label>
+              <div className="relative mt-2">
+                <input
+                  id="fiat-balance-adjustment"
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={adjustedBalance}
+                  onChange={(event) => handleAdjustedBalanceChange(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();
+                  }}
+                  aria-describedby="fiat-balance-hint"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-14 font-mono text-lg font-bold text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15"
+                  placeholder="0.00"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-bold text-slate-400">BsS</span>
+              </div>
+              <p id="fiat-balance-hint" className={`mt-2 text-xs font-medium ${adjustedBalance && !isValidAdjustedBalance ? 'text-rose-600' : 'text-slate-500'}`}>
+                {adjustedBalance && !isValidAdjustedBalance ? 'Ingresa solo cifras positivas, con máximo dos decimales.' : 'Solo cifras y hasta dos decimales. Puedes usar punto o coma.'}
+              </p>
+              <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">El historial se conserva y el saldo actual de Digital se toma como nueva base para las operaciones siguientes.</p>
             </div>
             <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
               <button
                 type="button"
-                disabled={isResetting}
-                onClick={() => setShowResetConfirmation(false)}
+                disabled={isAdjustingBalance}
+                onClick={() => setShowBalanceAdjustment(false)}
                 className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                disabled={isResetting}
-                onClick={handleResetFiatBalance}
-                className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isAdjustingBalance || !isValidAdjustedBalance}
+                onClick={handleFiatBalanceAdjustment}
+                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <RotateCcw size={15} className={isResetting ? 'animate-spin' : ''} />
-                {isResetting ? 'Reiniciando...' : 'Sí, reiniciar'}
+                {isAdjustingBalance ? <AlertTriangle size={15} className="animate-pulse" /> : <PencilLine size={15} />}
+                {isAdjustingBalance ? 'Actualizando...' : 'Guardar saldo'}
               </button>
             </div>
           </div>
